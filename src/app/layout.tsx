@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "DRID - Proposal Submission",
+  title: "Proposal Submission - DRID, University of Benin",
   description: "Follow this page to submit your research, innovation and development proposals.",
 };
 
