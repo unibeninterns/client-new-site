@@ -246,6 +246,12 @@ export default function TETFundForm() {
     alert('Form submitted successfully!');
   };
 
+  const clearForm = (e : any) => {
+    e.preventDefault();
+    localStorage.clear;
+    //refresh page
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -589,6 +595,12 @@ export default function TETFundForm() {
             {/* Submit Button */}
             <div className="mt-8 border-t pt-6">
               <div className="flex justify-end">
+                <button
+                  onClick={clearForm}
+                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 mr-4"
+                >
+                  Clear form
+                </button>
                 <button
                   type="submit"
                   className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-800 hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
