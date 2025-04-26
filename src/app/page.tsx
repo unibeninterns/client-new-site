@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Upload, AlertCircle } from 'lucide-react';
 import Header from '@/components/header';
 import Link from 'next/link';
@@ -25,25 +25,40 @@ interface FormData {
   cvFile: File | null;
 }
 
+interface FormErrors {
+  unibenEmail: string;
+  alternativeEmail: string;
+}
+
 export default function TETFundForm() {
-  const [formData, setFormData] = useState<FormData>({
-    fullName: '',
-    academicRank: '',
-    department: '',
-    faculty: '',
+  const [formData, setFormData] = useState<FormData>(() => {
+    const retreivedInputs = localStorage.getItem("savedInputs");
+    const returnValue =  retreivedInputs ? JSON.parse(retreivedInputs) :  {
+      fullName: '',
+      academicRank: '',
+      department: '',
+      faculty: '',
+      unibenEmail: '',
+      alternativeEmail: '',
+      phoneNumber: '',
+      coInvestigators: '',
+      coInvestigatorsDept: '',
+      projectTitle: '',
+      problemStatement: '',
+      researchObjectives: '',
+      methodology: '',
+      expectedOutcomes: '',
+      workPlan: '',
+      estimatedBudget: '',
+      cvFile: null
+    }
+    return returnValue
+
+  });
+
+  const [formErrors, setFormErrors] = useState<FormErrors>({
     unibenEmail: '',
-    alternativeEmail: '',
-    phoneNumber: '',
-    coInvestigators: '',
-    coInvestigatorsDept: '',
-    projectTitle: '',
-    problemStatement: '',
-    researchObjectives: '',
-    methodology: '',
-    expectedOutcomes: '',
-    workPlan: '',
-    estimatedBudget: '',
-    cvFile: null
+    alternativeEmail: ''
   });
 
   const [fileError, setFileError] = useState<string>('');
@@ -56,6 +71,52 @@ export default function TETFundForm() {
       ...formData,
       [name]: value
     });
+
+    // Clear errors when user is typing
+    if (name === 'unibenEmail' || name === 'alternativeEmail') {
+      setFormErrors({
+        ...formErrors,
+        [name]: ''
+      });
+    }
+
+    localStorage.setItem(
+      "savedInputs",
+      JSON.stringify({...formData, cvFile : null})
+    )
+  };
+
+  // Validate UNIBEN email (must end with @uniben.edu)
+  const validateUnibenEmail = (email: string): boolean => {
+    const unibenEmailRegex = /^[a-zA-Z0-9._%+-]+@uniben\.edu$/;
+    return unibenEmailRegex.test(email);
+  };
+
+  // Validate regular email format
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
+
+  // Email validation on blur
+  const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'unibenEmail' && value) {
+      if (!validateUnibenEmail(value)) {
+        setFormErrors({
+          ...formErrors,
+          unibenEmail: 'Please enter a valid UNIBEN email address ending with @uniben.edu'
+        });
+      }
+    } else if (name === 'alternativeEmail' && value) {
+      if (!validateEmail(value)) {
+        setFormErrors({
+          ...formErrors,
+          alternativeEmail: 'Please enter a valid email address'
+        });
+      }
+    }
   };
 
   const validateFile = (file: File): boolean => {
@@ -134,13 +195,34 @@ export default function TETFundForm() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
-    // Final validation check
+    // Email validation before submission
+    let hasErrors = false;
+    const newErrors = { unibenEmail: '', alternativeEmail: '' };
+    
+    if (!validateUnibenEmail(formData.unibenEmail)) {
+      newErrors.unibenEmail = 'Please enter a valid UNIBEN email address ending with @uniben.edu';
+      hasErrors = true;
+    }
+    
+    if (formData.alternativeEmail && !validateEmail(formData.alternativeEmail)) {
+      newErrors.alternativeEmail = 'Please enter a valid email address';
+      hasErrors = true;
+    }
+    
+    // Final file validation check
     if (!formData.cvFile) {
       setFileError('Please upload your CV document');
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      setFormErrors(newErrors);
       return;
     }
     
     console.log('Form submitted:', formData);
+    
+    localStorage.removeItem("savedInputs")
     // Here you would typically send the data to your backend
     alert('Form submitted successfully!');
   };
@@ -235,9 +317,17 @@ export default function TETFundForm() {
                     name="unibenEmail"
                     value={formData.unibenEmail}
                     onChange={handleInputChange}
+                    onBlur={handleEmailBlur}
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2 border"
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2 border ${formErrors.unibenEmail ? 'border-red-500' : 'border-gray-300'}`}
+                    placeholder="username@uniben.edu"
                   />
+                  {formErrors.unibenEmail && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {formErrors.unibenEmail}
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -249,8 +339,15 @@ export default function TETFundForm() {
                     name="alternativeEmail"
                     value={formData.alternativeEmail}
                     onChange={handleInputChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2 border"
+                    onBlur={handleEmailBlur}
+                    className={`mt-1 block w-full rounded-md shadow-sm focus:border-purple-500 focus:ring-purple-500 sm:text-sm p-2 border ${formErrors.alternativeEmail ? 'border-red-500' : 'border-gray-300'}`}
                   />
+                  {formErrors.alternativeEmail && (
+                    <p className="mt-1 text-sm text-red-600 flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {formErrors.alternativeEmail}
+                    </p>
+                  )}
                 </div>
 
                 <div>
