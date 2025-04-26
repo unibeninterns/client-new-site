@@ -31,7 +31,27 @@ interface FormErrors {
 }
 
 export default function TETFundForm() {
-  const [formData, setFormData] = useState<FormData>(() => {
+  const [formData, setFormData] = useState<FormData>({
+      fullName: '',
+      academicRank: '',
+      department: '',
+      faculty: '',
+      unibenEmail: '',
+      alternativeEmail: '',
+      phoneNumber: '',
+      coInvestigators: '',
+      coInvestigatorsDept: '',
+      projectTitle: '',
+      problemStatement: '',
+      researchObjectives: '',
+      methodology: '',
+      expectedOutcomes: '',
+      workPlan: '',
+      estimatedBudget: '',
+      cvFile: null
+    });
+
+  useEffect(() => {
     const retreivedInputs = localStorage.getItem("savedInputs");
     const returnValue =  retreivedInputs ? JSON.parse(retreivedInputs) :  {
       fullName: '',
@@ -52,9 +72,8 @@ export default function TETFundForm() {
       estimatedBudget: '',
       cvFile: null
     }
-    return returnValue
-
-  });
+    setFormData(returnValue)
+  }, [])
 
   const [formErrors, setFormErrors] = useState<FormErrors>({
     unibenEmail: '',
