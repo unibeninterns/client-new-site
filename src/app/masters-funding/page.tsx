@@ -57,7 +57,69 @@ export default function MastersFundingPage() {
                     </ul>
                   </li>
                   {/* More guidelines... */}
+                  <li>
+                <strong className="text-purple-800">Problem Statement and Justification:</strong>
+                <span className="block mt-1 text-gray-700">
+                  Briefly describe the problem your project addresses and explain why it is important.
+                </span>
+              </li>
+              <li>
+                <strong className="text-purple-800">Objectives and Anticipated Outcomes:</strong>
+                <span className="block mt-1 text-gray-700">
+                  What are you aiming to achieve? What changes, benefits, or results do you expect from your project?
+                </span>
+              </li>
+              <li>
+                <strong className="text-purple-800">Research-Informed Approach and Methodology:</strong>
+                <span className="block mt-1 text-gray-700">
+                  Explain how you will carry out your research, the methods you will use, and how it is informed by academic knowledge.
+                </span>
+              </li>
+              <li>
+                <strong className="text-purple-800">Innovation and Impact:</strong>
+                <ul className="list-disc list-inside ml-6 mt-2 text-gray-700">
+                  <li>What is novel about your project?</li>
+                  <li>How could your project contribute to society, culture, policy, or national development?</li>
+                </ul>
+              </li>
+              <li>
+                <strong className="text-purple-800">Interdisciplinary Relevance:</strong>
+                <span className="block mt-1 text-gray-700">
+                  Show how your project draws from or benefits multiple fields of study, if applicable.
+                </span>
+              </li>
+              <li>
+                <strong className="text-purple-800">Implementation Plan and Timeline:</strong>
+                <ul className="list-disc list-inside ml-6 mt-2 text-gray-700">
+                  <li>Outline the main activities and stages of the project.</li>
+                  <li>Provide a realistic timeline covering completion within one academic session.</li>
+                </ul>
+              </li>
+              <li>
+                <strong className="text-purple-800">Preliminary Budget Estimate (Separate Appendix):</strong>
+                <span className="block mt-1 text-gray-700">
+                  Break down how you propose to use the seed funding if awarded, with estimated costs.
+                </span>
+              </li>
                 </ol>
+
+                <h3 className="text-lg font-semibold mt-8 text-purple-800">Important Submission Details:</h3>
+            <ul className="list-disc list-inside space-y-2 mt-4 text-gray-700">
+              <li>Concept note must not exceed 5 pages (excluding appendix).</li>
+              <li>
+                Submission Email:{" "}
+                <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">
+                  drid@uniben.edu
+                </a>
+              </li>
+              <li>Deadline: Monday, 2nd June 2025</li>
+              <li>
+                For inquiries, contact the DRID Office or email{" "}
+                <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">
+                  drid@uniben.edu
+                </a>.
+              </li>
+            </ul>
 
                 <button 
                   onClick={() => setShowFullGuidelines(false)}
