@@ -1,123 +1,86 @@
-"use client";
-import Header from "@/components/header";
-
-export default function SubmissionGuidelines() {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <Header />
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="bg-purple-800 text-white px-6 py-4">
-            <h1 className="text-2xl font-bold">Submission Guidelines</h1>
-          </div>
-          <div className="p-6 text-gray-800">
-            <h2 className="text-xl font-semibold mb-4 text-purple-800">
-              Pilot Seed Funding for Research-Driven Innovation
-            </h2>
-            <p className="mb-4 text-gray-700">
-              Directorate of Research, Innovation and Development (DRID), University of Benin, Benin City.
-            </p>
-            <p className="mb-4 font-medium text-gray-800">
-              <strong>Concept Note Submission Template (Master’s Students Only)</strong>
-            </p>
-            <p className="mb-6 text-gray-700">
-              Please complete all fields clearly and accurately. Maximum of 5 pages excluding the budget appendix.
-            </p>
-
-            <ol className="list-decimal list-inside space-y-6 text-gray-800">
-              <li>
-                <strong className="text-purple-800">Project Title:</strong> 
-                <span className="block mt-1 text-gray-700">Provide a clear and descriptive title for your project.</span>
-              </li>
-              <li>
-                <strong className="text-purple-800">Lead Researcher Information:</strong>
-                <ul className="list-disc list-inside ml-6 mt-2 text-gray-700">
-                  <li>Full Name</li>
-                  <li>Matriculation Number</li>
-                  <li>Programme (e.g., MSc, MA, LLM)</li>
-                  <li>Department and Faculty</li>
-                  <li>Email Address</li>
-                  <li>Phone Number</li>
-                </ul>
-              </li>
-              <li>
-                <strong className="text-purple-800">Problem Statement and Justification:</strong>
-                <span className="block mt-1 text-gray-700">
-                  Briefly describe the problem your project addresses and explain why it is important.
-                </span>
-              </li>
-              <li>
-                <strong className="text-purple-800">Objectives and Anticipated Outcomes:</strong>
-                <span className="block mt-1 text-gray-700">
-                  What are you aiming to achieve? What changes, benefits, or results do you expect from your project?
-                </span>
-              </li>
-              <li>
-                <strong className="text-purple-800">Research-Informed Approach and Methodology:</strong>
-                <span className="block mt-1 text-gray-700">
-                  Explain how you will carry out your research, the methods you will use, and how it is informed by academic knowledge.
-                </span>
-              </li>
-              <li>
-                <strong className="text-purple-800">Innovation and Impact:</strong>
-                <ul className="list-disc list-inside ml-6 mt-2 text-gray-700">
-                  <li>What is novel about your project?</li>
-                  <li>How could your project contribute to society, culture, policy, or national development?</li>
-                </ul>
-              </li>
-              <li>
-                <strong className="text-purple-800">Interdisciplinary Relevance:</strong>
-                <span className="block mt-1 text-gray-700">
-                  Show how your project draws from or benefits multiple fields of study, if applicable.
-                </span>
-              </li>
-              <li>
-                <strong className="text-purple-800">Implementation Plan and Timeline:</strong>
-                <ul className="list-disc list-inside ml-6 mt-2 text-gray-700">
-                  <li>Outline the main activities and stages of the project.</li>
-                  <li>Provide a realistic timeline covering completion within one academic session.</li>
-                </ul>
-              </li>
-              <li>
-                <strong className="text-purple-800">Preliminary Budget Estimate (Separate Appendix):</strong>
-                <span className="block mt-1 text-gray-700">
-                  Break down how you propose to use the seed funding if awarded, with estimated costs.
-                </span>
-              </li>
-            </ol>
-
-            <h3 className="text-lg font-semibold mt-8 text-purple-800">Important Submission Details:</h3>
-            <ul className="list-disc list-inside space-y-2 mt-4 text-gray-700">
-              <li>Concept note must not exceed 5 pages (excluding appendix).</li>
-              <li>
-                Submission Email:{" "}
-                <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">
-                  drid@uniben.edu
-                </a>
-              </li>
-              <li>Deadline: Monday, 2nd June 2025</li>
-              <li>
-                For inquiries, contact the DRID Office or email{" "}
-                <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">
-                  drid@uniben.edu
-                </a>.
-              </li>
-            </ul>
-          </div>
+{/* Upload Section */}
+<div className="mb-8">
+<h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Upload Section</h2>
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-3">
+    Upload Short CV of Lead Researcher (Max 2 pages; PDF or DOC format) *
+  </label>
+  <div 
+    className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 ${isDragging ? 'border-purple-500 bg-purple-50' : 'border-gray-300'} ${fileError ? 'border-red-300' : ''} border-dashed rounded-md`}
+    onDragEnter={handleDragEnter}
+    onDragOver={handleDragOver}
+    onDragLeave={handleDragLeave}
+    onDrop={handleDrop}
+  >
+    <div className="space-y-1 text-center">
+      <Upload className={`mx-auto h-12 w-12 ${fileError ? 'text-red-400' : 'text-gray-400'}`} />
+      <div className="flex text-sm text-gray-600">
+        <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-purple-600 hover:text-purple-500">
+          <span>Upload a file</span>
+          <input 
+            id="file-upload" 
+            name="file-upload" 
+            type="file" 
+            className="sr-only"
+            accept=".pdf,.doc,.docx"
+            onChange={handleFileChange}
+            ref={fileInputRef}
+            required
+          />
+        </label>
+        <p className="pl-1">or drag and drop</p>
+      </div>
+      <p className="text-xs text-gray-500">
+        PDF or DOC up to 2MB (max 2 pages)
+      </p>
+      {formData.cvFile && (
+        <p className="text-sm text-green-600 mt-2">
+          File selected: {formData.cvFile.name}
+        </p>
+      )}
+      {fileError && (
+        <div className="flex items-center mt-2 text-sm text-red-600">
+          <AlertCircle className="h-4 w-4 mr-1" />
+          {fileError}
         </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-100 mt-12">
-        <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-gray-600">
-            © {new Date().getFullYear()} DRID UNIBEN. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      )}
     </div>
-  );
+  </div>
+</div>
+</div>
+
+{/* Submit Button */}
+<div className="mt-8 border-t pt-6">
+<div className="flex justify-end">
+  <button
+    onClick={clearForm}
+    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 mr-4"
+  >
+    Clear form
+  </button>
+  <button
+    type="submit"
+    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-800 hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+  >
+    Submit Application
+  </button>
+</div>
+</div>
+</form>
+</div>
+</main>
+
+{/* Footer */}
+<footer className="bg-gray-100 mt-12">
+<div className="container mx-auto px-4 py-6">
+<p className="text-center text-sm text-gray-600">
+© {new Date().getFullYear()} DRID UNIBEN. All rights reserved.
+</p>
+<p className="text-center text-xs text-gray-500 mt-1">
+For technical support, please contact: <Link href='mailto:drid@uniben.edu' className='text-blue-500' title='send email'>drid@uniben.edu</Link>
+</p>
+</div>
+</footer>
+</div>
+);
 }
