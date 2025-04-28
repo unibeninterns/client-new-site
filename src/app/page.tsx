@@ -172,9 +172,9 @@ export default function TETFundForm() {
     );
   };
 
-  // Validate UNIBEN email (must end with @uniben.edu)
+  // Validate UNIBEN email (must end with .uniben.edu, allowing subdomains)
   const validateUnibenEmail = (email: string): boolean => {
-    const unibenEmailRegex = /^[a-zA-Z0-9._%+-]+@uniben\.edu$/;
+    const unibenEmailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)*uniben\.edu$/;
     return unibenEmailRegex.test(email);
   };
 
@@ -192,7 +192,7 @@ export default function TETFundForm() {
       if (!validateUnibenEmail(value)) {
         setFormErrors(prevErrors => ({
           ...prevErrors,
-          unibenEmail: 'Please enter a valid UNIBEN email address ending with @uniben.edu'
+          unibenEmail: 'Please enter a valid UNIBEN email address'
         }));
       }
     } else if (name === 'alternativeEmail' && value) {
@@ -335,11 +335,16 @@ export default function TETFundForm() {
         const coInvNames = formData.coInvestigators.split(',').map(name => name.trim());
         const coInvDepts = formData.coInvestigatorsDept.split(',').map(dept => dept.trim());
         
-        const coInvestigators = coInvNames.map((name, index) => ({
-          name,
-          department: coInvDepts[index] || '',
-          faculty: '' // This could be improved to capture faculty too
-        }));
+        const coInvestigators = coInvNames.map((name, index) => {
+          const deptInfo = coInvDepts[index] || '';
+          const [department, faculty] = deptInfo.split(',').map(item => item.trim());
+          
+          return {
+            name,
+            department: department || '',
+            faculty: faculty || '' 
+          };
+        });
         
         apiFormData.append('coInvestigators', JSON.stringify(coInvestigators));
       }
@@ -413,6 +418,15 @@ export default function TETFundForm() {
             <h1 className="text-xl font-semibold">TETFund IBR Concept Note Submission Form</h1>
             <p className="text-purple-200 text-sm mt-1">Complete all required fields below</p>
           </div>
+
+          {submitError && (
+            <div className="p-4 mb-4 border border-red-200 rounded-md bg-red-50">
+              <div className="flex items-center">
+                <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
+                <p className="text-red-600">{submitError}</p>
+              </div>
+            </div>
+          )}
 
           {submitSuccess ? (
             <div className="p-8 text-center">
