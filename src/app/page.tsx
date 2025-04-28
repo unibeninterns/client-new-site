@@ -808,6 +808,7 @@ export default function TETFundForm() {
   </div>
 </div>
 </form>
+)}
 </div>
 </main>
 
