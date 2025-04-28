@@ -48,6 +48,20 @@ export const submitStaffProposal = async (formData: FormData) => {
   }
 };
 
+export const submitMasterProposal = async (formData: FormData) => {
+  try {
+    const response = await api.post('/submit/master-proposal', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error submitting master proposal:', error);
+    throw error;
+  }
+};
+
 // Get user proposals by email
 export const getUserProposalsByEmail = async (email: string) => {
   try {
