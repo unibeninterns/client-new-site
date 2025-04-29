@@ -85,12 +85,11 @@ export const getUserProposalsByEmail = async (email: string) => {
 // Authentication endpoints
 export const loginAdmin = async (credentials: { email: string; password: string }) => {
   try {
+    // Make sure axios is properly sending JSON content
     const response = await api.post('/auth/admin-login', credentials);
     
-    // Store token in localStorage
     if (response.data.accessToken) {
       localStorage.setItem('accessToken', response.data.accessToken);
-      // Update axios headers for future requests
       api.defaults.headers.common['Authorization'] = `Bearer ${response.data.accessToken}`;
     }
     
