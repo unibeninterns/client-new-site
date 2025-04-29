@@ -34,7 +34,7 @@ export default function AdminLoginPage() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link href="/">
           <div className="mx-auto text-center">
-            <h2 className="text-3xl font-bold text-purple-800">DRID UNIBEN</h2>
+            <h2 className="text-3xl font-bold text-purple-800 py-8">DRID UNIBEN</h2>
             <p className="mt-1 text-gray-600">
               Directorate of Research, Innovation and Development
             </p>
