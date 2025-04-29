@@ -22,13 +22,22 @@ export const getFaculties = async () => {
   }
 };
 
-// Department related endpoints
-export const getDepartmentsByFaculty = async (facultyId: string) => {
+export const getDepartments = async () => {
   try {
-    const response = await api.get(`/departments/by-faculty/${facultyId}`);
+    const response = await api.get('/departments');
     return response.data;
   } catch (error) {
-    console.error(`Error fetching departments for faculty ${facultyId}:`, error);
+    console.error('Error fetching faculties:', error);
+    throw error;
+  }
+};
+
+export const getDepartmentsByFaculty = async (facultyCode: string) => {
+  try {
+    const response = await api.get(`/departments/by-faculty-code/${facultyCode}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching departments for faculty ${facultyCode}:`, error);
     throw error;
   }
 };

@@ -119,23 +119,38 @@ export default function TETFundForm() {
       if (savedData.faculty) {
         loadDepartments(savedData.faculty);
       }
+      console.log('savedData', savedData);
     }
   }, []);
 
-  // Load departments when faculty changes
-  const loadDepartments = async (facultyId: string) => {
-    if (!facultyId) return;
+  // Modified loadDepartments function
+const loadDepartments = async (facultyValue: string) => {
+  if (!facultyValue) return;
+  
+  try {
+    setLoading(true);
+    console.log('facultyValue', facultyValue);
+    console.log('faculties', faculties);
     
-    try {
-      setLoading(true);
-      const departmentData = await getDepartmentsByFaculty(facultyId);
-      setDepartments(departmentData);
+    // First, find the faculty by its ID to get the code
+    const selectedFaculty = faculties.find(f => f._id === facultyValue);
+    console.log('selectedFaculty', selectedFaculty);
+    
+    if (!selectedFaculty) {
+      console.error('Selected faculty not found');
       setLoading(false);
-    } catch (error) {
-      console.error('Failed to load departments:', error);
-      setLoading(false);
+      return;
     }
-  };
+    
+    // Use the faculty code to fetch departments
+    const departmentData = await getDepartmentsByFaculty(selectedFaculty.code);
+    setDepartments(departmentData);
+    setLoading(false);
+  } catch (error) {
+    console.error('Failed to load departments:', error);
+    setLoading(false);
+  }
+};
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
