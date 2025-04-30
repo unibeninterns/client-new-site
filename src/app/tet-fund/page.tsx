@@ -322,61 +322,64 @@ const loadDepartments = async (facultyValue: string) => {
     }
     
     try {
-      setSubmitting(true);
-      setSubmitError('');
-      
-      // Prepare form data for submission
-      const apiFormData = new FormData();
-      
-      // Add all required fields according to the schema
-      apiFormData.append('fullName', formData.fullName);
-      apiFormData.append('academicTitle', formData.academicRank);
-      apiFormData.append('department', formData.department);
-      apiFormData.append('faculty', formData.faculty);
-      apiFormData.append('email', formData.unibenEmail);
-      apiFormData.append('phoneNumber', formData.phoneNumber);
-      apiFormData.append('projectTitle', formData.projectTitle);
-      apiFormData.append('backgroundProblem', formData.problemStatement);
-      apiFormData.append('researchObjectives', formData.researchObjectives);
-      apiFormData.append('methodologyOverview', formData.methodology);
-      apiFormData.append('expectedOutcomes', formData.expectedOutcomes);
-      apiFormData.append('workPlan', formData.workPlan);
-      apiFormData.append('estimatedBudget', formData.estimatedBudget);
-      
-      // Optional fields
-      if (formData.alternativeEmail) {
-        apiFormData.append('alternativeEmail', formData.alternativeEmail);
-      }
-      
-      // Handle co-investigators
-      if (formData.coInvestigators && formData.coInvestigatorsDept) {
-        try {
-          // Parse co-investigators data
-          const coInvNames = formData.coInvestigators.split(',').map(name => name.trim());
-          const coInvDepts = formData.coInvestigatorsDept.split(',').map(dept => dept.trim());
+    setSubmitting(true);
+    setSubmitError('');
+    
+    // Prepare form data for submission
+    const apiFormData = new FormData();
+    
+    // Add all required fields according to the schema
+    apiFormData.append('fullName', formData.fullName);
+    apiFormData.append('academicTitle', formData.academicRank);
+    apiFormData.append('department', formData.department);
+    apiFormData.append('faculty', formData.faculty);
+    apiFormData.append('email', formData.unibenEmail);
+    apiFormData.append('phoneNumber', formData.phoneNumber);
+    apiFormData.append('projectTitle', formData.projectTitle);
+    apiFormData.append('backgroundProblem', formData.problemStatement);
+    apiFormData.append('researchObjectives', formData.researchObjectives);
+    apiFormData.append('methodologyOverview', formData.methodology);
+    apiFormData.append('expectedOutcomes', formData.expectedOutcomes);
+    apiFormData.append('workPlan', formData.workPlan);
+    
+    // Fix for estimatedBudget: Remove commas and convert to number
+    const cleanedBudget = formData.estimatedBudget.replace(/,/g, '');
+    apiFormData.append('estimatedBudget', cleanedBudget);
+    
+    // Optional fields
+    if (formData.alternativeEmail) {
+      apiFormData.append('alternativeEmail', formData.alternativeEmail);
+    }
+    
+    // Handle co-investigators
+    if (formData.coInvestigators && formData.coInvestigatorsDept) {
+      try {
+        // Parse co-investigators data
+        const coInvNames = formData.coInvestigators.split(',').map(name => name.trim());
+        const coInvDepts = formData.coInvestigatorsDept.split(',').map(dept => dept.trim());
+        
+        const coInvestigators = coInvNames.map((name, index) => {
+          const deptInfo = coInvDepts[index] || '';
+          const [department, faculty] = deptInfo.split(':').map(item => item.trim());
           
-          const coInvestigators = coInvNames.map((name, index) => {
-            const deptInfo = coInvDepts[index] || '';
-            const [department, faculty] = deptInfo.split(':').map(item => item.trim());
-            
-            return {
-              name,
-              department: department || '',
-              faculty: faculty || '' 
-            };
-          });
-          
-          // The server expects this as a string representation of JSON
-          apiFormData.append('coInvestigators', JSON.stringify(coInvestigators));
-        } catch (parseError) {
-          console.error('Error parsing co-investigators:', parseError);
-          // Fallback to empty array if parsing fails
-          apiFormData.append('coInvestigators', JSON.stringify([]));
-        }
-      } else {
-        // Always include this field even if empty
+          return {
+            name,
+            department: department || '',
+            faculty: faculty || '' 
+          };
+        });
+        
+        // Don't stringify the array - the server expects an array, not a string
+        apiFormData.append('coInvestigators', JSON.stringify(coInvestigators));
+      } catch (parseError) {
+        console.error('Error parsing co-investigators:', parseError);
+        // Use empty array instead of stringifying it
         apiFormData.append('coInvestigators', JSON.stringify([]));
       }
+    } else {
+      // Always include this field even if empty
+      apiFormData.append('coInvestigators', JSON.stringify([]));
+    }
       
       // Append CV file
       if (formData.cvFile) {
