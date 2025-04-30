@@ -19,7 +19,7 @@ const Header = () => {
                             IBR Concept
                         </Link>
                         <Link href="/masters-funding" className="hover:text-purple-800">
-                            Master's Funding
+                            Master&apos;s Funding
                         </Link>
                     </nav>
                 </div>

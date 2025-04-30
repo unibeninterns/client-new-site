@@ -25,6 +25,7 @@ export default function AdminLoginPage() {
       await login(email, password);
       // No need to redirect here as it's handled in the AuthContext
     } catch (err) {
+      console.error(err);
       // Error handling is done in AuthContext
     }
   };

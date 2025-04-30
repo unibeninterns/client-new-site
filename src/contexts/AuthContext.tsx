@@ -9,6 +9,7 @@ interface User {
   role: string;
 }
 
+
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
@@ -36,6 +37,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           setUser(JSON.parse(userData));
         } catch (e) {
+          console.error('Error parsing user data:', e);
           // Invalid user data in localStorage
           localStorage.removeItem('userData');
           localStorage.removeItem('accessToken');
@@ -62,8 +64,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setError('Invalid login response');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to log in');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message || 'Failed to log in');
+      } else {
+        setError('An unknown error occurred');
+      }
       console.error('Login error:', err);
     } finally {
       setIsLoading(false);

@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback  } from 'react';
 import { Upload, AlertCircle, Loader2 } from 'lucide-react';
 import Header from '@/components/header';
 import Link from 'next/link';
@@ -16,12 +16,6 @@ interface Department {
   _id: string;
   code: string;
   title: string;
-  faculty: string;
-}
-
-interface CoInvestigator {
-  name: string;
-  department: string;
   faculty: string;
 }
 
@@ -104,6 +98,35 @@ export default function TETFundForm() {
     loadFaculties();
   }, []);
 
+  // Load departments based on selected faculty
+  const loadDepartments = useCallback(async (facultyValue: string) => {
+    if (!facultyValue) return;
+    
+    try {
+      setLoading(true);
+      console.log('facultyValue', facultyValue);
+      console.log('faculties', faculties);
+      
+      // First, find the faculty by its ID to get the code
+      const selectedFaculty = faculties.find(f => f._id === facultyValue);
+      console.log('selectedFaculty', selectedFaculty);
+      
+      if (!selectedFaculty) {
+        console.error('Selected faculty not found');
+        setLoading(false);
+        return;
+      }
+      
+      // Use the faculty code to fetch departments
+      const departmentData = await getDepartmentsByFaculty(selectedFaculty.code);
+      setDepartments(departmentData);
+      setLoading(false);
+    } catch (error) {
+      console.error('Failed to load departments:', error);
+      setLoading(false);
+    }
+  }, [faculties]);
+
   // Load saved form data from localStorage
   useEffect(() => {
     const retrievedInputs = localStorage.getItem("savedInputs");
@@ -121,36 +144,9 @@ export default function TETFundForm() {
       }
       console.log('savedData', savedData);
     }
-  }, []);
+  }, [loadDepartments]);
 
   // Modified loadDepartments function
-const loadDepartments = async (facultyValue: string) => {
-  if (!facultyValue) return;
-  
-  try {
-    setLoading(true);
-    console.log('facultyValue', facultyValue);
-    console.log('faculties', faculties);
-    
-    // First, find the faculty by its ID to get the code
-    const selectedFaculty = faculties.find(f => f._id === facultyValue);
-    console.log('selectedFaculty', selectedFaculty);
-    
-    if (!selectedFaculty) {
-      console.error('Selected faculty not found');
-      setLoading(false);
-      return;
-    }
-    
-    // Use the faculty code to fetch departments
-    const departmentData = await getDepartmentsByFaculty(selectedFaculty.code);
-    setDepartments(departmentData);
-    setLoading(false);
-  } catch (error) {
-    console.error('Failed to load departments:', error);
-    setLoading(false);
-  }
-};
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -232,8 +228,8 @@ const loadDepartments = async (facultyValue: string) => {
     }
     
     // Check file size (2MB max)
-    if (file.size > 2 * 1024 * 1024) {
-      setFileError('File size should not exceed 2MB');
+    if (file.size > 3 * 1024 * 1024) {
+      setFileError('File size should not exceed 3MB');
       return false;
     }
     
@@ -396,22 +392,18 @@ const loadDepartments = async (facultyValue: string) => {
       setSubmitSuccess(true);
       localStorage.removeItem("savedInputs");
       
-    } catch (error: any) {
-      console.error('Error submitting form:', error);
-      
-      // Provide more specific error messages based on the response
-      if (error.response) {
-        if (error.response.status === 400) {
-          setSubmitError(`Validation error: ${error.response.data.message || 'Please check all required fields'}`);
-        } else if (error.response.status === 413) {
+    } catch (error: unknown) {
+      if (error instanceof Error && 'response' in error) {
+        const errorResponse = error.response as { status: number; data: { message: string } };
+        if (errorResponse.status === 400) {
+          setSubmitError(`Validation error: ${errorResponse.data.message || 'Please check all required fields'}`);
+        } else if (errorResponse.status === 413) {
           setSubmitError('The file you uploaded is too large. Please ensure it is under 2MB.');
         } else {
-          setSubmitError(`Failed to submit your proposal (Error ${error.response.status}). Please try again later.`);
+          setSubmitError(`Failed to submit your proposal (Error ${errorResponse.status}). Please try again later.`);
         }
-      } else if (error.request) {
-        setSubmitError('Network error. Please check your internet connection and try again.');
       } else {
-        setSubmitError('Failed to submit your proposal. Please try again later.');
+        console.error('Unknown error:', error);
       }
     } finally {
       setSubmitting(false);
