@@ -18,6 +18,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const pathname = usePathname();
 
+  const handleLogout = async () => {
+    await logout();
+    // The redirect is handled in the logout function
+  };
+
   // Close sidebar when route changes (on mobile)
   useEffect(() => {
     setSidebarOpen(false);
@@ -78,7 +83,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             <div className="flex-shrink-0 border-t border-purple-800 p-4">
               <button
-                onClick={logout}
+                onClick={handleLogout}
                 className="flex items-center text-purple-100 hover:text-white"
               >
                 <LogOut className="h-6 w-6 mr-3" />
@@ -148,7 +153,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 {submenuOpen && (
                   <div className="mt-3 space-y-1">
                     <button
-                      onClick={logout}
+                      onClick={handleLogout}
                       className="flex w-full items-center rounded-md py-2 pl-9 pr-2 text-sm font-medium text-purple-100 hover:bg-purple-800 hover:text-white"
                     >
                       <LogOut className="h-5 w-5 mr-2" />

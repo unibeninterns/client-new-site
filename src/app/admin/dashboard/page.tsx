@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getProposalStatistics } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Loader2, FileText, UserCheck, Users, Flag } from 'lucide-react';
+import { Loader2, FileText, UserCheck, Users, Flag  } from 'lucide-react';
 
 interface StatisticsData {
   total: number;

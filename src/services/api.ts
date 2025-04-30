@@ -9,7 +9,60 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true,
 });
+
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Response interceptor to handle token refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If error is 401 and we haven't tried to refresh the token yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Try to refresh the token
+        const refreshResponse = await api.post('/auth/refresh-token');
+        
+        if (refreshResponse.data.accessToken) {
+          // Save the new token
+          localStorage.setItem('accessToken', refreshResponse.data.accessToken);
+          
+          // Update the original request with the new token
+          originalRequest.headers['Authorization'] = `Bearer ${refreshResponse.data.accessToken}`;
+          
+          // Retry the original request
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        // If refresh fails, redirect to login
+        console.error('Token refresh failed:', refreshError);
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('userData');
+        
+        // Only redirect if we're in the browser
+        if (typeof window !== 'undefined') {
+          window.location.href = '/admin/login';
+        }
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // Faculty related endpoints
 export const getFaculties = async () => {
@@ -100,9 +153,25 @@ export const loginAdmin = async (credentials: { email: string; password: string 
   }
 };
 
-export const logout = () => {
-  localStorage.removeItem('accessToken');
-  delete api.defaults.headers.common['Authorization'];
+export const logout = async () => {
+  try {
+    await api.post('/auth/logout');
+  } catch (error) {
+    console.error('Logout API call failed:', error);
+  } finally {
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userData');
+  }
+};
+
+export const verifyToken = async () => {
+  try {
+    const response = await api.get('/auth/verify-token');
+    return response.data;
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    throw error;
+  }
 };
 
 // Admin endpoints

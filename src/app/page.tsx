@@ -327,14 +327,13 @@ const loadDepartments = async (facultyValue: string) => {
       
       // Prepare form data for submission
       const apiFormData = new FormData();
+      
+      // Add all required fields according to the schema
       apiFormData.append('fullName', formData.fullName);
       apiFormData.append('academicTitle', formData.academicRank);
       apiFormData.append('department', formData.department);
       apiFormData.append('faculty', formData.faculty);
       apiFormData.append('email', formData.unibenEmail);
-      if (formData.alternativeEmail) {
-        apiFormData.append('alternativeEmail', formData.alternativeEmail);
-      }
       apiFormData.append('phoneNumber', formData.phoneNumber);
       apiFormData.append('projectTitle', formData.projectTitle);
       apiFormData.append('backgroundProblem', formData.problemStatement);
@@ -344,30 +343,48 @@ const loadDepartments = async (facultyValue: string) => {
       apiFormData.append('workPlan', formData.workPlan);
       apiFormData.append('estimatedBudget', formData.estimatedBudget);
       
+      // Optional fields
+      if (formData.alternativeEmail) {
+        apiFormData.append('alternativeEmail', formData.alternativeEmail);
+      }
+      
       // Handle co-investigators
       if (formData.coInvestigators && formData.coInvestigatorsDept) {
-        // Parse co-investigators data
-        const coInvNames = formData.coInvestigators.split(',').map(name => name.trim());
-        const coInvDepts = formData.coInvestigatorsDept.split(',').map(dept => dept.trim());
-        
-        const coInvestigators = coInvNames.map((name, index) => {
-          const deptInfo = coInvDepts[index] || '';
-          const [department, faculty] = deptInfo.split(',').map(item => item.trim());
+        try {
+          // Parse co-investigators data
+          const coInvNames = formData.coInvestigators.split(',').map(name => name.trim());
+          const coInvDepts = formData.coInvestigatorsDept.split(',').map(dept => dept.trim());
           
-          return {
-            name,
-            department: department || '',
-            faculty: faculty || '' 
-          };
-        });
-        
-        apiFormData.append('coInvestigators', JSON.stringify(coInvestigators));
+          const coInvestigators = coInvNames.map((name, index) => {
+            const deptInfo = coInvDepts[index] || '';
+            const [department, faculty] = deptInfo.split(':').map(item => item.trim());
+            
+            return {
+              name,
+              department: department || '',
+              faculty: faculty || '' 
+            };
+          });
+          
+          // The server expects this as a string representation of JSON
+          apiFormData.append('coInvestigators', JSON.stringify(coInvestigators));
+        } catch (parseError) {
+          console.error('Error parsing co-investigators:', parseError);
+          // Fallback to empty array if parsing fails
+          apiFormData.append('coInvestigators', JSON.stringify([]));
+        }
+      } else {
+        // Always include this field even if empty
+        apiFormData.append('coInvestigators', JSON.stringify([]));
       }
       
       // Append CV file
       if (formData.cvFile) {
         apiFormData.append('cvFile', formData.cvFile);
       }
+      
+      // Log what's being sent (for debugging)
+      console.log('Form data keys being submitted:', Array.from(apiFormData.keys()));
       
       // Submit the form
       const result = await submitStaffProposal(apiFormData);
@@ -376,12 +393,23 @@ const loadDepartments = async (facultyValue: string) => {
       setSubmitSuccess(true);
       localStorage.removeItem("savedInputs");
       
-      // Reset form or redirect
-      // window.location.href = '/success'; // Option to redirect
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting form:', error);
-      setSubmitError('Failed to submit your proposal. Please try again later.');
+      
+      // Provide more specific error messages based on the response
+      if (error.response) {
+        if (error.response.status === 400) {
+          setSubmitError(`Validation error: ${error.response.data.message || 'Please check all required fields'}`);
+        } else if (error.response.status === 413) {
+          setSubmitError('The file you uploaded is too large. Please ensure it is under 2MB.');
+        } else {
+          setSubmitError(`Failed to submit your proposal (Error ${error.response.status}). Please try again later.`);
+        }
+      } else if (error.request) {
+        setSubmitError('Network error. Please check your internet connection and try again.');
+      } else {
+        setSubmitError('Failed to submit your proposal. Please try again later.');
+      }
     } finally {
       setSubmitting(false);
     }
