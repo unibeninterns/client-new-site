@@ -13,6 +13,9 @@ const Header = () => {
                     </Link>
                     <nav className="ml-auto flex space-x-6 text-sm text-gray-600">
                         <Link href="/" className="hover:text-purple-800">
+                            Home
+                        </Link>
+                        <Link href="/tet-fund" className="hover:text-purple-800">
                             IBR Concept
                         </Link>
                         <Link href="/masters-funding" className="hover:text-purple-800">
