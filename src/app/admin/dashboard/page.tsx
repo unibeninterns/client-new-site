@@ -143,7 +143,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Student Proposals</dt>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Master Student Proposals</dt>
                           <dd>
                             <div className="text-lg font-medium text-gray-900">{statistics.byType.master_student}</div>
                           </dd>
