@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getProposalById, updateProposalStatus } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Loader2, ArrowLeft, Calendar, User, Phone, Mail, Building, BookOpen, DollarSign, FileText, Clock } from 'lucide-react';
+import { Loader2, ArrowLeft, Calendar, User, Phone, Mail, Building, BookOpen, Banknote, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 interface Submitter {
@@ -363,8 +363,8 @@ export default function ProposalDetailPage() {
                       <div className="mb-6">
                         <h5 className="text-sm font-medium text-gray-700 mb-2">Estimated Budget</h5>
                         <div className="flex items-center text-sm bg-gray-50 p-3 rounded-md">
-                          <DollarSign className="h-4 w-4 text-gray-400 mr-1" />
-                          {proposal.estimatedBudget?.toLocaleString()} USD
+                          <Banknote className="h-4 w-4 text-gray-400 mr-1" />
+                          {proposal.estimatedBudget?.toLocaleString()} NGN
                         </div>
                       </div>
                     </div>
