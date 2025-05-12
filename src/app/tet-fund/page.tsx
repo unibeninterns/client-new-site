@@ -301,9 +301,12 @@ export default function TETFundForm() {
       hasErrors = true;
     }
     
-    if (formData.alternativeEmail && !validateEmail(formData.alternativeEmail)) {
-      newErrors.alternativeEmail = 'Please enter a valid email address';
+    if (!formData.alternativeEmail) {
+      newErrors.alternativeEmail = 'Alternative email address is required';
       hasErrors = true;
+    } else if (formData.alternativeEmail && !validateEmail(formData.alternativeEmail)) {
+    newErrors.alternativeEmail = 'Please enter a valid email address';
+    hasErrors = true;
     }
     
     // Final file validation check
@@ -597,7 +600,7 @@ export default function TETFundForm() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Alternative Email Address (optional)
+                      Alternative Email Address *
                     </label>
                     <input
                       type="email"

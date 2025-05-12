@@ -155,11 +155,14 @@ export default function MastersFundingPage() {
     const newErrors = { email: '', alternativeEmail: '' };
     
     if (!validateUnibenEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid UNIBEN email address ending with @uniben.edu';
+      newErrors.email = 'Please enter a valid UNIBEN email address ending with uniben.edu';
       hasErrors = true;
     }
     
-    if (formData.alternativeEmail && !validateEmail(formData.alternativeEmail)) {
+    if (!formData.alternativeEmail) {
+      newErrors.alternativeEmail = 'Alternative email address is required';
+      hasErrors = true;
+    } else if (formData.alternativeEmail && !validateEmail(formData.alternativeEmail)) {
       newErrors.alternativeEmail = 'Please enter a valid email address';
       hasErrors = true;
     }
@@ -471,7 +474,7 @@ export default function MastersFundingPage() {
                   
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Alternative Email Address (optional)
+                      Alternative Email Address *
                     </label>
                     <input
                       type="email"
