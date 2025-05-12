@@ -1,11 +1,6 @@
 "use client";
 import React, { useState } from 'react';
 import Header from '@/components/reviewers/header';
-import { Table } from "@/components/ui/table";
-import { TableBody } from "@/components/ui/table";
-import { TableCell } from "@/components/ui/table";
-import { TableRow } from "@/components/ui/table";
-
 
 interface ReviewCriteria {
   id: string;
@@ -162,67 +157,24 @@ const ProposalReviewForm: React.FC = () => {
                             </p>
                         </div>
                         <div className="my-4">
-                            <div className="overflow-x-auto">
-                                <Table>
-                                    <TableBody>
-                                        <TableRow>
-                                            <TableCell className="md:w-1/3"></TableCell>
-                                                <h3 className="font-semibold text-gray-600">Field of Research</h3>
-                                                <p className="text-gray-800">Computer Science</p>
-                                            </TableCell>
-                                            <TableCell className="md:w-1/3"></TableCell>
-                                                <h3 className="font-semibold text-gray-600">Budget</h3>
-                                                <p className="text-gray-800">₦5,000,000.00</p>
-                                            </TableCell>
-                                            <TableCell className="md:w-1/3">
-                                                <h3 className="font-semibold text-gray-600">Keywords</h3>
-                                                <p className="text-gray-800">Machine Learning, AI, Data Science</p>
-                                            </TableCell>
-                                        </TableRow>
-                                    </TableBody>
-                                </Table>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 my-7  mx-auto max-w-4xl">
-                    <div className="p-6">
-                        <h2 className="text-xl font-bold text-purple-700 mb-4 border-b pb-2">AI Assessment</h2>
-                        <div className="mb-6">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="font-semibold">Overall AI Score:</span>
-                                <span className="text-lg font-bold text-purple-600">75/100</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                                <div className="bg-purple-600 rounded-full h-2" style={{ width: '75%' }}></div>
-                            </div>
-                        </div>
-                        <div className="space-y-4">
-                            {reviewCriteria.map(criteria => (
-                                <div key={criteria.id} className="border-b pb-3">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="font-medium">{criteria.name}</span>
-                                        <span className="font-semibold text-purple-600">
-                                            {criteria.id === 'relevance' ? '10/10' :
-                                             criteria.id === 'innovation' ? '15/15' :
-                                             criteria.id === 'feasibility' ? '6/10' :
-                                             criteria.id === 'impact' ? '14/15' : '10/10'}
-                                        </span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div 
-                                            className="bg-purple-600 rounded-full h-1.5" 
-                                            style={{ 
-                                                width: criteria.id === 'relevance' ? '10/10' :
-                                                       criteria.id === 'innovation' ? '4/10' :
-                                                       criteria.id === 'feasibility' ? '60%' :
-                                                       criteria.id === 'impact' ? '70%' : '65%'
-                                            }}
-                                        ></div>
-                                    </div>
-                                </div>
-                            ))}
+                            <table className="w-full border-collapse">
+                                <tbody>
+                                    <tr className="border-b">
+                                        <td className="py-2">
+                                            <h3 className="font-semibold text-gray-600">Field of Research</h3>
+                                            <p className="text-gray-800">Computer Science</p>
+                                        </td>
+                                        <td className="py-2">
+                                            <h3 className="font-semibold text-gray-600">Budget</h3>
+                                            <p className="text-gray-800">₦5,000,000.00</p>
+                                        </td>
+                                        <td className="py-2">
+                                            <h3 className="font-semibold text-gray-600">Keywords</h3>
+                                            <p className="text-gray-800">Machine Learning, AI, Data Science</p>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>
