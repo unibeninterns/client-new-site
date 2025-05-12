@@ -1,18 +1,18 @@
 # Project TODOs
 
 ### Frontend Development
-- [ ] TODO: Implement responsive design for all device sizes
-- [ ] TODO: Create multi-step submission wizard for proposals
+- [x] TODO: Implement responsive design for all device sizes
+- [x] TODO: Create multi-step submission wizard for proposals
 - [ ] TODO: Build review interface with side-by-side scoring rubric
 - [ ] TODO: Develop administrative dashboard with real-time status tracking
 - [ ] TODO: Add document viewer with annotation capabilities
 - [ ] TODO: Implement notification center for all user roles
 
 ### Backend Development
-- [ ] TODO: Set up Node.js/Express backend architecture
-- [ ] TODO: Create RESTful API endpoints with versioning (v1)
-- [ ] TODO: Implement JWT authentication system
-- [ ] TODO: Set up file upload handling with Multer
+- [x] TODO: Set up Node.js/Express backend architecture
+- [x] TODO: Create RESTful API endpoints with versioning (v1)
+- [x] TODO: Implement JWT authentication system
+- [x] TODO: Set up file upload handling with Multer
 - [ ] TODO: Configure email notification service with Nodemailer
 - [ ] TODO: Implement logging system with Winston
 
@@ -70,4 +70,4 @@
 - [ ] TODO: Configure production environment
 - [ ] TODO: Set up monitoring and logging
 - [ ] TODO: Create backup and recovery procedures
-- [ ] TODO: Document deployment process
+- [ ] TODO: Document deployment process_
