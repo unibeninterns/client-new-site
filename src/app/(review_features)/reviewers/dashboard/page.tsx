@@ -1,7 +1,8 @@
 "use client"
-import React, { useState } from 'react';
-import { Search, ChevronDown } from 'lucide-react';
-import Header from '@/components/header';
+import React, { useState, useMemo } from 'react';
+import { Search, ChevronDown, Eye, Edit3 as Review } from 'lucide-react';
+import Header from '@/components/reviewers/header';
+import Link from 'next/link';
 
 // Define types for proposal data
 interface Proposal {
@@ -13,13 +14,14 @@ interface Proposal {
 }
 
 const ReviewersDashboard: React.FC = () => {
+  const [selectedDateFilter, setSelectedDateFilter] = useState('allDates');
   // Sample data - in a real app, this would come from an API or state management
   const [proposals, setProposals] = useState<Proposal[]>([
     { 
       id: 1, 
       title: 'Lorem ipsum', 
       field: 'Lorem ipsum', 
-      dateAssigned: 'May 15, 2025', 
+      dateAssigned: 'May 12, 2025', 
       status: 'Pending' 
     },
     { 
@@ -33,17 +35,52 @@ const ReviewersDashboard: React.FC = () => {
       id: 3, 
       title: 'Lorem ipsum', 
       field: 'Lorem ipsum', 
-      dateAssigned: 'May 15, 2025', 
+      dateAssigned: 'May 1, 2025', 
       status: 'In Progress' 
     },
     { 
       id: 4, 
       title: 'Lorem ipsum', 
       field: 'Lorem ipsum', 
-      dateAssigned: 'May 15, 2025', 
+      dateAssigned: 'May 19, 2025', 
       status: 'Reviewed' 
     }
   ]);
+
+  // Filter proposals based on date
+  const filteredProposals = useMemo(() => {
+    const currentDate = new Date();
+    
+    return proposals.filter(proposal => {
+      const proposalDate = new Date(proposal.dateAssigned);
+      
+      switch(selectedDateFilter) {
+        case 'last24h':
+          const last24Hours = new Date(currentDate.getTime() - (24 * 60 * 60 * 1000));
+          return proposalDate >= last24Hours;
+          
+        case 'last7days':
+          const last7Days = new Date(currentDate.getTime() - (7 * 24 * 60 * 60 * 1000));
+          return proposalDate >= last7Days;
+          
+        case 'last1month':
+          const lastMonth = new Date(currentDate.getTime() - (30 * 24 * 60 * 60 * 1000));
+          return proposalDate >= lastMonth;
+          
+        case 'mostRecent':
+          return true; // We'll sort these later
+          
+        default: // allDates
+          return true;
+      }
+    }).sort((a, b) => {
+      // If mostRecent is selected, sort by date (newest first)
+      if (selectedDateFilter === 'mostRecent') {
+        return new Date(b.dateAssigned).getTime() - new Date(a.dateAssigned).getTime();
+      }
+      return 0;
+    });
+  }, [proposals, selectedDateFilter]);
 
   // Status color mapping
   const getStatusColor = (status: string) => {
@@ -57,7 +94,10 @@ const ReviewersDashboard: React.FC = () => {
 
   return (
     <>
-        <Header />
+        <Header userData={{
+          name : "John Doe",
+          role : "reviewer"
+        }} />
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-2xl md:text-4xl font-bold text-gray-700 text-center my-3">Reviewer's Dashboard</h1>
 
@@ -90,6 +130,8 @@ const ReviewersDashboard: React.FC = () => {
                 {/* Date Dropdown */}
                 <div className="relative">
                 <select 
+                    value={selectedDateFilter}
+                    onChange={(e) => setSelectedDateFilter(e.target.value)}
                     className="w-full appearance-none pl-4 pr-8 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                 >
                     <option value="allDates">All Dates</option>
@@ -115,7 +157,7 @@ const ReviewersDashboard: React.FC = () => {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                    {proposals.map((proposal) => (
+                    {filteredProposals.map((proposal) => (
                     <tr key={proposal.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-4 py-4 whitespace-nowrap">{proposal.title}</td>
                         <td className="px-4 py-4 whitespace-nowrap">{proposal.field}</td>
@@ -126,11 +168,15 @@ const ReviewersDashboard: React.FC = () => {
                         </span>
                         </td>
                         <td className="px-4 py-4">
-                        {proposal.status !== "Reviewed" && <button 
-                            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs hover:bg-purple-700 transition-colors"
+                        {proposal.status === "Reviewed" ? <Link href={""} 
+                            className="bg-gray-600 text-white px-4 py-2 rounded-lg text-xs hover:bg-gray-700 transition-colors flex w-max"
                         >
-                            Review Now
-                        </button>}
+                          <Eye size={16} className="mr-2"/> View
+                        </Link> : <Link href={""} 
+                            className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs hover:bg-purple-700 transition-colors flex w-max"
+                        >
+                          <Review size={16} className="mr-2"/> Review Now
+                        </Link>}
                         </td>
                     </tr>
                     ))}
