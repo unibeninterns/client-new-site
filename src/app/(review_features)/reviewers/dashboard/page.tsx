@@ -126,11 +126,11 @@ const ReviewersDashboard: React.FC = () => {
                         </span>
                         </td>
                         <td className="px-4 py-4">
-                        <button 
+                        {proposal.status !== "Reviewed" && <button 
                             className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs hover:bg-purple-700 transition-colors"
                         >
                             Review Now
-                        </button>
+                        </button>}
                         </td>
                     </tr>
                     ))}
