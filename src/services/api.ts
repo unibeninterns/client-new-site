@@ -215,4 +215,36 @@ export const getProposalStatistics = async () => {
   }
 };
 
+export interface ProposalDecision {
+  id: string;
+  title: string;
+  fieldOfResearch: string;
+  totalScore: number;
+  scores: {
+    ai: number;
+    reviewer1: number;
+    reviewer2: number;
+  };
+  status: 'pending' | 'approved' | 'rejected';
+}
+
+export const getProposalsForDecision = async () => {
+  const response = await api.get<{ data: ProposalDecision[] }>('/admin/proposals/decisions');
+  return response.data;
+};
+
+export const notifyApplicants = async (proposalIds: string[]) => {
+  const response = await api.post('/admin/proposals/notify', {
+    proposalIds,
+  });
+  return response.data;
+};
+
+export const exportDecisionsReport = async () => {
+  const response = await api.get('/admin/proposals/export', {
+    responseType: 'blob',  // Important for file downloads
+  });
+  return response.data;
+};
+
 export default api;

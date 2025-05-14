@@ -51,10 +51,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       document.removeEventListener('mousedown', handleOutsideClick);
     };
   }, [sidebarOpen]);
-
   const navigation = [
     { name: 'Dashboard', href: '/admin/dashboard', icon: Home },
     { name: 'All Proposals', href: '/admin/proposals', icon: FileText },
+    { name: 'Final Decisions', href: '/admin/decisions', icon: ChevronDown },
   ];
 
   return (
