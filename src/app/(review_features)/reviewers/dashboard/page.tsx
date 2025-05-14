@@ -168,11 +168,11 @@ const ReviewersDashboard: React.FC = () => {
                         </span>
                         </td>
                         <td className="px-4 py-4">
-                        {proposal.status === "Reviewed" ? <Link href={""} 
+                        {proposal.status === "Reviewed" ? <Link href={"./dashboard/proposal"} 
                             className="bg-gray-600 text-white px-4 py-2 rounded-lg text-xs hover:bg-gray-700 transition-colors flex w-max"
                         >
                           <Eye size={16} className="mr-2"/> View
-                        </Link> : <Link href={""} 
+                        </Link> : <Link href={"./dashboard/proposal"} 
                             className="bg-purple-600 text-white px-4 py-2 rounded-lg text-xs hover:bg-purple-700 transition-colors flex w-max"
                         >
                           <Review size={16} className="mr-2"/> Review Now

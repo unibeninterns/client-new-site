@@ -3,7 +3,7 @@
 ### Frontend Development
 - [x] TODO: Implement responsive design for all device sizes
 - [x] TODO: Create multi-step submission wizard for proposals
-- [ ] TODO: Build review interface with side-by-side scoring rubric
+- [x] TODO: Build review interface with side-by-side scoring rubric
 - [ ] TODO: Develop administrative dashboard with real-time status tracking
 - [ ] TODO: Add document viewer with annotation capabilities
 - [ ] TODO: Implement notification center for all user roles
@@ -24,9 +24,9 @@
 - [ ] TODO: Configure relationship mappings between collections
 
 ### AI Scoring System (Placeholder)
-- [ ] TODO: Implement mock AI scoring service
-- [ ] TODO: Create score generation with random variations
-- [ ] TODO: Add templated feedback generation
+- [x] TODO: Implement mock AI scoring service
+- [x] TODO: Create score generation with random variations
+- [x] TODO: Add templated feedback generation
 - [ ] TODO: Set up logging for future model training
 - [ ] TODO: Implement discrepancy detection system
 
@@ -56,7 +56,7 @@
 - [ ] TODO: Write user guides for each role
 - [ ] TODO: Document database schema
 - [ ] TODO: Create system architecture documentation
-- [ ] TODO: Write deployment guidelines
+- [x1] TODO: Write deployment guidelines
 
 ### Testing
 - [ ] TODO: Write unit tests for core functionality

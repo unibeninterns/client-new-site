@@ -1,7 +1,18 @@
 "use client";
 import React, { useState } from 'react';
 import Header from '@/components/reviewers/header';
+import DiscrepancyAlert from '@/components/reviewers/DiscrepancyAlert';
 import Link from 'next/link';
+
+interface ReviewerData {
+  name: string;
+  scores: Record<string, number>;
+}
+
+interface PreviousScores {
+  reviewerA: ReviewerData;
+  reviewerB: ReviewerData;
+}
 
 interface ReviewCriteria {
   id: string;
@@ -12,6 +23,41 @@ interface ReviewCriteria {
 }
 
 const ProposalReviewForm: React.FC = () => {
+  const [isDiscrepancyReview] = useState(true); // This would come from your API/props
+
+  const [previousScores] = useState<PreviousScores>({
+    reviewerA: {
+      name: "Dr. John Smith",
+      scores: {
+        'relevance': 8,
+        'innovation': 12,
+        'objectives': 8,
+        'methodology': 12,
+        'literature': 8,
+        'team': 7,
+        'feasibility': 8,
+        'budget': 7,
+        'impact': 4,
+        'sustainability': 4
+      }
+    },
+    reviewerB: {
+      name: "Dr. Jane Doe",
+      scores: {
+        'relevance': 6,
+        'innovation': 9,
+        'objectives': 7,
+        'methodology': 13,
+        'literature': 6,
+        'team': 8,
+        'feasibility': 6,
+        'budget': 8,
+        'impact': 3,
+        'sustainability': 3
+      }
+    }
+  });
+
   const [reviewCriteria, setReviewCriteria] = useState<ReviewCriteria[]>([
     {
       id: 'relevance',
@@ -146,8 +192,86 @@ const ProposalReviewForm: React.FC = () => {
           role : "reviewer"
         }} />
         <div className="min-h-screen bg-gray-50 p-6">
-            
             <h1 className="text-2xl md:text-4xl font-bold text-gray-700 text-center my-3">Review Proposal</h1>
+            
+            {/* Previous Scores Comparison - Only shown for re-reviews */}
+            {isDiscrepancyReview && (
+              <div className="max-w-4xl mx-auto mb-6">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-xl font-bold mb-4">Previous scores</h2>
+                  <table className="w-full">
+                    <thead>
+                      <tr>
+                        <th className="text-left py-2">Metric</th>
+                        <th className="text-left py-2">Score A</th>
+                        <th className="text-left py-2">Score B</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reviewCriteria.map((criteria) => {
+                        const scoreA = previousScores.reviewerA.scores[criteria.id] || 0;
+                        const scoreB = previousScores.reviewerB.scores[criteria.id] || 0;
+                        
+                        return (
+                          <tr key={criteria.id} className="border-t">
+                            <td className="py-3">{criteria.name}</td>
+                            <td className="py-3">
+                              <div className="flex items-center">
+                                <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                                  <div 
+                                    className="bg-purple-600 rounded-full h-2" 
+                                    style={{ width: `${(scoreA / criteria.maxScore) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span>{scoreA}/{criteria.maxScore}</span>
+                              </div>
+                            </td>
+                            <td className="py-3">
+                              <div className="flex items-center">
+                                <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                                  <div 
+                                    className="bg-purple-600 rounded-full h-2" 
+                                    style={{ width: `${(scoreB / criteria.maxScore) * 100}%` }}
+                                  ></div>
+                                </div>
+                                <span>{scoreB}/{criteria.maxScore}</span>
+                              </div>
+                            </td>
+                          </tr>
+                        );                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2">
+                        <td className="py-4 font-bold">Total Score</td>
+                        <td className="py-4">
+                          <div className="flex items-center">
+                            <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                              <div 
+                                className="bg-purple-600 rounded-full h-2" 
+                                style={{ width: `${(Object.values(previousScores.reviewerA.scores).reduce((a, b) => a + b, 0) / calculateMaxTotalScore()) * 100}%` }}
+                              ></div>
+                            </div>
+                            <span className="font-bold">{Object.values(previousScores.reviewerA.scores).reduce((a, b) => a + b, 0)}/{calculateMaxTotalScore()}</span>
+                          </div>
+                        </td>
+                        <td className="py-4">
+                          <div className="flex items-center">
+                            <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
+                              <div 
+                                className="bg-purple-600 rounded-full h-2" 
+                                style={{ width: `${(Object.values(previousScores.reviewerB.scores).reduce((a, b) => a + b, 0) / calculateMaxTotalScore()) * 100}%` }}
+                              ></div>
+                            </div>
+                            <span className="font-bold">{Object.values(previousScores.reviewerB.scores).reduce((a, b) => a + b, 0)}/{calculateMaxTotalScore()}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+
                 <section className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 my-7  mx-auto max-w-4xl">
                     <div className="p-6">
                         <h2 className="text-xl font-bold text-purple-700 mb-4 border-b pb-2">Proposal Details</h2>
