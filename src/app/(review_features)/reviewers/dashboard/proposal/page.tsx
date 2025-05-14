@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from 'react';
 import Header from '@/components/reviewers/header';
+import Link from 'next/link';
 
 interface ReviewCriteria {
   id: string;
@@ -151,7 +152,12 @@ const ProposalReviewForm: React.FC = () => {
                     <div className="p-6">
                         <h2 className="text-xl font-bold text-purple-700 mb-4 border-b pb-2">Proposal Details</h2>
                         <div className="mt-4">
-                            <h3 className="font-semibold text-gray-600 mb-2">Project Summary</h3>
+                            <div className="flex justify-between items-center mb-2">
+                              <h3 className="font-semibold text-gray-600">Project Summary</h3>
+                                <Link href="../review-guideline" target="_blank" className="bg-gray-200 px-3 py-1 rounded-md text-purple-600 hover:text-purple-800 text-sm">
+                                Review Guidelines
+                                </Link>
+                            </div>
                             <p className="text-gray-700 leading-relaxed">
                                 Lorem ipsum dolor sit amet consectetur. Nunc aliquam a curabitur nec massa. Massa magnis nunc tellus libero volputat orci. Vitae tellus est adipiscing commodo lorem diam vitae.
                             </p>
