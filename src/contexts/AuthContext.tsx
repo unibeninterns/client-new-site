@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginAdmin, logout } from '../services/api';
+import { loginAdmin, loginReviewer, loginResearcher, logout } from '../services/api';
 
 interface User {
   id: string;
@@ -9,6 +9,15 @@ interface User {
   role: string;
 }
 
+interface Credentials {
+  email: string;
+  password: string;
+}
+
+type LoginFunction = (credentials: Credentials) => Promise<{
+  user: User;
+  accessToken: string;
+}>;
 
 interface AuthContextType {
   user: User | null;
@@ -21,13 +30,17 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+interface AuthProviderProps {
+  children: ReactNode;
+  userType?: 'admin' | 'reviewer' | 'researcher';
+}
+
+export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
   
-  // Check if user is already logged in on mount
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem('accessToken');
@@ -35,10 +48,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       if (token && userData) {
         try {
-          setUser(JSON.parse(userData));
+          const parsedUser = JSON.parse(userData);
+          
+          if (parsedUser.role === userType) {
+            setUser(parsedUser);
+          } else {
+            localStorage.removeItem('userData');
+            localStorage.removeItem('accessToken');
+          }
         } catch (e) {
           console.error('Error parsing user data:', e);
-          // Invalid user data in localStorage
           localStorage.removeItem('userData');
           localStorage.removeItem('accessToken');
         }
@@ -48,19 +67,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     
     checkAuth();
-  }, []);
+  }, [userType]);
+
+  const getLoginFunction = (type: string): LoginFunction => {
+    switch (type) {
+      case 'admin':
+        return loginAdmin;
+      case 'reviewer':
+        return loginReviewer;
+      case 'researcher':
+        return loginResearcher;
+      default:
+        return loginAdmin;
+    }
+  };
   
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     setError(null);
     
     try {
-      const response = await loginAdmin({ email, password });
+      const loginFn = getLoginFunction(userType);
+      const response = await loginFn({ email, password });
       
       if (response.user && response.accessToken) {
-        setUser(response.user);
-        localStorage.setItem('userData', JSON.stringify(response.user));
-        router.push('/admin/dashboard');
+        if (response.user.role === userType) {
+          setUser(response.user);
+          localStorage.setItem('userData', JSON.stringify(response.user));
+          
+          switch (userType) {
+            case 'admin':
+              router.push('/admin/dashboard');
+              break;
+            case 'reviewer':
+              router.push('/reviewers/dashboard');
+              break;
+            case 'researcher':
+              router.push('/researchers/dashboard');
+              break;
+            default:
+              router.push('/');
+          }
+        } else {
+          setError(`Invalid login. You are trying to log in as a ${userType} but your account is a ${response.user.role}.`);
+          localStorage.removeItem('accessToken');
+        }
       } else {
         setError('Invalid login response');
       }
@@ -80,7 +131,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout();
     localStorage.removeItem('userData');
     setUser(null);
-    router.push('/admin/login');
+    
+    switch (userType) {
+      case 'admin':
+        router.push('/admin/login');
+        break;
+      case 'reviewer':
+        router.push('/reviewers/login');
+        break;
+      case 'researcher':
+        router.push('/researchers/login');
+        break;
+      default:
+        router.push('/');
+    }
   };
   
   const isAuthenticated = !!user;
