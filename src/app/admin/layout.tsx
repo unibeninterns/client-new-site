@@ -8,7 +8,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <AuthProvider>
+    <AuthProvider userType="admin">
       {children}
     </AuthProvider>
   );
