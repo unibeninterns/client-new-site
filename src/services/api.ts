@@ -149,17 +149,6 @@ export const submitMasterProposal = async (formData: FormData) => {
   }
 };
 
-// Get user proposals by email
-export const getUserProposalsByEmail = async (email: string) => {
-  try {
-    const response = await api.get(`/submit/proposals/email/${email}`);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching user proposals:", error);
-    throw error;
-  }
-};
-
 // Authentication endpoints
 export const loginAdmin = async (credentials: {
   email: string;
@@ -265,25 +254,185 @@ export const getProposalById = async (id: string) => {
   }
 };
 
-export const updateProposalStatus = async (
-  id: string,
-  data: { status: string; comment?: string }
-) => {
-  try {
-    const response = await api.put(`/admin/proposals/${id}/status`, data);
-    return response.data;
-  } catch (error) {
-    console.error(`Error updating proposal status:`, error);
-    throw error;
-  }
-};
-
 export const getProposalStatistics = async () => {
   try {
     const response = await api.get("/admin/statistics");
     return response.data;
   } catch (error) {
     console.error("Error fetching proposal statistics:", error);
+    throw error;
+  }
+};
+
+// Researcher management endpoints for admin use
+
+export const getResearchersWithProposals = async () => {
+  try {
+    const response = await api.get("/admin/researcher/researchers");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching researchers with proposals:", error);
+    throw error;
+  }
+};
+
+export const getResearcherDetails = async (researcherId: string) => {
+  try {
+    const response = await api.get(
+      `/admin/researcher/researchers/${researcherId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching researcher details with ID ${researcherId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const sendResearcherCredentials = async (researcherId: string) => {
+  try {
+    const response = await api.post(
+      `/admin/researcher/researchers/${researcherId}/send-credentials`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error sending credentials to researcher ${researcherId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const resendResearcherCredentials = async (researcherId: string) => {
+  try {
+    const response = await api.post(
+      `/admin/researcher/researchers/${researcherId}/resend-credentials`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error resending credentials to researcher ${researcherId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+// Assignment review endpoints for admin use
+export const assignReviewers = async (proposalId: string) => {
+  try {
+    const response = await api.post(`/admin/assign/${proposalId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error assigning reviewers:", error);
+    throw error;
+  }
+};
+
+export const checkOverdueReviews = async () => {
+  try {
+    const response = await api.get("/admin/check-overdue");
+    return response.data;
+  } catch (error) {
+    console.error("Error checking overdue reviews:", error);
+    throw error;
+  }
+};
+
+// Reviewer management endpoints
+export const inviteReviewer = async (email: string) => {
+  try {
+    const response = await api.post("/reviewer/invite", { email });
+    return response.data;
+  } catch (error) {
+    console.error("Error inviting reviewer:", error);
+    throw error;
+  }
+};
+
+export const completeReviewerProfile = async (
+  token: string,
+  profileData: {
+    name: string;
+    facultyId: string;
+    departmentId: string;
+    phoneNumber: string;
+    academicTitle?: string;
+    alternativeEmail?: string;
+  }
+) => {
+  try {
+    const response = await api.post(
+      `/reviewer/complete-profile/${token}`,
+      profileData
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error completing reviewer profile:", error);
+    throw error;
+  }
+};
+
+export const addReviewerProfile = async (reviewerData: {
+  email: string;
+  name: string;
+  facultyId: string;
+  departmentId: string;
+  phoneNumber: string;
+  academicTitle?: string;
+  alternativeEmail?: string;
+}) => {
+  try {
+    const response = await api.post("/reviewer/add", reviewerData);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding reviewer profile:", error);
+    throw error;
+  }
+};
+
+export const getAllReviewers = async (params = {}) => {
+  try {
+    const response = await api.get("/reviewer", { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching all reviewers:", error);
+    throw error;
+  }
+};
+
+export const getReviewerById = async (id: string) => {
+  try {
+    const response = await api.get(`/reviewer/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching reviewer with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+export const deleteReviewer = async (id: string) => {
+  try {
+    const response = await api.delete(`/reviewer/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error deleting reviewer with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+export const resendReviewerInvitation = async (id: string) => {
+  try {
+    const response = await api.post(`/reviewer/${id}/resend-invitation`);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error resending invitation to reviewer with ID ${id}:`,
+      error
+    );
     throw error;
   }
 };
@@ -325,19 +474,6 @@ export const getReviewById = async (reviewId: string) => {
     return response.data;
   } catch (error) {
     console.error(`Error fetching review with ID ${reviewId}:`, error);
-    throw error;
-  }
-};
-
-export const getProposalForReview = async (proposalId: string) => {
-  try {
-    const response = await api.get(`/reviewsys/proposal/${proposalId}`);
-    return response.data;
-  } catch (error) {
-    console.error(
-      `Error fetching proposal for review with ID ${proposalId}:`,
-      error
-    );
     throw error;
   }
 };
