@@ -22,13 +22,25 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import moment from 'moment'; // Import moment
 
+// Updated Invitation interface based on console.log output
 interface Invitation {
-  id: string;
+  _id: string; // Changed from id to _id
   email: string;
-  status: "pending" | "accepted" | "expired" | "rejected" | "added";
-  created: string;
-  expires: string;
+  invitationStatus: "pending" | "accepted" | "expired" | "rejected" | "added"; // Changed from status to invitationStatus
+  createdAt: string; // Changed from created to createdAt
+  // expires is not in the provided data structure
+  assignedProposals: any[]; // Added based on console.log
+  completedReviews: any[]; // Added based on console.log
+  credentialsSent: boolean; // Added based on console.log
+  isActive: boolean; // Added based on console.log
+  name: string; // Added based on console.log
+  phoneNumber: string; // Added based on console.log
+  proposals: any[]; // Added based on console.log
+  role: string; // Added based on console.log
+  userType: string; // Added based on console.log
+  __v: number; // Added based on console.log
 }
 
 // Updated ReviewerFormState to match api.addReviewerProfile schema
@@ -137,7 +149,7 @@ function AdminInvitationsPage() {
       try {
         await api.deleteReviewer(id);
         setInvitations(
-          invitations.filter((invitation) => invitation.id !== id)
+          invitations.filter((invitation) => invitation._id !== id) // Use _id
         );
         setSuccess("Invitation deleted successfully");
       } catch (error: any) {
@@ -188,7 +200,7 @@ function AdminInvitationsPage() {
 
   // Removed handleFileChange as profilePicture is no longer in state/API schema
 
-  const getStatusBadgeClass = (status: Invitation['status']) => {
+  const getStatusBadgeClass = (status: Invitation['invitationStatus']) => { // Use invitationStatus
     switch (status) {
       case "pending":
         return "bg-blue-100 text-blue-800";
@@ -203,7 +215,7 @@ function AdminInvitationsPage() {
     }
   };
 
-  const getStatusIcon = (status: Invitation['status']) => {
+  const getStatusIcon = (status: Invitation['invitationStatus']) => { // Use invitationStatus
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4 mr-1" />;
@@ -289,7 +301,7 @@ function AdminInvitationsPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending..." : "Send Invitation"}
+                  {isSubmitting ? "Sending..." : "Create Profile"}
                 </Button>
               </DialogFooter>
             </form>
@@ -452,14 +464,13 @@ function AdminInvitationsPage() {
                   <th className="px-4 py-3 text-left font-medium">Status</th>
                   <th className="px-4 py-3 text-left font-medium">Created</th>
                   <th className="px-4 py-3 text-left font-medium">Expires</th>
-                  <th className="px-4 py-3 text-left font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {invitations.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={4} // Updated colspan
                       className="px-4 py-8 text-center text-gray-500"
                     >
                       No invitations found.
@@ -468,34 +479,31 @@ function AdminInvitationsPage() {
                 ) : (
                   invitations.map((invitation) => (
                     <tr
-                      key={invitation.id} // Added unique key prop
+                      key={invitation._id} // Use _id for key
                       className="border-b hover:bg-gray-50"
-                    >
-                      <td className="px-4 py-3 font-medium">
+                    ><td className="px-4 py-3 font-medium">
                         {invitation.email}
-                      </td>
-                      <td className="px-4 py-3">
+                      </td><td className="px-4 py-3">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                            invitation.status
-                          )}`}
+                            invitation.invitationStatus
+                          )}`} // Use invitationStatus
                         >
-                          {getStatusIcon(invitation.status)}
-                          {invitation.status ?
-                            invitation.status.charAt(0).toUpperCase() + invitation.status.slice(1)
-                            : 'N/A'} {/* Added check for undefined status */}
+                          {getStatusIcon(invitation.invitationStatus)} {/* Use invitationStatus */}
+                          {invitation.invitationStatus ? // Use invitationStatus
+                            invitation.invitationStatus.charAt(0).toUpperCase() + invitation.invitationStatus.slice(1)
+                            : 'N/A'}
                         </span>
-                      </td>
-                      <td className="px-4 py-3">{invitation.created}</td>
-                      <td className="px-4 py-3">{invitation.expires}</td>
+                      </td><td className="px-4 py-3">{moment(invitation.createdAt).format('YYYY-MM-DD HH:mm')}</td> {/* Use moment for createdAt */}
+                      <td className="px-4 py-3">N/A</td> {/* Expires data not available */}
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          {(invitation.status === "expired" ||
-                            invitation.status === "rejected") && (
+                          {(invitation.invitationStatus === "expired" || // Use invitationStatus
+                            invitation.invitationStatus === "rejected") && ( // Use invitationStatus
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => resendInvitation(invitation.id)}
+                              onClick={() => resendInvitation(invitation._id)} // Use _id
                             >
                               <Mail className="h-4 w-4" />
                               <span className="ml-1">Resend</span>
@@ -504,7 +512,7 @@ function AdminInvitationsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteInvitation(invitation.id)}
+                            onClick={() => deleteInvitation(invitation._id)} // Use _id
                           >
                             <X className="h-4 w-4" />
                           </Button>
