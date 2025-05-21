@@ -147,4 +147,100 @@ export default function ResearcherLayout({ children }: ResearcherLayoutProps) {
                       } group flex items-center px-2 py-2 text-sm font-medium rounded-md`}
                     >
                       <Icon className="mr-3 h-5 w-5" />
-                      {item.name
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+            
+            {/* User Profile */}
+            <div className="flex flex-shrink-0 border-t border-purple-800 p-4">
+              <div className="group w-full flex flex-col">
+                <button 
+                  className="w-full flex items-center justify-between text-left"
+                  onClick={() => setSubmenuOpen(!submenuOpen)}
+                >
+                  <div className="flex items-center">
+                    <div className="ml-1">
+                      <p className="text-sm font-medium text-white">
+                        {user?.name || 'Researcher'}
+                      </p>
+                      <p className="text-xs font-medium text-purple-200">
+                        {user?.email || 'researcher@uniben.edu'}
+                      </p>
+                    </div>
+                  </div>
+                  {submenuOpen ? (
+                    <ChevronUp className="h-5 w-5 text-purple-300" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-purple-300" />
+                  )}
+                </button>
+                
+                {submenuOpen && (
+                  <div className="mt-3 space-y-1">
+                    <button
+                      onClick={handleLogout}
+                      className="flex w-full items-center rounded-md py-2 pl-9 pr-2 text-sm font-medium text-purple-100 hover:bg-purple-800 hover:text-white"
+                    >
+                      <LogOut className="h-5 w-5 mr-2" />
+                      Sign Out
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content area */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          {/* Mobile header */}
+          <div className="lg:hidden">
+            <div className="flex items-center justify-between bg-white px-4 py-2 shadow-sm h-16">
+              <button
+                id="sidebar-toggle"
+                type="button"
+                className="text-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 p-2"
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                aria-label="Open sidebar"
+              >
+                <span className="sr-only">Open sidebar</span>
+                <Menu className="h-6 w-6" />
+              </button>
+              <div className="text-lg font-semibold text-gray-900">
+                DRID Researcher Portal
+              </div>
+              <div className="text-sm text-gray-600">
+                {user?.name || 'Researcher'}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop header */}
+          <div className="hidden lg:block bg-white shadow-sm">
+            <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+              <div className="flex items-center">
+                <div className="h-10 w-10 bg-purple-800 rounded-full flex items-center justify-center text-white font-bold text-xl">D</div>
+                <span className="ml-2 font-semibold text-xl text-purple-800">DRID</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">Welcome,</span>
+                <span className="font-medium text-purple-800">{user?.name || 'Researcher'}</span>
+                <span className="text-xs px-2 py-1 bg-purple-100 text-purple-800 rounded-full">
+                  Researcher
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Main content */}
+          <main className="flex-1 overflow-y-auto bg-gray-100">
+            {children}
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
