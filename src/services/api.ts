@@ -352,7 +352,7 @@ export const checkOverdueReviews = async () => {
   }
 };
 
-// Reviewer management endpoints
+// Reviewer management endpoints for admin
 export const inviteReviewer = async (email: string) => {
   try {
     const response = await api.post("/reviewer/invite", { email });
