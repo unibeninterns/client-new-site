@@ -166,4 +166,122 @@ export default function ProposalDetails() {
                     
                     <div className="mb-8">
                       <h2 className="text-lg font-semibold mb-2 text-gray-800">Methodology</h2>
-                      <p className="text-gray-700 whitespace-pre-line
+                      <p className="text-gray-700 whitespace-pre-line">{proposal.methodology}</p>
+                    </div>
+                    
+                    {proposal.expectedOutcomes && (
+                      <div className="mb-8">
+                        <h2 className="text-lg font-semibold mb-2 text-gray-800">Expected Outcomes</h2>
+                        <p className="text-gray-700 whitespace-pre-line">{proposal.expectedOutcomes}</p>
+                      </div>
+                    )}
+                    
+                    {proposal.workPlan && (
+                      <div className="mb-8">
+                        <h2 className="text-lg font-semibold mb-2 text-gray-800">Work Plan</h2>
+                        <p className="text-gray-700 whitespace-pre-line">{proposal.workPlan}</p>
+                      </div>
+                    )}
+                    
+                    {proposal.estimatedBudget !== undefined && (
+                      <div className="mb-8">
+                        <h2 className="text-lg font-semibold mb-2 text-gray-800">Estimated Budget</h2>
+                        <p className="text-gray-700">₦{proposal.estimatedBudget.toLocaleString()}</p>
+                      </div>
+                    )}
+                    
+                    {proposal.coInvestigators && proposal.coInvestigators.length > 0 && (
+                      <div className="mb-8">
+                        <h2 className="text-lg font-semibold mb-2 text-gray-800">Co-Investigators</h2>
+                        <ul className="list-disc pl-5">
+                          {proposal.coInvestigators.map((person, index) => (
+                            <li key={index} className="text-gray-700 mb-1">
+                              {person.name}
+                              {person.department && ` - ${person.department}`}
+                              {person.faculty && `, ${person.faculty}`}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Sidebar */}
+              <div className="lg:col-span-1">
+                <div className="bg-white rounded-lg shadow-md p-6">
+                  <h2 className="text-lg font-semibold mb-4 text-gray-800">Documents</h2>
+                  
+                  {(proposal.cvFile || proposal.docFile) ? (
+                    <div className="space-y-3">
+                      {proposal.cvFile && (
+                        <a 
+                          href={`/api/files/${proposal.cvFile}`}
+                          download
+                          className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50"
+                        >
+                          <Download className="h-5 w-5 text-purple-700 mr-2" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">Curriculum Vitae</p>
+                            <p className="text-xs text-gray-500">Download CV</p>
+                          </div>
+                        </a>
+                      )}
+                      
+                      {proposal.docFile && (
+                        <a 
+                          href={`/api/files/${proposal.docFile}`}
+                          download
+                          className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50"
+                        >
+                          <Download className="h-5 w-5 text-purple-700 mr-2" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">Full Proposal Document</p>
+                            <p className="text-xs text-gray-500">Download Document</p>
+                          </div>
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No documents attached to this proposal.</p>
+                  )}
+                </div>
+                
+                <div className="bg-white rounded-lg shadow-md p-6 mt-6">
+                  <h2 className="text-lg font-semibold mb-4 text-gray-800">Status Timeline</h2>
+                  <div className="border-l-2 border-gray-200 pl-4 space-y-6">
+                    <div className="relative">
+                      <div className="absolute -left-6 mt-1 w-4 h-4 rounded-full bg-green-500"></div>
+                      <p className="text-sm font-medium text-gray-800">Submitted</p>
+                      <p className="text-xs text-gray-500">{formatDate(proposal.createdAt)}</p>
+                    </div>
+                    
+                    {proposal.status !== 'submitted' && (
+                      <div className="relative">
+                        <div className="absolute -left-6 mt-1 w-4 h-4 rounded-full bg-yellow-500"></div>
+                        <p className="text-sm font-medium text-gray-800">Under Review</p>
+                        <p className="text-xs text-gray-500">Started review process</p>
+                      </div>
+                    )}
+                    
+                    {['approved', 'rejected', 'revision_requested'].includes(proposal.status) && (
+                      <div className="relative">
+                        <div className={`absolute -left-6 mt-1 w-4 h-4 rounded-full ${
+                          proposal.status === 'approved' ? 'bg-green-500' : 
+                          proposal.status === 'rejected' ? 'bg-red-500' : 'bg-orange-500'
+                        }`}></div>
+                        <p className="text-sm font-medium text-gray-800">{formatStatus(proposal.status)}</p>
+                        <p className="text-xs text-gray-500">{formatDate(proposal.updatedAt)}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </ResearcherLayout>
+  );
+}
