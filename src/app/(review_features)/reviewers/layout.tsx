@@ -1,14 +1,18 @@
-import { ReactNode } from "react";
-
-interface LayoutProps {
-    children: ReactNode;
-}
+import { AuthProvider } from '@/contexts/AuthContext';
 
 export const metadata = {
     title: "Reviewers Section",
     description: "Follow this link to start reviewing proposals."
 };
 
-export default function Layout({ children }: LayoutProps) {
-    return <>{children}</>;
+export default function ReviewersLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <AuthProvider userType="reviewer">
+      {children}
+    </AuthProvider>
+  );
 }

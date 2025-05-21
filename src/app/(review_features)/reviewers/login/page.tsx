@@ -10,7 +10,6 @@ export default function ReviewerLoginPage() {
     const [password, setPassword] = useState('');
     const [formError, setFormError] = useState('');
     const { login, isLoading, error } = useAuth();
-    // Removed authentication and form handlers.
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
