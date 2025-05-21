@@ -31,13 +31,15 @@ interface Invitation {
   expires: string;
 }
 
-interface ResearcherFormState {
+// Updated ReviewerFormState to match api.addReviewerProfile schema
+interface ReviewerFormState {
   name: string;
   email: string;
-  faculty: string;
-  title: string;
-  bio: string;
-  profilePicture: File | null;
+  facultyId: string;
+  departmentId: string;
+  phoneNumber: string;
+  academicTitle?: string;
+  alternativeEmail?: string;
 }
 
 function AdminInvitationsPage() {
@@ -49,14 +51,16 @@ function AdminInvitationsPage() {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [showAddResearcherDialog, setShowAddResearcherDialog] = useState<boolean>(false);
-  const [researcherForm, setResearcherForm] = useState<ResearcherFormState>({
+  const [showAddReviewerDialog, setShowAddReviewerDialog] = useState<boolean>(false);
+  // Updated initial state to match new ReviewerFormState interface
+  const [reviewerForm, setReviewerForm] = useState<ReviewerFormState>({
     name: "",
     email: "",
-    faculty: "",
-    title: "",
-    bio: "",
-    profilePicture: null,
+    facultyId: "",
+    departmentId: "",
+    phoneNumber: "",
+    academicTitle: "",
+    alternativeEmail: "",
   });
 
   const router = useRouter();
@@ -143,68 +147,46 @@ function AdminInvitationsPage() {
     }
   };
 
-  const handleAddResearcher = async (e: FormEvent<HTMLFormElement>) => {
+  const handleAddReviewer = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setIsSubmitting(true);
 
     try {
-      // Construct data object for the API based on the api.addReviewerProfile signature.
-      // Note: The form collects 'faculty', 'title', 'bio', and 'profilePicture',
-      // but the current api.addReviewerProfile expects 'facultyId', 'departmentId',
-      // 'phoneNumber', 'academicTitle', 'alternativeEmail', and does not support
-      // 'bio' or 'profilePicture' upload.
-      // Placeholder values are used for required fields not present in the form.
-      const reviewerData = {
-        name: researcherForm.name,
-        email: researcherForm.email,
-        facultyId: researcherForm.faculty || "placeholder-faculty-id", // Assuming faculty maps to facultyId, using placeholder
-        departmentId: "placeholder-department-id", // No department field in form, using placeholder
-        phoneNumber: "placeholder-phone-number", // No phone number field in form, using placeholder
-        academicTitle: researcherForm.title || undefined, // Assuming title maps to academicTitle
-        alternativeEmail: undefined, // No alternative email field in form
-      };
+      // The reviewerForm state now matches the api.addReviewerProfile schema
+      await api.addReviewerProfile(reviewerForm);
+      setSuccess(`Reviewer profile created for ${reviewerForm.email}`);
 
-      // TODO: The form collects bio and profilePicture, but the current API endpoint
-      // does not support these fields. The API or form needs to be updated
-      // to fully support adding a researcher profile with all collected data.
-      await api.addReviewerProfile(reviewerData);
-      setSuccess(`Researcher profile created for ${researcherForm.email}`);
-
-      setResearcherForm({
+      // Reset form state
+      setReviewerForm({
         name: "",
         email: "",
-        faculty: "",
-        title: "",
-        bio: "",
-        profilePicture: null,
+        facultyId: "",
+        departmentId: "",
+        phoneNumber: "",
+        academicTitle: "",
+        alternativeEmail: "",
       });
 
-      setTimeout(() => setShowAddResearcherDialog(false), 1500);
+      setTimeout(() => setShowAddReviewerDialog(false), 1500);
     } catch (error: any) {
-      setError(error.message || "Failed to create researcher profile");
+      setError(error.message || "Failed to create reviewer profile");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setResearcherForm({
-        ...researcherForm,
-        profilePicture: e.target.files[0],
-      });
-    }
-  };
-
+  // handleFileChange and handleInputChange are updated to handle new state structure
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setResearcherForm({
-      ...researcherForm,
+    setReviewerForm({
+      ...reviewerForm,
       [name]: value,
     });
   };
+
+  // Removed handleFileChange as profilePicture is no longer in state/API schema
 
   const getStatusBadgeClass = (status: Invitation['status']) => {
     switch (status) {
@@ -251,20 +233,20 @@ function AdminInvitationsPage() {
     <div className="space-y-6 p-5">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold tracking-tight">
-          Researcher Invitations
+          Reviewer Invitations
         </h1>
         <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
           <DialogTrigger asChild>
             <Button>
               <Mail className="mr-2 h-4 w-4" />
-              Invite Researcher
+              Invite Reviewer
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Invite Researcher</DialogTitle>
+              <DialogTitle>Invite Reviewer</DialogTitle>
               <DialogDescription>
-                Send an invitation email to a new researcher to join the
+                Send an invitation email to a new reviewer to join the
                 platform.
               </DialogDescription>
             </DialogHeader>
@@ -291,7 +273,7 @@ function AdminInvitationsPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="researcher@example.com"
+                  placeholder="reviewer@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -315,25 +297,25 @@ function AdminInvitationsPage() {
         </Dialog>
 
         <Dialog
-          open={showAddResearcherDialog}
-          onOpenChange={setShowAddResearcherDialog}
+          open={showAddReviewerDialog}
+          onOpenChange={setShowAddReviewerDialog}
         >
           <DialogTrigger asChild>
             <Button variant="outline">
               <UserPlus className="mr-2 h-4 w-4" />
-              Add Researcher
+              Add Reviewer
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[550px]">
             <DialogHeader>
-              <DialogTitle>Add Researcher Profile</DialogTitle>
+              <DialogTitle>Add Reviewer Profile</DialogTitle>
               <DialogDescription>
-                Create a new researcher profile directly. The researcher will
+                Create a new reviewer profile directly. The reviewer will
                 receive login credentials by email.
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleAddResearcher} className="space-y-4 py-4">
+            <form onSubmit={handleAddReviewer} className="space-y-4 py-4">
               {error && (
                 <Alert variant="destructive" className="mb-4">
                   <AlertCircle className="h-4 w-4" />
@@ -352,89 +334,98 @@ function AdminInvitationsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="researcher-name">Full Name</Label>
+                  <Label htmlFor="reviewer-name">Full Name</Label>
                   <Input
-                    id="researcher-name"
+                    id="reviewer-name"
                     name="name"
                     placeholder="Dr. Jane Smith"
-                    value={researcherForm.name}
+                    value={reviewerForm.name}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="researcher-email">Email Address</Label>
+                  <Label htmlFor="reviewer-email">Email Address</Label>
                   <Input
-                    id="researcher-email"
+                    id="reviewer-email"
                     name="email"
                     type="email"
-                    placeholder="researcher@example.com"
-                    value={researcherForm.email}
+                    placeholder="reviewer@example.com"
+                    value={reviewerForm.email}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                {/* Updated fields to match API schema */}
+                <div className="space-y-2">
+                  <Label htmlFor="reviewer-facultyId">Faculty ID</Label>
+                  <Input
+                    id="reviewer-facultyId"
+                    name="facultyId"
+                    placeholder="e.g., ENG"
+                    value={reviewerForm.facultyId}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="researcher-faculty">Faculty/Department</Label>
+                  <Label htmlFor="reviewer-departmentId">Department ID</Label>
                   <Input
-                    id="researcher-faculty"
-                    name="faculty"
-                    placeholder="Computer Science"
-                    value={researcherForm.faculty}
+                    id="reviewer-departmentId"
+                    name="departmentId"
+                    placeholder="e.g., CS"
+                    value={reviewerForm.departmentId}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="researcher-title">Title/Position</Label>
+                  <Label htmlFor="reviewer-phoneNumber">Phone Number</Label>
                   <Input
-                    id="researcher-title"
-                    name="title"
-                    placeholder="Associate Professor"
-                    value={researcherForm.title}
+                    id="reviewer-phoneNumber"
+                    name="phoneNumber"
+                    placeholder="e.g., +1234567890"
+                    value={reviewerForm.phoneNumber}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="researcher-bio">Biography</Label>
-                <Textarea
-                  id="researcher-bio"
-                  name="bio"
-                  placeholder="Short biography of the researcher's background and interests..."
-                  value={researcherForm.bio}
-                  onChange={handleInputChange}
-                  rows={4}
-                  required
-                />
-              </div>
+                <div className="space-y-2">
+                  <Label htmlFor="reviewer-academicTitle">Academic Title (Optional)</Label>
+                  <Input
+                    id="reviewer-academicTitle"
+                    name="academicTitle"
+                    placeholder="e.g., Professor"
+                    value={reviewerForm.academicTitle}
+                    onChange={handleInputChange}
+                  />
+                </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="researcher-pic">
-                  Profile Picture (Optional)
-                </Label>
-                <Input
-                  id="researcher-pic"
-                  name="profilePicture"
-                  type="file"
-                  accept="image/jpeg,image/png,image/jpg"
-                  onChange={handleFileChange}
-                />
-                <p className="text-xs text-gray-500">
-                  Max size: 3MB. Accepted formats: JPEG, PNG, JPG
-                </p>
+                 <div className="space-y-2">
+                  <Label htmlFor="reviewer-alternativeEmail">Alternative Email (Optional)</Label>
+                  <Input
+                    id="reviewer-alternativeEmail"
+                    name="alternativeEmail"
+                    type="email"
+                    placeholder="reviewer.alt@example.com"
+                    value={reviewerForm.alternativeEmail}
+                    onChange={handleInputChange}
+                  />
+                </div>
+
+                {/* Removed Bio and Profile Picture fields */}
               </div>
 
               <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setShowAddResearcherDialog(false)}
+                  onClick={() => setShowAddReviewerDialog(false)}
                 >
                   Cancel
                 </Button>
@@ -477,7 +468,7 @@ function AdminInvitationsPage() {
                 ) : (
                   invitations.map((invitation) => (
                     <tr
-                      key={invitation.id}
+                      key={invitation.id} // Added unique key prop
                       className="border-b hover:bg-gray-50"
                     >
                       <td className="px-4 py-3 font-medium">
