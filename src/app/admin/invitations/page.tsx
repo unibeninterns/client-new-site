@@ -166,8 +166,24 @@ function AdminInvitationsPage() {
     setIsSubmitting(true);
 
     try {
-      // The reviewerForm state now matches the api.addReviewerProfile schema
-      await api.addReviewerProfile(reviewerForm);
+      // Construct data object including only non-empty fields
+      // Removed api.AddReviewerProfileData type annotation as it's not exported
+      const reviewerData = {
+        name: reviewerForm.name,
+        email: reviewerForm.email,
+        facultyId: reviewerForm.facultyId,
+        departmentId: reviewerForm.departmentId,
+        phoneNumber: reviewerForm.phoneNumber,
+      };
+
+      if (reviewerForm.academicTitle) {
+        reviewerData.academicTitle = reviewerForm.academicTitle;
+      }
+      if (reviewerForm.alternativeEmail) {
+        reviewerData.alternativeEmail = reviewerForm.alternativeEmail;
+      }
+
+      await api.addReviewerProfile(reviewerData);
       setSuccess(`Reviewer profile created for ${reviewerForm.email}`);
 
       // Reset form state
@@ -301,7 +317,7 @@ function AdminInvitationsPage() {
                   Cancel
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Sending..." : "Create Profile"}
+                  {isSubmitting ? "Sending..." : "Send Invitation"}
                 </Button>
               </DialogFooter>
             </form>
