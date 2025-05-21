@@ -254,6 +254,16 @@ export const getProposalById = async (id: string) => {
   }
 };
 
+export const getFacultiesWithProposals = async () => {
+  try {
+    const response = await api.get("/admin/faculties-with-proposals");
+    return response.data.data;
+  } catch (error) {
+    console.error("Error fetching faculties with proposals:", error);
+    throw error;
+  }
+};
+
 export const getProposalStatistics = async () => {
   try {
     const response = await api.get("/admin/statistics");

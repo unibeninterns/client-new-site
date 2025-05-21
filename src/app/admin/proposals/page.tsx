@@ -3,10 +3,16 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { getProposals } from '@/services/api';
+import { getProposals, getFacultiesWithProposals } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+
+interface Faculty {
+  _id: string;
+  code: string;
+  title: string;
+}
 
 interface Proposal {
   _id: string;
@@ -29,6 +35,7 @@ interface PaginationData {
 export default function AdminProposalsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [pagination, setPagination] = useState<PaginationData>({
     count: 0,
     totalPages: 1,
@@ -39,6 +46,7 @@ export default function AdminProposalsPage() {
   const [filters, setFilters] = useState({
     status: '',
     submitterType: '',
+    faculty: '', // Add faculty filter
     sort: 'createdAt',
     order: 'desc'
   });
@@ -49,6 +57,22 @@ export default function AdminProposalsPage() {
       router.push('/admin/login');
     }
   }, [authLoading, isAuthenticated, router]);
+
+  // Fetch faculties with proposals
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      if (!isAuthenticated) return;
+      
+      try {
+        const facultyData = await getFacultiesWithProposals();
+        setFaculties(facultyData);
+      } catch (err) {
+        console.error('Failed to fetch faculties:', err);
+      }
+    };
+
+    fetchFaculties();
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const fetchProposals = async () => {
@@ -179,7 +203,7 @@ export default function AdminProposalsPage() {
                 <span className="text-sm font-medium text-gray-500">Filters:</span>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-grow">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-grow">
                 {/* Status Filter */}
                 <div>
                   <label htmlFor="status" className="block text-xs font-medium text-gray-500 mb-1">
@@ -216,6 +240,27 @@ export default function AdminProposalsPage() {
                     <option value="">All Types</option>
                     <option value="staff">Staff</option>
                     <option value="master_student">Master&apos;s Student</option>
+                  </select>
+                </div>
+                
+                {/* Faculty Filter - NEW */}
+                <div>
+                  <label htmlFor="faculty" className="block text-xs font-medium text-gray-500 mb-1">
+                    Faculty
+                  </label>
+                  <select
+                    id="faculty"
+                    name="faculty"
+                    value={filters.faculty}
+                    onChange={handleFilterChange}
+                    className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                  >
+                    <option value="">All Faculties</option>
+                    {faculties.map((faculty) => (
+                      <option key={faculty._id} value={faculty._id}>
+                        {faculty.title}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 
