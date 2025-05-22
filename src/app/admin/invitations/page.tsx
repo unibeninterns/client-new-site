@@ -9,7 +9,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Mail, Check, AlertCircle, Clock, X } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
 import { UserPlus } from "lucide-react";
 import {
   Dialog,
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import moment from 'moment'; // Import moment
 
 interface Invitation {
   id: string;
@@ -98,9 +96,10 @@ function AdminInvitationsPage() {
         setIsLoading(false);
       }
     };
+    console.log(invitations);
   
     fetchInvitations();
-  }, []);
+  }, [invitations]);
 
   useEffect(() => {
     const fetchFaculties = async () => {
@@ -240,7 +239,7 @@ function AdminInvitationsPage() {
       setReviewerForm({
         ...reviewerForm,
         [name]: value,
-        departmentId: "", // Reset department
+        departmentId: "",
       });
     } else {
       setReviewerForm({
@@ -250,7 +249,7 @@ function AdminInvitationsPage() {
     }
   };
 
-  const getStatusBadgeClass = (status: Invitation['invitationStatus']) => { // Use invitationStatus
+  const getStatusBadgeClass = (status: Invitation['status']) => {
     switch (status) {
       case "pending":
         return "bg-blue-100 text-blue-800";
@@ -538,9 +537,9 @@ function AdminInvitationsPage() {
                       No invitations found.
                     </td>
                   </tr>
-                ) : ({invitations.map((invitation) => (
+                ) : (invitations.map((invitation) => (
                   <tr
-                    key={invitation.id} // Use id for key
+                    key={invitation.id}
                     className="border-b hover:bg-gray-50"
                   >
                     <td className="px-4 py-3 font-medium">
@@ -567,7 +566,7 @@ function AdminInvitationsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => resendInvitation(invitation.id)} // Use id
+                            onClick={() => resendInvitation(invitation._id)}
                           >
                             <Mail className="h-4 w-4" />
                             <span className="ml-1">Resend</span>
@@ -576,7 +575,7 @@ function AdminInvitationsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => deleteInvitation(invitation.id)} // Use id
+                          onClick={() => deleteInvitation(invitation.id)}
                         >
                           <X className="h-4 w-4" />
                         </Button>
