@@ -434,6 +434,16 @@ export const deleteReviewer = async (id: string) => {
   }
 };
 
+export const getReviewerInvitations = async () => {
+  try {
+    const response = await api.get("/reviewer/invitations");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching reviewer invitations:", error);
+    throw error;
+  }
+};
+
 export const resendReviewerInvitation = async (id: string) => {
   try {
     const response = await api.post(`/reviewer/${id}/resend-invitation`);

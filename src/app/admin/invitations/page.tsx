@@ -24,39 +24,42 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import moment from 'moment'; // Import moment
 
-// Updated Invitation interface based on console.log output
 interface Invitation {
-  _id: string; // Changed from id to _id
+  id: string;
   email: string;
-  invitationStatus: "pending" | "accepted" | "expired" | "rejected" | "added"; // Changed from status to invitationStatus
-  createdAt: string; // Changed from created to createdAt
-  // expires is not in the provided data structure
-  assignedProposals: any[]; // Added based on console.log
-  completedReviews: any[]; // Added based on console.log
-  credentialsSent: boolean; // Added based on console.log
-  isActive: boolean; // Added based on console.log
-  name: string; // Added based on console.log
-  phoneNumber: string; // Added based on console.log
-  proposals: any[]; // Added based on console.log
-  role: string; // Added based on console.log
-  userType: string; // Added based on console.log
-  __v: number; // Added based on console.log
+  status: "pending" | "accepted" | "expired" | "rejected" | "added";
+  created: string;
+  expires: string | null;
 }
-
-// Updated ReviewerFormState to match api.addReviewerProfile schema
 interface ReviewerFormState {
   name: string;
   email: string;
-  facultyId: string;
+  facultyId: string; 
   departmentId: string;
   phoneNumber: string;
   academicTitle?: string;
   alternativeEmail?: string;
 }
 
+interface Faculty {
+  _id: string;
+  code: string;
+  title: string;
+}
+
+interface Department {
+  _id: string;
+  code: string;
+  title: string;
+  faculty: string;
+}
+
 function AdminInvitationsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [selectedFacultyCode, setSelectedFacultyCode] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showInviteDialog, setShowInviteDialog] = useState<boolean>(false);
   const [email, setEmail] = useState<string>("");
@@ -86,7 +89,7 @@ function AdminInvitationsPage() {
   useEffect(() => {
     const fetchInvitations = async () => {
       try {
-        const response = await api.getAllReviewers();
+        const response = await api.getReviewerInvitations(); // Changed API call
         setInvitations(response.data);
         setIsLoading(false);
       } catch (error: any) {
@@ -95,31 +98,67 @@ function AdminInvitationsPage() {
         setIsLoading(false);
       }
     };
-
+  
     fetchInvitations();
   }, []);
+
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      try {
+        const response = await api.getFaculties();
+        setFaculties(response.data);
+      } catch (error) {
+        console.error("Error fetching faculties:", error);
+      }
+    };
+  
+    fetchFaculties();
+  }, []);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      if (selectedFacultyCode) {
+        try {
+          const response = await api.getDepartmentsByFaculty(selectedFacultyCode);
+          setDepartments(response.data);
+        } catch (error) {
+          console.error("Error fetching departments:", error);
+          setDepartments([]);
+        }
+      } else {
+        setDepartments([]);
+      }
+    };
+  
+    fetchDepartments();
+  }, [selectedFacultyCode]);
+
+  const validateUnibenEmail = (email: string): boolean => {
+    const unibenEmailRegex = /^[a-zA-Z0-9._%+-]+@([a-zA-Z0-9-]+\.)*uniben\.edu$/;
+    return unibenEmailRegex.test(email);
+  };
 
   const handleSendInvite = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setIsSubmitting(true);
-
+  
     // Basic email validation
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email || !validateUnibenEmail(email)) {
       setError("Please enter a valid email address");
       setIsSubmitting(false);
       return;
     }
-
+  
     try {
       await api.inviteReviewer(email);
       setSuccess(`Invitation sent to ${email}`);
-
+  
       // Refresh the invitation list
-      const response = await api.getAllReviewers();
+      const response = await api.getReviewerInvitations();
       setInvitations(response.data);
-
+  
       setEmail("");
       setTimeout(() => setShowInviteDialog(false), 1500);
     } catch (error: any) {
@@ -132,11 +171,11 @@ function AdminInvitationsPage() {
   const resendInvitation = async (id: string) => {
     try {
       await api.resendReviewerInvitation(id);
-
+  
       // Refresh invitations list
-      const response = await api.getAllReviewers();
+      const response = await api.getReviewerInvitations();
       setInvitations(response.data);
-
+  
       setSuccess("Invitation resent successfully");
     } catch (error: any) {
       console.error("Error resending invitation:", error);
@@ -149,7 +188,7 @@ function AdminInvitationsPage() {
       try {
         await api.deleteReviewer(id);
         setInvitations(
-          invitations.filter((invitation) => invitation._id !== id) // Use _id
+          invitations.filter((invitation) => invitation.id !== id)
         );
         setSuccess("Invitation deleted successfully");
       } catch (error: any) {
@@ -166,7 +205,6 @@ function AdminInvitationsPage() {
     setIsSubmitting(true);
 
     try {
-      // The reviewerForm state now matches the api.addReviewerProfile schema
       await api.addReviewerProfile(reviewerForm);
       setSuccess(`Reviewer profile created for ${reviewerForm.email}`);
 
@@ -190,15 +228,27 @@ function AdminInvitationsPage() {
   };
 
   // handleFileChange and handleInputChange are updated to handle new state structure
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setReviewerForm({
-      ...reviewerForm,
-      [name]: value,
-    });
+    
+    if (name === 'facultyId') {
+      // Find the selected faculty to get its code
+      const selectedFaculty = faculties.find(f => f._id === value);
+      setSelectedFacultyCode(selectedFaculty?.code || "");
+      
+      // Reset department when faculty changes
+      setReviewerForm({
+        ...reviewerForm,
+        [name]: value,
+        departmentId: "", // Reset department
+      });
+    } else {
+      setReviewerForm({
+        ...reviewerForm,
+        [name]: value,
+      });
+    }
   };
-
-  // Removed handleFileChange as profilePicture is no longer in state/API schema
 
   const getStatusBadgeClass = (status: Invitation['invitationStatus']) => { // Use invitationStatus
     switch (status) {
@@ -215,7 +265,7 @@ function AdminInvitationsPage() {
     }
   };
 
-  const getStatusIcon = (status: Invitation['invitationStatus']) => { // Use invitationStatus
+  const getStatusIcon = (status: Invitation['status']) => {
     switch (status) {
       case "pending":
         return <Clock className="h-4 w-4 mr-1" />;
@@ -344,94 +394,106 @@ function AdminInvitationsPage() {
                 </Alert>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reviewer-name">Full Name</Label>
-                  <Input
-                    id="reviewer-name"
-                    name="name"
-                    placeholder="Dr. Jane Smith"
-                    value={reviewerForm.name}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+<div className="grid grid-cols-2 gap-4">
+  <div className="space-y-2">
+    <Label htmlFor="reviewer-name">Full Name</Label>
+    <Input
+      id="reviewer-name"
+      name="name"
+      placeholder="Dr. Jane Smith"
+      value={reviewerForm.name}
+      onChange={handleInputChange}
+      required
+    />
+  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reviewer-email">Email Address</Label>
-                  <Input
-                    id="reviewer-email"
-                    name="email"
-                    type="email"
-                    placeholder="reviewer@example.com"
-                    value={reviewerForm.email}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+  <div className="space-y-2">
+    <Label htmlFor="reviewer-email">Email Address</Label>
+    <Input
+      id="reviewer-email"
+      name="email"
+      type="email"
+      placeholder="reviewer@example.com"
+      value={reviewerForm.email}
+      onChange={handleInputChange}
+      required
+    />
+  </div>
 
-                {/* Updated fields to match API schema */}
-                <div className="space-y-2">
-                  <Label htmlFor="reviewer-facultyId">Faculty ID</Label>
-                  <Input
-                    id="reviewer-facultyId"
-                    name="facultyId"
-                    placeholder="e.g., ENG"
-                    value={reviewerForm.facultyId}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+  <div className="space-y-2">
+    <Label htmlFor="reviewer-facultyId">Faculty</Label>
+    <select
+      id="reviewer-facultyId"
+      name="facultyId"
+      value={reviewerForm.facultyId}
+      onChange={handleInputChange}
+      required
+      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+    >
+      <option value="">Select Faculty</option>
+      {faculties.map((faculty) => (
+        <option key={faculty._id} value={faculty._id}>
+          {faculty.title} ({faculty.code})
+        </option>
+      ))}
+    </select>
+  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reviewer-departmentId">Department ID</Label>
-                  <Input
-                    id="reviewer-departmentId"
-                    name="departmentId"
-                    placeholder="e.g., CS"
-                    value={reviewerForm.departmentId}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+  <div className="space-y-2">
+    <Label htmlFor="reviewer-departmentId">Department</Label>
+    <select
+      id="reviewer-departmentId"
+      name="departmentId"
+      value={reviewerForm.departmentId}
+      onChange={handleInputChange}
+      required
+      disabled={!selectedFacultyCode}
+      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      <option value="">Select Department</option>
+      {departments.map((department) => (
+        <option key={department._id} value={department._id}>
+          {department.title} ({department.code})
+        </option>
+      ))}
+    </select>
+  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reviewer-phoneNumber">Phone Number</Label>
-                  <Input
-                    id="reviewer-phoneNumber"
-                    name="phoneNumber"
-                    placeholder="e.g., +1234567890"
-                    value={reviewerForm.phoneNumber}
-                    onChange={handleInputChange}
-                    required
-                  />
-                </div>
+  <div className="space-y-2">
+    <Label htmlFor="reviewer-phoneNumber">Phone Number</Label>
+    <Input
+      id="reviewer-phoneNumber"
+      name="phoneNumber"
+      placeholder="e.g., +1234567890"
+      value={reviewerForm.phoneNumber}
+      onChange={handleInputChange}
+      required
+    />
+  </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="reviewer-academicTitle">Academic Title (Optional)</Label>
-                  <Input
-                    id="reviewer-academicTitle"
-                    name="academicTitle"
-                    placeholder="e.g., Professor"
-                    value={reviewerForm.academicTitle}
-                    onChange={handleInputChange}
-                  />
-                </div>
+  <div className="space-y-2">
+    <Label htmlFor="reviewer-academicTitle">Academic Title (Optional)</Label>
+    <Input
+      id="reviewer-academicTitle"
+      name="academicTitle"
+      placeholder="e.g., Professor"
+      value={reviewerForm.academicTitle}
+      onChange={handleInputChange}
+    />
+  </div>
+</div>
 
-                 <div className="space-y-2">
-                  <Label htmlFor="reviewer-alternativeEmail">Alternative Email (Optional)</Label>
-                  <Input
-                    id="reviewer-alternativeEmail"
-                    name="alternativeEmail"
-                    type="email"
-                    placeholder="reviewer.alt@example.com"
-                    value={reviewerForm.alternativeEmail}
-                    onChange={handleInputChange}
-                  />
-                </div>
-
-                {/* Removed Bio and Profile Picture fields */}
-              </div>
+<div className="space-y-2">
+  <Label htmlFor="reviewer-alternativeEmail">Alternative Email (Optional)</Label>
+  <Input
+    id="reviewer-alternativeEmail"
+    name="alternativeEmail"
+    type="email"
+    placeholder="reviewer.alt@example.com"
+    value={reviewerForm.alternativeEmail}
+    onChange={handleInputChange}
+  />
+</div>
 
               <DialogFooter>
                 <Button
@@ -476,51 +538,53 @@ function AdminInvitationsPage() {
                       No invitations found.
                     </td>
                   </tr>
-                ) : (
-                  invitations.map((invitation) => (
-                    <tr
-                      key={invitation._id} // Use _id for key
-                      className="border-b hover:bg-gray-50"
-                    ><td className="px-4 py-3 font-medium">
-                        {invitation.email}
-                      </td><td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                            invitation.invitationStatus
-                          )}`} // Use invitationStatus
-                        >
-                          {getStatusIcon(invitation.invitationStatus)} {/* Use invitationStatus */}
-                          {invitation.invitationStatus ? // Use invitationStatus
-                            invitation.invitationStatus.charAt(0).toUpperCase() + invitation.invitationStatus.slice(1)
-                            : 'N/A'}
-                        </span>
-                      </td><td className="px-4 py-3">{moment(invitation.createdAt).format('YYYY-MM-DD HH:mm')}</td> {/* Use moment for createdAt */}
-                      <td className="px-4 py-3">N/A</td> {/* Expires data not available */}
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {(invitation.invitationStatus === "expired" || // Use invitationStatus
-                            invitation.invitationStatus === "rejected") && ( // Use invitationStatus
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => resendInvitation(invitation._id)} // Use _id
-                            >
-                              <Mail className="h-4 w-4" />
-                              <span className="ml-1">Resend</span>
-                            </Button>
-                          )}
+                ) : ({invitations.map((invitation) => (
+                  <tr
+                    key={invitation.id} // Use id for key
+                    className="border-b hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3 font-medium">
+                      {invitation.email}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
+                          invitation.status
+                        )}`} // Use status
+                      >
+                        {getStatusIcon(invitation.status)} {/* Use status */}
+                        {invitation.status ? 
+                          invitation.status.charAt(0).toUpperCase() + invitation.status.slice(1)
+                          : 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">{invitation.created}</td>
+                    <td className="px-4 py-3">{invitation.expires || 'N/A'}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {(invitation.status === "expired" || 
+                          invitation.status === "rejected") && (
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => deleteInvitation(invitation._id)} // Use _id
+                            onClick={() => resendInvitation(invitation.id)} // Use id
                           >
-                            <X className="h-4 w-4" />
+                            <Mail className="h-4 w-4" />
+                            <span className="ml-1">Resend</span>
                           </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteInvitation(invitation.id)} // Use id
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
               </tbody>
             </table>
           </div>
