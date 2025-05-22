@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Menu, X, Home, FileText, LogOut, ChevronDown, ChevronUp, LinkIcon 
+  Menu, X, Home, FileText, LogOut, ChevronDown, ChevronUp, LinkIcon, Users // Import Users icon
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -55,6 +55,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Dashboard', href: '/admin/dashboard', icon: Home },
     { name: 'All Proposals', href: '/admin/proposals', icon: FileText },
     { name: 'Invitations', href: '/admin/invitations', icon: LinkIcon },
+    { name: 'Researchers', href: '/admin/researchers', icon: Users }, // Changed icon to Users
     { name: 'Final Decisions', href: '/admin/decisions', icon: ChevronDown },
   ];
 
