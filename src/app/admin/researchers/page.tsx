@@ -5,19 +5,21 @@ import * as api from "@/services/api";
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import Link from 'next/link'; // Import Link
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"; // Import Tooltip components
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Import Dropdown Menu components
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RefreshCw, MoreVertical } from "lucide-react"; // Import MoreVertical for the dot button
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button"; // Import Button
 import { Label } from "@/components/ui/label"; // Import Label
 import { Alert, AlertDescription } from "@/components/ui/alert"; // Import Alert components
@@ -38,8 +40,7 @@ function AdminResearchersPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>(""); // Add success state
-  const [showResendDialog, setShowResendDialog] = useState<boolean>(false); // State for resend dialog
-  const [selectedResearcherId, setSelectedResearcherId] = useState<string | null>(null); // State to hold the ID of the researcher for the dialog
+  // Removed state for Dialog
 
   const router = useRouter();
 
@@ -65,7 +66,10 @@ function AdminResearchersPage() {
     fetchResearchers();
   }, []); // Empty dependency array to fetch data only once
 
-  // Removed handleRowClick as navigation will be handled by Link
+  const handleRowClick = (researcherId: string) => { // Re-added handleRowClick
+    // Navigate to the researcher details page
+    router.push(`/admin/researchers/${researcherId}`);
+  };
 
   const handleSendCredentials = async (researcherId: string) => {
     setError("");
@@ -83,33 +87,20 @@ function AdminResearchersPage() {
     }
   };
 
-  const handleResendCredentials = async () => {
-    if (!selectedResearcherId) return;
-
+  const handleResendCredentials = async (researcherId: string) => { // Modified to accept researcherId
     setError("");
     setSuccess("");
     try {
-      await api.resendResearcherCredentials(selectedResearcherId);
+      await api.resendResearcherCredentials(researcherId); // Use researcherId parameter
       setSuccess("Credentials resent successfully.");
-      setShowResendDialog(false); // Close dialog on success
-      setSelectedResearcherId(null); // Reset selected researcher
+      // No need to close dialog or reset selected researcher state
     } catch (error: any) {
       console.error("Error resending credentials:", error);
       setError(error.message || "Failed to resend credentials.");
     }
   };
 
-  const openResendDialog = (researcherId: string) => {
-    setSelectedResearcherId(researcherId);
-    setShowResendDialog(true);
-  };
-
-  const closeResendDialog = () => {
-    setShowResendDialog(false);
-    setSelectedResearcherId(null);
-    setError(""); // Clear errors when closing dialog
-    setSuccess(""); // Clear success when closing dialog
-  };
+  // Removed functions related to Dialog state
 
   if (isLoading) {
     return (
@@ -146,122 +137,102 @@ function AdminResearchersPage() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b">
-                    <th className="px-4 py-3 text-left font-medium">Name</th>
-                    <th className="px-4 py-3 text-left font-medium">Email</th>
-                    <th className="px-4 py-3 text-left font-medium">Credential Status</th>
-                    <th className="px-4 py-3 text-left font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {researchers.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={4}
-                        className="px-4 py-8 text-center text-gray-500"
-                      >
-                        No researchers found.
-                      </td>
+              <TooltipProvider> {/* Wrap table with TooltipProvider */}
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="px-4 py-3 text-left font-medium">Name</th>
+                      <th className="px-4 py-3 text-left font-medium">Email</th>
+                      <th className="px-4 py-3 text-left font-medium">Credential Status</th>
+                      <th className="px-4 py-3 text-left font-medium">Actions</th>
                     </tr>
-                  ) : (
-                    researchers.map((researcher) => (
-                      <tr
-                        key={researcher._id} // Changed key to _id
-                        className="border-b hover:bg-gray-50 cursor-pointer"
-                        // Removed onClick handler
-                      >
-                        {/* Wrap row content in Link */}
-                        <Link href={`/admin/researchers/${researcher._id}`} className="contents"> {/* Changed href to use _id */}
-                          <td className="px-4 py-3 font-medium">
-                            {researcher.name}
-                          </td>
-                          <td className="px-4 py-3">{researcher.email}</td>
-                          <td className="px-4 py-3">
-                            {researcher.isActive ? "sent" : "pending"}
-                          </td>
-                        </Link>
-                        <td className="px-4 py-3">
-                          {/* Action buttons - conditional rendering based on isActive */}
-                          {!researcher.isActive && (
-                            <Button
-                              variant="default" // Changed variant to default for theme color
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation(); // Prevent row click
-                                handleSendCredentials(researcher._id); // Changed to _id
-                              }}
-                            >
-                              Send Credentials
-                            </Button>
-                          )}
-                          {/* Vertical dot button and resend action dialog trigger */}
-                          {researcher.isActive && (
-                            <Dialog
-                              key={researcher._id} // Changed key to _id
-                              open={showResendDialog && selectedResearcherId === researcher._id} // Changed to _id
-                              onOpenChange={(open) => {
-                                if (open) {
-                                  openResendDialog(researcher._id); // Changed to _id
-                                } else {
-                                  closeResendDialog();
-                                }
-                              }}
-                            >
-                              <DialogTrigger asChild>
-                                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[425px]">
-                                <DialogHeader>
-                                  <DialogTitle>Researcher Actions</DialogTitle>
-                                  <DialogDescription>
-                                    Select an action for {researcher.name}.
-                                  </DialogDescription>
-                                </DialogHeader>
-                                <div className="py-4">
-                                  {error && (
-                                    <Alert variant="destructive" className="mb-4">
-                                      <AlertCircle className="h-4 w-4" />
-                                      <AlertDescription>{error}</AlertDescription>
-                                    </Alert>
-                                  )}
-                                  {success && (
-                                    <Alert className="mb-4 bg-green-50 border-green-200">
-                                      <Check className="h-4 w-4 text-green-500" />
-                                      <AlertDescription className="text-green-700">
-                                        {success}
-                                      </AlertDescription>
-                                    </Alert>
-                                  )}
-                                  <Button
-                                    variant="ghost"
-                                    className="w-full justify-start"
-                                    onClick={handleResendCredentials}
-                                  >
-                                    Resend Credentials
-                                  </Button>
-                                </div>
-                                <DialogFooter>
-                                  <Button variant="outline" onClick={closeResendDialog}>
-                                    Cancel
-                                  </Button>
-                                </DialogFooter> {/* Added closing tag */}
-                              </DialogContent>
-                            </Dialog>
-                          )}
+                  </thead>
+                  <tbody>{researchers.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="px-4 py-8 text-center text-gray-500"
+                        >
+                          No researchers found.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      researchers.map((researcher) => (
+                        <Tooltip key={researcher._id}> {/* Add Tooltip with key */}
+                          <TooltipTrigger asChild>
+                            <tr
+                              key={researcher._id} // Added unique key prop
+                              className="border-b hover:bg-gray-50 cursor-pointer"
+                              onClick={() => handleRowClick(researcher._id)} // Re-added onClick handler
+                            >
+                              {/* Content of the row */}
+                              <td className="px-4 py-3 font-medium">
+                                {researcher.name}
+                              </td>
+                              <td className="px-4 py-3">{researcher.email}</td>
+                              <td className="px-4 py-3">
+                                {researcher.isActive ? "sent" : "pending"}
+                              </td>
+                              <td className="px-4 py-3">
+                                {/* Action buttons - conditional rendering based on isActive */}
+                                {!researcher.isActive && (
+                                  <Button
+                                    variant="default" // Changed variant to default for theme color
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent row click
+                                      handleSendCredentials(researcher._id); // Changed to _id
+                                    }}
+                                  >
+                                    Send Credentials
+                                  </Button>
+                                )}
+                                {/* Vertical dot button and resend action dropdown trigger */}
+                                {researcher.isActive && (
+                                  <DropdownMenu> {/* Use DropdownMenu */}
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                        <MoreVertical className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end"> {/* Use DropdownMenuContent */}
+                                      {/* Add alert messages within the dropdown content if needed, or handle them globally */}
+                                      {error && (
+                                        <Alert variant="destructive" className="mb-2">
+                                          <AlertCircle className="h-4 w-4" />
+                                          <AlertDescription>{error}</AlertDescription>
+                                        </Alert>
+                                      )}
+                                      {success && (
+                                        <Alert className="mb-2 bg-green-50 border-green-200">
+                                          <Check className="h-4 w-4 text-green-500" />
+                                          <AlertDescription className="text-green-700">
+                                            {success}
+                                          </AlertDescription>
+                                        </Alert>
+                                      )}
+                                      <DropdownMenuItem onClick={() => handleResendCredentials(researcher._id)}> {/* Use DropdownMenuItem and pass researcher._id */}
+                                        Resend Credentials
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                )}
+                              </td>
+                            </tr>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Click to view details</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      ))
+                    )}</tbody>
+                </table>
+              </TooltipProvider> {/* Close TooltipProvider */}
             </div>
           </CardContent>
         </Card>
-        {success && !showResendDialog && (
+        {/* Keep global success/error alerts outside the table if needed */}
+        {success && !researchers.some(r => r.isActive) && ( // Show global success only if no dropdown is open
           <Alert className="mt-4 bg-green-50 border-green-200">
             <Check className="h-4 w-4 text-green-500" />
             <AlertDescription className="text-green-700">
@@ -269,9 +240,15 @@ function AdminResearchersPage() {
             </AlertDescription>
           </Alert>
         )}
+         {error && !researchers.some(r => r.isActive) && ( // Show global error only if no dropdown is open
+          <Alert variant="destructive" className="mt-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
       </div>
     </AdminLayout>
-  );
-}
+    );
+  }
 
 export default AdminResearchersPage;
