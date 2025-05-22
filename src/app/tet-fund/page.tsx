@@ -22,8 +22,8 @@ interface Department {
 interface FormData {
   fullName: string;
   academicRank: string;
-  department: string;
-  faculty: string;
+  department?: string; // Made optional
+  faculty?: string; // Made optional
   unibenEmail: string;
   alternativeEmail: string;
   phoneNumber: string;
@@ -129,7 +129,8 @@ export default function TETFundForm() {
 
   // Load saved form data from localStorage
   useEffect(() => {
-    const retrievedInputs = localStorage.getItem("savedInputs");
+    localStorage.removeItem("savedInputs")
+    const retrievedInputs = localStorage.getItem("v2SavedInputs");
     if (retrievedInputs) {
       const savedData = JSON.parse(retrievedInputs);
       setFormData(prevData => ({
@@ -137,7 +138,7 @@ export default function TETFundForm() {
         ...savedData,
         cvFile: null // Files can't be stored in localStorage
       }));
-      
+
       // If a faculty was selected, load the departments
       if (savedData.faculty) {
         loadDepartments(savedData.faculty);
@@ -150,7 +151,7 @@ export default function TETFundForm() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    
+
     // Special handling for faculty selection
     if (name === 'faculty') {
       setFormData(prevData => ({
@@ -158,7 +159,7 @@ export default function TETFundForm() {
         [name]: value,
         department: '' // Reset department when faculty changes
       }));
-      
+
       // Load departments for selected faculty
       loadDepartments(value);
     } else {
@@ -176,10 +177,28 @@ export default function TETFundForm() {
       }));
     }
 
-    // Save to localStorage (excluding file)
+    // Save to localStorage (excluding file, faculty, and department)
+    const dataToSave = {
+      fullName: formData.fullName,
+      academicRank: formData.academicRank,
+      unibenEmail: formData.unibenEmail,
+      alternativeEmail: formData.alternativeEmail,
+      phoneNumber: formData.phoneNumber,
+      coInvestigators: formData.coInvestigators,
+      coInvestigatorsDept: formData.coInvestigatorsDept,
+      projectTitle: formData.projectTitle,
+      problemStatement: formData.problemStatement,
+      researchObjectives: formData.researchObjectives,
+      methodology: formData.methodology,
+      expectedOutcomes: formData.expectedOutcomes,
+      workPlan: formData.workPlan,
+      estimatedBudget: formData.estimatedBudget,
+      // Exclude cvFile, faculty, and department
+    };
+
     localStorage.setItem(
-      "savedInputs",
-      JSON.stringify({...formData, [name]: value, cvFile: null})
+      "v2SavedInputs",
+      JSON.stringify({...dataToSave, [name]: value})
     );
   };
 
@@ -330,8 +349,13 @@ export default function TETFundForm() {
     // Add all required fields according to the schema
     apiFormData.append('fullName', formData.fullName);
     apiFormData.append('academicTitle', formData.academicRank);
-    apiFormData.append('department', formData.department);
-    apiFormData.append('faculty', formData.faculty);
+    // Conditionally append department and faculty
+    if (formData.department) {
+      apiFormData.append('department', formData.department);
+    }
+    if (formData.faculty) {
+      apiFormData.append('faculty', formData.faculty);
+    }
     apiFormData.append('email', formData.unibenEmail);
     apiFormData.append('phoneNumber', formData.phoneNumber);
     apiFormData.append('projectTitle', formData.projectTitle);
@@ -393,7 +417,7 @@ export default function TETFundForm() {
       
       console.log('Form submitted successfully:', result);
       setSubmitSuccess(true);
-      localStorage.removeItem("savedInputs");
+      localStorage.removeItem("v2SavedInputs");
       
     } catch (error: unknown) {
       if (error instanceof Error && 'response' in error) {
@@ -439,7 +463,7 @@ export default function TETFundForm() {
     setFileError('');
     
     // Clear localStorage
-    localStorage.removeItem("savedInputs");
+    localStorage.removeItem("v2SavedInputs");
     
     // Clear file input
     if (fileInputRef.current) {
