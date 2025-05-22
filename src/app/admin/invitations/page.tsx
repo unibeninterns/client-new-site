@@ -99,7 +99,7 @@ function AdminInvitationsPage() {
     };
   
     fetchInvitations();
-  }, [invitations]);
+  }, []);
 
   useEffect(() => {
     const fetchFaculties = async () => {
