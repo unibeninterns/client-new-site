@@ -24,6 +24,17 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import moment from 'moment'; // Import moment
 
+// Define the interface for adding a reviewer profile
+interface AddReviewerProfileData {
+  email: string;
+  name: string;
+  facultyId: string;
+  departmentId: string;
+  phoneNumber: string;
+  academicTitle?: string;
+  alternativeEmail?: string;
+}
+
 // Updated Invitation interface based on console.log output
 interface Invitation {
   _id: string; // Changed from id to _id
@@ -43,7 +54,7 @@ interface Invitation {
   __v: number; // Added based on console.log
 }
 
-// Updated ReviewerFormState to match api.addReviewerProfile schema
+// Updated ReviewerFormState to match AddReviewerProfileData interface
 interface ReviewerFormState {
   name: string;
   email: string;
@@ -167,8 +178,7 @@ function AdminInvitationsPage() {
 
     try {
       // Construct data object including only non-empty fields
-      // Removed api.AddReviewerProfileData type annotation as it's not exported
-      const reviewerData = {
+      const reviewerData: AddReviewerProfileData = {
         name: reviewerForm.name,
         email: reviewerForm.email,
         facultyId: reviewerForm.facultyId,
@@ -267,18 +277,16 @@ function AdminInvitationsPage() {
           <DialogTrigger asChild>
             <Button>
               <Mail className="mr-2 h-4 w-4" />
-              Invite Reviewer
+              Send Invite
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Invite Reviewer</DialogTitle>
+              <DialogTitle>Send Reviewer Invitation</DialogTitle>
               <DialogDescription>
-                Send an invitation email to a new reviewer to join the
-                platform.
+                Enter the email address of the reviewer you want to invite.
               </DialogDescription>
             </DialogHeader>
-
             <form onSubmit={handleSendInvite} className="space-y-4 py-4">
               {error && (
                 <Alert variant="destructive" className="mb-4">
@@ -288,7 +296,7 @@ function AdminInvitationsPage() {
               )}
 
               {success && (
-                <Alert className="mb-4 bg-green-50 border-green-200">
+                <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
                   <Check className="h-4 w-4 text-green-500" />
                   <AlertDescription className="text-green-700">
                     {success}
@@ -297,14 +305,15 @@ function AdminInvitationsPage() {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</Label>
                 <Input
                   id="email"
                   type="email"
                   placeholder="reviewer@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                   required
+                  className="mt-1 block w-full"
                 />
               </div>
 
@@ -352,7 +361,7 @@ function AdminInvitationsPage() {
               )}
 
               {success && (
-                <Alert className="mb-4 bg-green-50 border-green-200">
+                <Alert variant="success" className="mb-4 bg-green-50 border-green-200">
                   <Check className="h-4 w-4 text-green-500" />
                   <AlertDescription className="text-green-700">
                     {success}
@@ -362,7 +371,7 @@ function AdminInvitationsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="reviewer-name">Full Name</Label>
+                  <Label htmlFor="reviewer-name" className="block text-sm font-medium text-gray-700">Full Name</Label>
                   <Input
                     id="reviewer-name"
                     name="name"
@@ -370,11 +379,13 @@ function AdminInvitationsPage() {
                     value={reviewerForm.name}
                     onChange={handleInputChange}
                     required
+                    className="mt-1 block w-full"
+                    type="text"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reviewer-email">Email Address</Label>
+                  <Label htmlFor="reviewer-email" className="block text-sm font-medium text-gray-700">Email Address</Label>
                   <Input
                     id="reviewer-email"
                     name="email"
@@ -383,12 +394,13 @@ function AdminInvitationsPage() {
                     value={reviewerForm.email}
                     onChange={handleInputChange}
                     required
+                    className="mt-1 block w-full"
                   />
                 </div>
 
                 {/* Updated fields to match API schema */}
                 <div className="space-y-2">
-                  <Label htmlFor="reviewer-facultyId">Faculty ID</Label>
+                  <Label htmlFor="reviewer-facultyId" className="block text-sm font-medium text-gray-700">Faculty ID</Label>
                   <Input
                     id="reviewer-facultyId"
                     name="facultyId"
@@ -396,11 +408,13 @@ function AdminInvitationsPage() {
                     value={reviewerForm.facultyId}
                     onChange={handleInputChange}
                     required
+                    className="mt-1 block w-full"
+                    type="text"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reviewer-departmentId">Department ID</Label>
+                  <Label htmlFor="reviewer-departmentId" className="block text-sm font-medium text-gray-700">Department ID</Label>
                   <Input
                     id="reviewer-departmentId"
                     name="departmentId"
@@ -408,11 +422,13 @@ function AdminInvitationsPage() {
                     value={reviewerForm.departmentId}
                     onChange={handleInputChange}
                     required
+                    className="mt-1 block w-full"
+                    type="text"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reviewer-phoneNumber">Phone Number</Label>
+                  <Label htmlFor="reviewer-phoneNumber" className="block text-sm font-medium text-gray-700">Phone Number</Label>
                   <Input
                     id="reviewer-phoneNumber"
                     name="phoneNumber"
@@ -420,22 +436,26 @@ function AdminInvitationsPage() {
                     value={reviewerForm.phoneNumber}
                     onChange={handleInputChange}
                     required
+                    className="mt-1 block w-full"
+                    type="text"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="reviewer-academicTitle">Academic Title (Optional)</Label>
+                  <Label htmlFor="reviewer-academicTitle" className="block text-sm font-medium text-gray-700">Academic Title (Optional)</Label>
                   <Input
                     id="reviewer-academicTitle"
                     name="academicTitle"
                     placeholder="e.g., Professor"
                     value={reviewerForm.academicTitle}
                     onChange={handleInputChange}
+                    className="mt-1 block w-full"
+                    type="text"
                   />
                 </div>
 
                  <div className="space-y-2">
-                  <Label htmlFor="reviewer-alternativeEmail">Alternative Email (Optional)</Label>
+                  <Label htmlFor="reviewer-alternativeEmail" className="block text-sm font-medium text-gray-700">Alternative Email (Optional)</Label>
                   <Input
                     id="reviewer-alternativeEmail"
                     name="alternativeEmail"
@@ -443,6 +463,7 @@ function AdminInvitationsPage() {
                     placeholder="reviewer.alt@example.com"
                     value={reviewerForm.alternativeEmail}
                     onChange={handleInputChange}
+                    className="mt-1 block w-full"
                   />
                 </div>
 
@@ -544,7 +565,7 @@ function AdminInvitationsPage() {
       </Card>
 
       {success && !showInviteDialog && (
-        <Alert className="mt-4 bg-green-50 border-green-200">
+        <Alert variant="success" className="mt-4 bg-green-50 border-green-200">
           <Check className="h-4 w-4 text-green-500" />
           <AlertDescription className="text-green-700">
             {success}
