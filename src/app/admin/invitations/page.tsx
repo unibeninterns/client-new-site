@@ -566,7 +566,7 @@ function AdminInvitationsPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => resendInvitation(invitation._id)}
+                            onClick={() => resendInvitation(invitation.id)}
                           >
                             <Mail className="h-4 w-4" />
                             <span className="ml-1">Resend</span>
