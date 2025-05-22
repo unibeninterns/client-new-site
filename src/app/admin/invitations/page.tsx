@@ -88,6 +88,7 @@ function AdminInvitationsPage() {
     const fetchInvitations = async () => {
       try {
         const response = await api.getReviewerInvitations(); // Changed API call
+    console.log(response);
         setInvitations(response.data);
         setIsLoading(false);
       } catch (error: any) {
@@ -96,7 +97,6 @@ function AdminInvitationsPage() {
         setIsLoading(false);
       }
     };
-    console.log(invitations);
   
     fetchInvitations();
   }, [invitations]);

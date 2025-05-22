@@ -275,7 +275,6 @@ export const getProposalStatistics = async () => {
 };
 
 // Researcher management endpoints for admin use
-//TODO START
 export const getResearchersWithProposals = async () => {
   try {
     const response = await api.get("/admin/researcher/researchers");
@@ -330,7 +329,7 @@ export const resendResearcherCredentials = async (researcherId: string) => {
     throw error;
   }
 };
-//TODO ENDS
+
 // Assignment review endpoints for admin use
 export const assignReviewers = async (proposalId: string) => {
   try {
