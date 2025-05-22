@@ -55,7 +55,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Dashboard', href: '/admin/dashboard', icon: Home },
     { name: 'All Proposals', href: '/admin/proposals', icon: FileText },
     { name: 'Invitations', href: '/admin/invitations', icon: LinkIcon },
-    { name: 'Researchers', href: '/admin/researchers', icon: Users }, // Changed icon to Users
+    { name: 'Researchers', href: '/admin/researchers', icon: Users },
+    { name: 'Reviewers', href: '/admin/reviewers', icon: Users },
     { name: 'Final Decisions', href: '/admin/decisions', icon: ChevronDown },
   ];
 

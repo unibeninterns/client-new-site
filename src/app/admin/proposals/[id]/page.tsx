@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { getProposalById, updateProposalStatus } from '@/services/api';
+import { getProposalById } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Loader2, ArrowLeft, Calendar, User, Phone, Mail, Building, BookOpen, Banknote, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
@@ -59,8 +59,6 @@ export default function ProposalDetailPage() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [statusUpdateLoading, setStatusUpdateLoading] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string>('');
   const router = useRouter();
 
   useEffect(() => {
@@ -79,7 +77,6 @@ export default function ProposalDetailPage() {
       try {
         const response = await getProposalById(id as string);
         setProposal(response.data);
-        setSelectedStatus(response.data.status);
       } catch (err) {
         console.error('Failed to fetch proposal:', err);
         setError('Failed to load proposal details. Please try again.');
@@ -90,30 +87,6 @@ export default function ProposalDetailPage() {
 
     fetchProposal();
   }, [isAuthenticated, id]);
-
-  const handleStatusChange = async () => {
-    if (!proposal || selectedStatus === proposal.status) return;
-    
-    setStatusUpdateLoading(true);
-    
-    try {
-      await updateProposalStatus(proposal._id, { status: selectedStatus });
-      
-      // Update local state
-      setProposal(prev => {
-        if (prev) {
-          return { ...prev, status: selectedStatus as Proposal['status'] };
-        }
-        return prev;
-      });
-      
-    } catch (err) {
-      console.error('Failed to update status:', err);
-      setError('Failed to update proposal status. Please try again.');
-    } finally {
-      setStatusUpdateLoading(false);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -214,43 +187,6 @@ export default function ProposalDetailPage() {
                     <span className={`px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(proposal.status)}`}>
                       {getStatusLabel(proposal.status)}
                     </span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Status Update Section */}
-              <div className="px-4 py-5 sm:px-6 border-b border-gray-200 bg-white">
-                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                  <div className="mb-3 md:mb-0">
-                    <h4 className="text-sm font-medium text-gray-500">Update Status</h4>
-                    <p className="text-xs text-gray-400">Change the proposal&apos;s current status</p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <select
-                      value={selectedStatus}
-                      onChange={(e) => setSelectedStatus(e.target.value)}
-                      className="rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                    >
-                      <option value="submitted">Submitted</option>
-                      <option value="under_review">Under Review</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                      <option value="revision_requested">Needs Revision</option>
-                    </select>
-                    <button
-                      onClick={handleStatusChange}
-                      disabled={statusUpdateLoading || selectedStatus === proposal.status}
-                      className="py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed inline-flex items-center"
-                    >
-                      {statusUpdateLoading ? (
-                        <>
-                          <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                          Updating...
-                        </>
-                      ) : (
-                        'Update Status'
-                      )}
-                    </button>
                   </div>
                 </div>
               </div>
