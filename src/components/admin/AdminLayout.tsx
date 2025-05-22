@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Menu, X, Home, FileText, LogOut, ChevronDown, ChevronUp, LinkIcon, Users // Import Users icon
+  Menu, X, Home, FileText, LogOut, ChevronDown, ChevronUp, LinkIcon,  Users // Import Users icon
 } from 'lucide-react';
 
 interface AdminLayoutProps {

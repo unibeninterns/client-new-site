@@ -5,6 +5,8 @@ import * as api from "@/services/api";
 import AdminLayout from '@/components/admin/AdminLayout';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import Link from 'next/link'; // Import Link
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RefreshCw, MoreVertical } from "lucide-react"; // Import MoreVertical for the dot button
 import {
@@ -23,7 +25,7 @@ import { Check, AlertCircle } from "lucide-react"; // Import icons for alerts
 
 // Define the interface for researcher data based on the API response
 interface Researcher {
-  id: string;
+  _id: string; // Changed from id to _id
   name: string;
   email: string;
   isActive: boolean; // Assuming the API returns this field
@@ -63,10 +65,7 @@ function AdminResearchersPage() {
     fetchResearchers();
   }, []); // Empty dependency array to fetch data only once
 
-  const handleRowClick = (researcherId: string) => {
-    // Navigate to the researcher details page
-    router.push(`/admin/researchers/${researcherId}`);
-  };
+  // Removed handleRowClick as navigation will be handled by Link
 
   const handleSendCredentials = async (researcherId: string) => {
     setError("");
@@ -76,7 +75,7 @@ function AdminResearchersPage() {
       setSuccess("Credentials sent successfully.");
       // Update the researcher's status in the local state
       setResearchers(researchers.map(r =>
-        r.id === researcherId ? { ...r, isActive: true } : r
+        r._id === researcherId ? { ...r, isActive: true } : r // Changed r.id to r._id
       ));
     } catch (error: any) {
       console.error("Error sending credentials:", error);
@@ -169,26 +168,29 @@ function AdminResearchersPage() {
                   ) : (
                     researchers.map((researcher) => (
                       <tr
-                        key={researcher.id}
+                        key={researcher._id} // Changed key to _id
                         className="border-b hover:bg-gray-50 cursor-pointer"
-                        onClick={() => handleRowClick(researcher.id)} // Make row clickable
+                        // Removed onClick handler
                       >
-                        <td className="px-4 py-3 font-medium">
-                          {researcher.name}
-                        </td>
-                        <td className="px-4 py-3">{researcher.email}</td>
-                        <td className="px-4 py-3">
-                          {researcher.isActive ? "sent" : "pending"}
-                        </td>
+                        {/* Wrap row content in Link */}
+                        <Link href={`/admin/researchers/${researcher._id}`} className="contents"> {/* Changed href to use _id */}
+                          <td className="px-4 py-3 font-medium">
+                            {researcher.name}
+                          </td>
+                          <td className="px-4 py-3">{researcher.email}</td>
+                          <td className="px-4 py-3">
+                            {researcher.isActive ? "sent" : "pending"}
+                          </td>
+                        </Link>
                         <td className="px-4 py-3">
                           {/* Action buttons - conditional rendering based on isActive */}
                           {!researcher.isActive && (
                             <Button
-                              variant="outline"
+                              variant="default" // Changed variant to default for theme color
                               size="sm"
                               onClick={(e) => {
                                 e.stopPropagation(); // Prevent row click
-                                handleSendCredentials(researcher.id);
+                                handleSendCredentials(researcher._id); // Changed to _id
                               }}
                             >
                               Send Credentials
@@ -196,13 +198,17 @@ function AdminResearchersPage() {
                           )}
                           {/* Vertical dot button and resend action dialog trigger */}
                           {researcher.isActive && (
-                            <Dialog open={showResendDialog && selectedResearcherId === researcher.id} onOpenChange={(open) => {
-                              if (open) {
-                                openResendDialog(researcher.id);
-                              } else {
-                                closeResendDialog();
-                              }
-                            }}>
+                            <Dialog
+                              key={researcher._id} // Changed key to _id
+                              open={showResendDialog && selectedResearcherId === researcher._id} // Changed to _id
+                              onOpenChange={(open) => {
+                                if (open) {
+                                  openResendDialog(researcher._id); // Changed to _id
+                                } else {
+                                  closeResendDialog();
+                                }
+                              }}
+                            >
                               <DialogTrigger asChild>
                                 <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
                                   <MoreVertical className="h-4 w-4" />
@@ -242,7 +248,7 @@ function AdminResearchersPage() {
                                   <Button variant="outline" onClick={closeResendDialog}>
                                     Cancel
                                   </Button>
-                                </DialogFooter>
+                                </DialogFooter> {/* Added closing tag */}
                               </DialogContent>
                             </Dialog>
                           )}
