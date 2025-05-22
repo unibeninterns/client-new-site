@@ -10,7 +10,7 @@ import { RefreshCw } from "lucide-react";
 
 // Define the interface for researcher details based on the API response
 interface ResearcherDetails {
-  id: string;
+  _id: string; // Changed from id to _id
   name: string;
   email: string;
   isActive: boolean;
@@ -93,6 +93,10 @@ function ResearcherDetailsPage() {
             <CardTitle>Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm font-medium">ID:</p> {/* Added ID display */}
+              <p>{researcher._id}</p> {/* Display _id */}
+            </div>
             <div>
               <p className="text-sm font-medium">Name:</p>
               <p>{researcher.name}</p>
