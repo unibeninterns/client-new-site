@@ -55,8 +55,6 @@ export default function ResearcherLayout({ children }: ResearcherLayoutProps) {
   const navigation = [
     { name: 'Dashboard', href: '/researchers/dashboard', icon: Home },
     { name: 'My Proposals', href: '/researchers/proposals', icon: FileText },
-    { name: 'Submit New Proposal', href: '/researchers/submit', icon: ClipboardList },
-    { name: 'Guidelines', href: '/researchers/guidelines', icon: BookOpen },
   ];
 
   return (
