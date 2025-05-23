@@ -161,6 +161,13 @@ export default function ResearcherDashboard() {
 
             {/* Quick Links */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Link
+                href="/masters-funding" target='_blank'
+                className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500 hover:bg-purple-50 transition-colors"
+              >
+                <h3 className="font-semibold text-gray-800 mb-2">Submit New Proposal</h3>
+                <p className="text-gray-600 text-sm">Start a new research proposal submission</p>
+              </Link>
               
               <Link
                 href="/researchers/proposals" 

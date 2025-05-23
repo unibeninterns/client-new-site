@@ -74,7 +74,7 @@ export default function ResearcherProposals() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">My Proposals</h1>
           <Link 
-            href="/researchers/submit" 
+            href="/masters-funding" target='_blank'
             className="bg-purple-800 hover:bg-purple-900 text-white px-4 py-2 rounded-md text-sm font-medium flex items-center"
           >
             <FileText className="h-4 w-4 mr-2" />
