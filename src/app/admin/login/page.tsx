@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { AlertCircle, Loader2, LogIn } from 'lucide-react';
 import Link from 'next/link';
@@ -9,26 +9,49 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
-  const { login, isLoading, error } = useAuth();
+  const { login, isLoading, error, clearError } = useAuth();
+
+  // Clear form error when user starts typing
+  useEffect(() => {
+    if (formError) {
+      setFormError('');
+    }
+  }, [email, password]);
+
+  // Clear auth error when component mounts or when user starts interacting
+  useEffect(() => {
+    return () => {
+      clearError();
+    };
+  }, [clearError]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError('');
+    clearError(); // Clear any existing auth errors
     
     // Basic validation
     if (!email || !password) {
       setFormError('Email and password are required');
       return;
     }
+
+    if (!email.includes('@')) {
+      setFormError('Please enter a valid email address');
+      return;
+    }
     
     try {
       await login(email, password);
-      // No need to redirect here as it's handled in the AuthContext
+      // Success handling is done in AuthContext
     } catch (err) {
-      console.error(err);
-      // Error handling is done in AuthContext
+      console.error('Login submission error:', err);
+      // Error is already handled in AuthContext and will show via the error state
     }
   };
+
+  // Don't clear fields on error - let user correct their input
+  const displayError = error || formError;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center">
@@ -49,11 +72,11 @@ export default function AdminLoginPage() {
             Admin Login
           </h1>
           
-          {(error || formError) && (
+          {displayError && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
               <div className="flex items-center">
-                <AlertCircle className="h-5 w-5 text-red-500 mr-2" />
-                <p className="text-sm text-red-600">{error || formError}</p>
+                <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                <p className="text-sm text-red-600">{displayError}</p>
               </div>
             </div>
           )}
@@ -74,6 +97,7 @@ export default function AdminLoginPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
                   placeholder="admin@uniben.edu"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -92,6 +116,7 @@ export default function AdminLoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -100,7 +125,7 @@ export default function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-800 hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-800 hover:bg-purple-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:bg-purple-300 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? (
                   <>

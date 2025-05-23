@@ -28,6 +28,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   error: string | null;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -117,13 +118,22 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
       } else {
         setError('Invalid login response');
       }
-    } catch (err: unknown) {
+    } catch (err: any) {
+      // This is the key fix - properly extract the error message
+      let errorMessage = 'An unknown error occurred';
+      
       if (err instanceof Error) {
-        setError(err.message || 'Failed to log in');
-      } else {
-        setError('An unknown error occurred');
+        errorMessage = err.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
+      } else if (err?.response?.data?.message) {
+        errorMessage = err.response.data.message;
+      } else if (err?.message) {
+        errorMessage = err.message;
       }
+      
       console.error('Login error:', err);
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -133,6 +143,7 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
     logout();
     localStorage.removeItem('userData');
     setUser(null);
+    setError(null);
     
     switch (userType) {
       case 'admin':
@@ -148,6 +159,10 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
         router.push('/');
     }
   };
+
+  const clearError = () => {
+    setError(null);
+  };
   
   const isAuthenticated = !!user;
   
@@ -159,7 +174,8 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
         isAuthenticated,
         login,
         logout: handleLogout,
-        error
+        error,
+        clearError
       }}
     >
       {children}

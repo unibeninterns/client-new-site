@@ -35,10 +35,10 @@ interface ResearcherDetails {
 // Define the interface for proposal details
 interface ProposalDetails {
   _id: string;
-  projectTitle?: string; // Added projectTitle to the interface
+  projectTitle?: string;
   reviewStatus: string;
   submitterType: string;
-  submitter: string; // Assuming researcher ID
+  submitter: string;
   status: string;
   createdAt: string;
   updatedAt: string;
@@ -73,7 +73,8 @@ function ResearcherDetailsPage() {
     const fetchResearcherDetails = async () => {
       try {
         const response = await api.getResearcherDetails(researcherId); // Use the correct API
-        setResearcherData(response.data); // Set the entire response data
+        setResearcherData(response.data);
+        console.log("Researcher Data:", response.data);
         setIsLoading(false);
       } catch (error: any) {
         console.error(`Error fetching researcher details for ID ${researcherId}:`, error);

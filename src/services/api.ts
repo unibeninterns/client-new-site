@@ -176,7 +176,7 @@ export const loginReviewer = async (credentials: {
   password: string;
 }) => {
   try {
-    const response = await api.post("/reviewer/login", credentials);
+    const response = await api.post("/auth/reviewer-login", credentials);
 
     if (response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
@@ -197,7 +197,7 @@ export const loginResearcher = async (credentials: {
   password: string;
 }) => {
   try {
-    const response = await api.post("/researcher/login", credentials);
+    const response = await api.post("/auth/researcher-login", credentials);
 
     if (response.data.accessToken) {
       localStorage.setItem("accessToken", response.data.accessToken);
