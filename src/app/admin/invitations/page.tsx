@@ -105,7 +105,8 @@ function AdminInvitationsPage() {
     const fetchFaculties = async () => {
       try {
         const response = await api.getFaculties();
-        setFaculties(response.data);
+        setFaculties(response);
+        console.log("Faculties:", response);
       } catch (error) {
         console.error("Error fetching faculties:", error);
       }
@@ -334,7 +335,7 @@ function AdminInvitationsPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="reviewer@example.com"
+                  placeholder="reviewer@uniben.edu"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -412,7 +413,7 @@ function AdminInvitationsPage() {
       id="reviewer-email"
       name="email"
       type="email"
-      placeholder="reviewer@example.com"
+      placeholder="reviewer@uniben.edu"
       value={reviewerForm.email}
       onChange={handleInputChange}
       required
