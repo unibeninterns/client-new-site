@@ -528,7 +528,7 @@ function AdminInvitationsPage() {
                 </tr>
               </thead>
               <tbody>
-                {invitations.length === 0 ? (
+                {!invitations || invitations.length === 0 ? (
                   <tr>
                     <td
                       colSpan={4} // Updated colspan
