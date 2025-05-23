@@ -34,12 +34,12 @@ interface Reviewer {
   academicTitle?: string;
   faculty: {
     _id: string;
-    name: string;
+    title: string;
     code: string;
   };
   department: {
     _id: string;
-    name: string;
+    title: string;
     code: string;
   };
   isActive: boolean;
@@ -114,6 +114,7 @@ export default function AdminReviewersPage() {
       
       const response = await getAllReviewers(params);
       setReviewers(response.data || []);
+      console.log('Reviewers loaded:', response.data);
       setPagination({
         currentPage: response.currentPage || 1,
         totalPages: response.totalPages || 1,
@@ -175,8 +176,8 @@ export default function AdminReviewersPage() {
   const filteredReviewers = reviewers.filter(reviewer => {
     const matchesSearch = reviewer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reviewer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reviewer.faculty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reviewer.department.name.toLowerCase().includes(searchTerm.toLowerCase());
+                         reviewer.faculty.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         reviewer.department.title.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || reviewer.invitationStatus === statusFilter;
     
@@ -308,7 +309,7 @@ export default function AdminReviewersPage() {
                               </div>
                               <div className="flex items-center">
                                 <Building className="h-4 w-4 mr-1" />
-                                {reviewer.faculty.name} - {reviewer.department.name}
+                                {reviewer.faculty?.title} - {reviewer.department?.title}
                               </div>
                             </div>
                             <div className="mt-2 flex items-center space-x-6 text-sm">
@@ -413,12 +414,12 @@ export default function AdminReviewersPage() {
                           <div className="flex items-center text-gray-600 mb-2">
                             <Building className="h-4 w-4 mr-2" />
                             <span className="font-medium">Faculty:</span>
-                            <span className="ml-2">{selectedReviewer.faculty.name}</span>
+                            <span className="ml-2">{selectedReviewer.faculty.title}</span>
                           </div>
                           <div className="flex items-center text-gray-600 mb-2">
                             <Building className="h-4 w-4 mr-2" />
                             <span className="font-medium">Department:</span>
-                            <span className="ml-2">{selectedReviewer.department.name}</span>
+                            <span className="ml-2">{selectedReviewer.department.title}</span>
                           </div>
                           <div className="flex items-center text-gray-600">
                             <Calendar className="h-4 w-4 mr-2" />
