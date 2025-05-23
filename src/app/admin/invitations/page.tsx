@@ -88,8 +88,9 @@ function AdminInvitationsPage() {
     const fetchInvitations = async () => {
       try {
         const response = await api.getReviewerInvitations(); // Changed API call
-        setInvitations(response.data);
+        setInvitations(response.data || []);
         setIsLoading(false);
+        console.log("Invitations:", response.data);
       } catch (error: any) {
         console.error("Error fetching invitations:", error);
         setError(error.message || "Failed to load invitations");
@@ -527,62 +528,63 @@ function AdminInvitationsPage() {
                 </tr>
               </thead>
               <tbody>
-                {!invitations || invitations.length === 0 ? (
+                {!Array.isArray(invitations) || invitations.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={4} // Updated colspan
+                      colSpan={4}
                       className="px-4 py-8 text-center text-gray-500"
                     >
                       No invitations found.
                     </td>
                   </tr>
-                ) : (invitations.map((invitation) => (
-                  <tr
-                    key={invitation.id}
-                    className="border-b hover:bg-gray-50"
-                  >
-                    <td className="px-4 py-3 font-medium">
-                      {invitation.email}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
-                          invitation.status
-                        )}`} // Use status
-                      >
-                        {getStatusIcon(invitation.status)} {/* Use status */}
-                        {invitation.status ? 
-                          invitation.status.charAt(0).toUpperCase() + invitation.status.slice(1)
-                          : 'N/A'}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">{invitation.created}</td>
-                    <td className="px-4 py-3">{invitation.expires || 'N/A'}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {(invitation.status === "expired" || 
-                          invitation.status === "rejected") && (
+                ) : (
+                  invitations.map((invitation) => (
+                    <tr
+                      key={invitation?.id}
+                      className="border-b hover:bg-gray-50"
+                    >
+                      <td className="px-4 py-3 font-medium">
+                        {invitation?.email}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClass(
+                            invitation?.status
+                          )}`}
+                        >
+                          {getStatusIcon(invitation?.status)}
+                          {invitation?.status ? 
+                            invitation.status.charAt(0).toUpperCase() + invitation.status.slice(1)
+                            : 'N/A'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">{invitation?.created || 'N/A'}</td>
+                      <td className="px-4 py-3">{invitation?.expires || 'N/A'}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {(invitation?.status === "expired" || 
+                            invitation?.status === "rejected") && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => resendInvitation(invitation.id)}
+                            >
+                              <Mail className="h-4 w-4" />
+                              <span className="ml-1">Resend</span>
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => resendInvitation(invitation.id)}
+                            onClick={() => deleteInvitation(invitation.id)}
                           >
-                            <Mail className="h-4 w-4" />
-                            <span className="ml-1">Resend</span>
+                            <X className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteInvitation(invitation.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
