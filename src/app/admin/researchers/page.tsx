@@ -26,7 +26,7 @@ interface Researcher {
   _id: string; // Changed from id to _id
   name: string;
   email: string;
-  isActive: boolean; // Corrected from credentialsSent to isActive
+  credentialsSent: boolean; // Corrected from credentialsSent to credentialsSent
   // Add other relevant researcher fields here
 }
 
@@ -80,7 +80,7 @@ function AdminResearchersPage() {
       toast.success("Credentials sent successfully."); // Use sonner toast.success
       // Update the researcher's status in the local state
       setResearchers(researchers.map(r =>
-        r._id === researcherId ? { ...r, isActive: true } : r
+        r._id === researcherId ? { ...r, credentialsSent: true } : r
       ));
     } catch (error: any) {
       console.error("Error sending credentials:", error);
@@ -180,11 +180,11 @@ function AdminResearchersPage() {
                           </td>
                           <td className="px-4 py-3">{researcher.email}</td>
                           <td className="px-4 py-3">
-                            {researcher.isActive ? "sent" : "pending"}
+                            {researcher.credentialsSent ? "sent" : "pending"}
                           </td>
                           <td className="px-4 py-3">
-                            {/* Action buttons - conditional rendering based on isActive */}
-                            {!researcher.isActive && (
+                            {/* Action buttons - conditional rendering based on credentialsSent */}
+                            {!researcher.credentialsSent && (
                               <Button
                                 variant="default" // Changed variant to default for theme color
                                 size="sm"
@@ -201,7 +201,7 @@ function AdminResearchersPage() {
                               </Button>
                             )}
                             {/* Vertical dot button and resend action dropdown trigger */}
-                            {researcher.isActive && (
+                            {researcher.credentialsSent && (
                               <DropdownMenu> {/* Use DropdownMenu */}
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
