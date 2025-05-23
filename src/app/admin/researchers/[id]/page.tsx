@@ -6,7 +6,8 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, ArrowLeft } from "lucide-react"; // Import ArrowLeft
+import Link from 'next/link'; // Import Link
 
 // Define the interface for researcher details based on the API response
 interface ResearcherDetails {
@@ -72,7 +73,6 @@ function ResearcherDetailsPage() {
     const fetchResearcherDetails = async () => {
       try {
         const response = await api.getResearcherDetails(researcherId); // Use the correct API
-        console.log(response.data)
         setResearcherData(response.data); // Set the entire response data
         setIsLoading(false);
       } catch (error: any) {
@@ -116,6 +116,16 @@ function ResearcherDetailsPage() {
   return (
     <AdminLayout>
       <div className="space-y-6 p-5">
+         {/* Back link */}
+          <div className="mb-6">
+            <Link
+              href="/admin/researchers" // Link back to the researchers list page
+              className="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Back to Researchers
+            </Link>
+          </div>
         <h1 className="text-2xl font-bold tracking-tight">
           Researcher Details: {researcher.name}
         </h1>
