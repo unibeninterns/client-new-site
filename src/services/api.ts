@@ -26,13 +26,24 @@ api.interceptors.request.use(
 );
 
 // Response interceptor to handle token refresh
+// Fixed response interceptor in api.ts
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // If error is 401 and we haven't tried to refresh the token yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Check if this is a login endpoint - don't attempt refresh for login failures
+    const isLoginEndpoint =
+      originalRequest.url?.includes("/auth/") &&
+      (originalRequest.url.includes("-login") ||
+        originalRequest.url.includes("/login"));
+
+    // Only attempt token refresh for 401s that are NOT from login endpoints
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isLoginEndpoint
+    ) {
       originalRequest._retry = true;
 
       try {
@@ -53,8 +64,6 @@ api.interceptors.response.use(
       } catch (refreshError: any) {
         // If refresh fails, redirect to login
         console.error("Token refresh failed:", refreshError);
-        console.error("Response data:", refreshError.response?.data);
-        console.error("Status code:", refreshError.response?.status);
 
         // Only redirect if we're in the browser
         if (typeof window !== "undefined") {
