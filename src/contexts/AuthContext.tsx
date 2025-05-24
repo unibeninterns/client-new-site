@@ -112,28 +112,25 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
               router.push('/');
           }
         } else {
-          setError(`Invalid login. You are trying to log in as a ${userType} but your account is a ${response.user.role}.`);
-          localStorage.removeItem('accessToken');
+          throw new Error(`Invalid login. You are trying to log in as a ${userType} but your account is a ${response.user.role}.`);
         }
       } else {
-        setError('Invalid login response');
+        throw new Error('Invalid login response');
       }
     } catch (err: any) {
-      // properly extract the error message
-      let errorMessage = 'An unknown error occurred';
-      
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      } else if (err?.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
-      } else if (err?.message) {
-        errorMessage = err.message;
-      }
-      
-      console.error('Login error:', err?.response?.data?.message);
-      setError(errorMessage);
+      // Extract and throw the error - let the component handle display
+    let errorMessage = 'An unknown error occurred';
+    
+    if (err?.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
+    
+    console.error('Login error:', err?.response?.data?.message || err?.message);
+    
+    // Just throw the error, don't set it in context
+    throw new Error(errorMessage);
     } finally {
       setIsLoading(false);
     }

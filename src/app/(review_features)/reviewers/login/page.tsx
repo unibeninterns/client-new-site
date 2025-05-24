@@ -44,14 +44,14 @@ export default function ReviewerLoginPage() {
         try {
             await login(email, password);
             // Success handling is done in AuthContext
-        } catch (err) {
-            console.error('Login submission error:', err);
-            // Error is already handled in AuthContext and will show via the error state
+        } catch (err: any) {
+          console.error('Login submission error:', err);
+          setFormError(err.message || 'Login failed. Please try again.');
         }
     };
 
     // Don't clear fields on error - let user correct their input
-    const displayError = error || formError;
+    const displayError = formError || error;
 
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col justify-center">
