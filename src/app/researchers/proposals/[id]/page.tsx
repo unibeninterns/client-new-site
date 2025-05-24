@@ -112,7 +112,7 @@ export default function ProposalDetails() {
               <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                 <div>
                   <h1 className="text-2xl font-bold text-gray-800 mb-2">
-                    {proposal.projectTitle || 'Untitled Proposal'}
+                    {proposal.projectTitle || '(check doc file for title)'}
                   </h1>
                   <div className="flex items-center flex-wrap gap-2">
                     <span className={`px-3 py-1 text-sm font-medium rounded-full ${getStatusColor(proposal.status)}`}>
@@ -147,9 +147,6 @@ export default function ProposalDetails() {
                     <nav className="-mb-px flex">
                       <div className="w-1/2 py-4 px-1 text-center border-b-2 border-purple-800">
                         <span className="text-sm font-medium text-purple-800">Proposal Details</span>
-                      </div>
-                      <div className="w-1/2 py-4 px-1 text-center">
-                        <span className="text-sm font-medium text-gray-500">Review Status</span>
                       </div>
                     </nav>
                   </div>
