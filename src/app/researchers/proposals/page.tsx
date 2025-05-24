@@ -28,6 +28,7 @@ export default function ResearcherProposals() {
       try {
         const response = await getResearcherDashboard();
         setProposals(response.data.proposals);
+        console.log('Fetched proposals:', response.data.proposals);
       } catch (err) {
         console.error('Error fetching proposals:', err);
         setError('Failed to load proposals. Please try again later.');
