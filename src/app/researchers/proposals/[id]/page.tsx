@@ -32,7 +32,7 @@ interface Proposal {
 export default function ProposalDetails() {
   const params = useParams();
   const router = useRouter();
-  const proposalId = params.proposalId as string;
+  const proposalId = params.id as string;
   
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -280,7 +280,7 @@ export default function ProposalDetails() {
               </div>
             </div>
           </>
-        )}
+        ) : null}
       </div>
     </ResearcherLayout>
   );

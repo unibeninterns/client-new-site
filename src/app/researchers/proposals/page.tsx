@@ -17,6 +17,7 @@ interface Proposal {
 
 export default function ResearcherProposals() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [filteredProposals, setFilteredProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,6 +38,26 @@ export default function ResearcherProposals() {
     
     fetchProposals();
   }, []);
+
+  useEffect(() => {
+    const filterAndSearchProposals = () => {
+      let filtered = proposals;
+
+      if (statusFilter !== 'all') {
+        filtered = filtered.filter(proposal => proposal.status === statusFilter);
+      }
+
+      if (searchTerm) {
+        filtered = filtered.filter(proposal =>
+          proposal.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+
+      setFilteredProposals(filtered);
+    };
+
+    filterAndSearchProposals();
+  }, [proposals, searchTerm, statusFilter]);
   
   const getStatusColor = (status: string) => {
     switch(status) {
@@ -61,12 +82,6 @@ export default function ResearcherProposals() {
   const formatStatus = (status: string) => {
     return status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
   };
-  
-  const filteredProposals = proposals.filter(proposal => {
-    const matchesSearch = proposal.projectTitle?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || proposal.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
   
   return (
     <ResearcherLayout>
@@ -121,30 +136,10 @@ export default function ResearcherProposals() {
               </select>
             </div>
           </div>
-          
+
           {loading ? (
             <div className="flex justify-center items-center h-32">
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-800"></div>
-            </div>
-          ) : filteredProposals.length === 0 ? (
-            <div className="text-center py-8">
-              <div className="bg-gray-100 rounded-full h-16 w-16 flex items-center justify-center mx-auto mb-4">
-                <FileText className="h-8 w-8 text-gray-500" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-800 mb-1">No proposals found</h3>
-              <p className="text-gray-600">
-                {proposals.length === 0 
-                  ? "You haven't submitted any proposals yet." 
-                  : "No proposals match your current filters."}
-              </p>
-              {proposals.length === 0 && (
-                <Link 
-                  href="/researchers/submit" 
-                  className="mt-4 inline-block text-purple-600 hover:text-purple-800"
-                >
-                  Submit your first proposal →
-                </Link>
-              )}
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -160,36 +155,46 @@ export default function ResearcherProposals() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredProposals.map((proposal) => (
-                    <tr key={proposal._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {proposal.projectTitle || 'Untitled Proposal'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {proposal.submitterType === 'staff' ? 'Staff Research' : 'Master\'s Research'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(proposal.status)}`}>
-                          {formatStatus(proposal.status)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(proposal.createdAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatDate(proposal.updatedAt)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <Link 
-                          href={`/researchers/proposals/${proposal._id}`}
-                          className="text-purple-600 hover:text-purple-900 flex items-center justify-end"
-                        >
-                          View Details
-                          <ChevronRight className="ml-1 h-4 w-4" />
-                        </Link>
+                  {filteredProposals.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                        {proposals.length === 0 
+                          ? "You haven't submitted any proposals yet." 
+                          : "No proposals match your current filters."}
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredProposals.map((proposal) => (
+                      <tr key={proposal._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {proposal.projectTitle || 'Untitled Proposal'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {proposal.submitterType === 'staff' ? 'Staff Research' : 'Master\'s Research'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(proposal.status)}`}>
+                            {formatStatus(proposal.status)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(proposal.createdAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatDate(proposal.updatedAt)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <Link 
+                            href={`/researchers/proposals/${proposal._id}`}
+                            className="text-purple-600 hover:text-purple-900 flex items-center justify-end"
+                          >
+                            View Details
+                            <ChevronRight className="ml-1 h-4 w-4" />
+                          </Link>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
