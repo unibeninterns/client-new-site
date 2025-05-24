@@ -45,7 +45,7 @@ export default function AdminLoginPage() {
       await login(email, password);
       // Success handling is done in AuthContext
     } catch (err) {
-      console.error('Login submission error:', err);
+      console.error('Login submission error:', err?.response?.data?.message);
       // Error is already handled in AuthContext and will show via the error state
     }
   };

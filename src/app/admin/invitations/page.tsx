@@ -120,7 +120,7 @@ function AdminInvitationsPage() {
       if (selectedFacultyCode) {
         try {
           const response = await api.getDepartmentsByFaculty(selectedFacultyCode);
-          setDepartments(response.data);
+          setDepartments(response);
         } catch (error) {
           console.error("Error fetching departments:", error);
           setDepartments([]);
@@ -162,7 +162,7 @@ function AdminInvitationsPage() {
       setEmail("");
       setTimeout(() => setShowInviteDialog(false), 1500);
     } catch (error: any) {
-      setError(error.message || "Failed to send invitation");
+      setError(error.response.data.message || "Failed to send invitation");
     } finally {
       setIsSubmitting(false);
     }
@@ -221,7 +221,7 @@ function AdminInvitationsPage() {
 
       setTimeout(() => setShowAddReviewerDialog(false), 1500);
     } catch (error: any) {
-      setError(error.message || "Failed to create reviewer profile");
+      setError(error.response.data.message || "Failed to create reviewer profile");
     } finally {
       setIsSubmitting(false);
     }

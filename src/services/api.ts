@@ -50,11 +50,11 @@ api.interceptors.response.use(
           // Retry the original request
           return api(originalRequest);
         }
-      } catch (refreshError) {
+      } catch (refreshError: any) {
         // If refresh fails, redirect to login
         console.error("Token refresh failed:", refreshError);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("userData");
+        console.error("Response data:", refreshError.response?.data);
+        console.error("Status code:", refreshError.response?.status);
 
         // Only redirect if we're in the browser
         if (typeof window !== "undefined") {
@@ -77,6 +77,8 @@ api.interceptors.response.use(
 
           window.location.href = redirectPath;
         }
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("userData");
       }
     }
 

@@ -119,20 +119,20 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
         setError('Invalid login response');
       }
     } catch (err: any) {
-      // This is the key fix - properly extract the error message
+      // properly extract the error message
       let errorMessage = 'An unknown error occurred';
       
       if (err instanceof Error) {
         errorMessage = err.message;
-      } else if (typeof err === 'string') {
-        errorMessage = err;
       } else if (err?.response?.data?.message) {
         errorMessage = err.response.data.message;
+      } else if (typeof err === 'string') {
+        errorMessage = err;
       } else if (err?.message) {
         errorMessage = err.message;
       }
       
-      console.error('Login error:', err);
+      console.error('Login error:', err?.response?.data?.message);
       setError(errorMessage);
     } finally {
       setIsLoading(false);
