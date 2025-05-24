@@ -16,7 +16,7 @@ export default function ResearcherLoginPage() {
     if (formError) {
       setFormError('');
     }
-  }, [email, password]);
+  }, [email, password, formError]);
 
   // Clear auth error when component mounts or when user starts interacting
   useEffect(() => {
