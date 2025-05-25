@@ -1,12 +1,12 @@
 'use client'
-import Header from '@/components/header'
+
+import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 
 export default function ReviewGuideline() {
     return (
         <>
-            <Header />
-        <div className="min-h-screen bg-gray-50 p-4">
-            
+        <ReviewerLayout>
+          <div className="min-h-screen bg-gray-50 p-4">
             <div className="max-w-5xl mx-auto bg-white p-6 rounded-lg shadow-md mt-8">
                 <h1 className="text-2xl font-bold text-center mb-6">TETFund IBR Proposal Grading Template</h1>
                 
@@ -73,6 +73,7 @@ export default function ReviewGuideline() {
                 </div>
             </div>
         </div>
+       </ReviewerLayout>
         </>
     )
 }

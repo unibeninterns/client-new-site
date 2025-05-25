@@ -1,8 +1,10 @@
 "use client";
+
 import React, { useState } from 'react';
-import Header from '@/components/reviewers/header';
 import DiscrepancyAlert from '@/components/reviewers/DiscrepancyAlert';
 import Link from 'next/link';
+import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
+
 
 interface ReviewerData {
   name: string;
@@ -187,14 +189,15 @@ const ProposalReviewForm: React.FC = () => {
 
   return (
     <>
-        <Header userData={{
-          name : "John Doe",
-          role : "reviewer"
-        }} />
+      <ReviewerLayout>
         <div className="min-h-screen bg-gray-50 p-6">
-            <h1 className="text-2xl md:text-4xl font-bold text-gray-700 text-center my-3">Review Proposal</h1>
+        <h1 className="text-2xl md:text-4xl font-bold text-gray-700 text-center my-3">Review Proposal</h1>
+      
             
             {/* Previous Scores Comparison - Only shown for re-reviews */}
+            {isDiscrepancyReview && (
+          <DiscrepancyAlert previousScores={previousScores} />
+        )}
             {isDiscrepancyReview && (
               <div className="max-w-4xl mx-auto mb-6">
                 <div className="bg-white rounded-lg shadow-md p-6">
@@ -401,6 +404,7 @@ const ProposalReviewForm: React.FC = () => {
             </div>
         </div>
         </div>
+       </ReviewerLayout>
     </>
   );
 };
