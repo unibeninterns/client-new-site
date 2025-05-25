@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { getReviewerDashboard } from '@/services/api';
+import { useRouter } from 'next/navigation';
 
 // Types based on your API response structure
 interface ReviewerInfo {
@@ -89,6 +90,13 @@ const ReviewersDashboard: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
   const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+      if (!authLoading && !isAuthenticated) {
+        router.push('/admin/login');
+      }
+    }, [authLoading, isAuthenticated, router]);
 
   // Fetch dashboard data
   const fetchDashboardData = async () => {
@@ -110,7 +118,7 @@ const ReviewersDashboard: React.FC = () => {
   };
 
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    if (isAuthenticated) {
       fetchDashboardData();
     }
   }, [isAuthenticated, authLoading]);

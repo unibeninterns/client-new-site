@@ -2,7 +2,7 @@
 
 import { useState, useEffect, ReactNode } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from './header';
 import { 
@@ -14,41 +14,15 @@ interface ReviewerLayoutProps {
 }
 
 export default function ReviewerLayout({ children }: ReviewerLayoutProps) {
-  const { user, logout, isAuthenticated, isLoading } = useAuth();
+  const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const pathname = usePathname();
-  const router = useRouter();
 
   const handleLogout = async () => {
     await logout();
     // The redirect is handled in the logout function
   };
-
-  // Redirect unauthenticated users to login
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/reviewers/login');
-    }
-  }, [isAuthenticated, isLoading, router]);
-
-  // Show a loading state while authentication is being checked
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If not authenticated, the useEffect will handle the redirect,
-  // so we don't render anything here to avoid flickering.
-  if (!isAuthenticated) {
-    return null;
-  }
 
   // Close sidebar when route changes (on mobile)
   useEffect(() => {
