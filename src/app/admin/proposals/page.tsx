@@ -3,10 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import * as api from '@/services/api';
 import { getProposals, getFacultiesWithProposals } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw } from 'lucide-react';
+import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical } from 'lucide-react';
 import Link from 'next/link';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { toast, Toaster } from "sonner";
 
 interface Faculty {
   _id: string;
@@ -87,7 +91,7 @@ export default function AdminProposalsPage() {
           limit: 10,
           ...filters
         });
-        
+        console.log(response.data)
         setProposals(response.data);
         setPagination({
           count: response.count,
@@ -126,6 +130,24 @@ export default function AdminProposalsPage() {
 
   const refreshData = () => {
     setPagination(prev => ({ ...prev })); // Trigger useEffect to reload data
+  };
+
+  const handleAssignReviewer = async (proposalId: string) => {
+    toast("Assigning reviewer...");
+    try {
+      // The api.assignReviewers function expects only the proposalId
+      const response = await api.assignReviewers(proposalId);
+      if(response.data.success) {
+        toast("Assigned reviewer successfully.");
+        refreshData(); // Refresh the list after assignment
+      }
+      else {
+        toast.error("Assignment failed")
+      }
+    } catch (error) {
+      console.error("Failed to assign reviewer:", error);
+      toast.error("Error while assigning reviewer.");
+    }
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -384,13 +406,23 @@ export default function AdminProposalsPage() {
                           {formatDate(proposal.createdAt)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Link
-                            href={`/admin/proposals/${proposal._id}`}
-                            className="text-purple-600 hover:text-purple-900 inline-flex items-center"
-                          >
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Link>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => router.push(`/admin/proposals/${proposal._id}`)}>
+                                View
+                              </DropdownMenuItem>
+                              {proposal.status !== "under_review" && (
+                              <DropdownMenuItem onSelect={() => handleAssignReviewer(proposal._id)}>
+                                Assign Reviewer
+                              </DropdownMenuItem>)}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </td>
                       </tr>
                     ))}
@@ -432,6 +464,7 @@ export default function AdminProposalsPage() {
           </div>
         </div>
       </div>
+      <Toaster />
     </AdminLayout>
   );
 }
