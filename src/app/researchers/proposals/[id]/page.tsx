@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { getResearcherProposalDetails } from '@/services/api';
 import ResearcherLayout from '@/components/researchers/ResearcherLayout';
-import { AlertCircle, ArrowLeft, Download, Clock } from 'lucide-react';
+import { AlertCircle, ArrowLeft, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
 
 interface Proposal {
@@ -215,28 +215,30 @@ export default function ProposalDetails() {
                     <div className="space-y-3">
                       {proposal.cvFile && (
                         <a 
-                          href={`/api/files/${proposal.cvFile}`}
-                          download
+                          href={proposal.cvFile}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50"
                         >
-                          <Download className="h-5 w-5 text-purple-700 mr-2" />
+                          <FileText className="h-5 w-5 text-purple-700 mr-2" />
                           <div>
                             <p className="text-sm font-medium text-gray-800">Curriculum Vitae</p>
-                            <p className="text-xs text-gray-500">Download CV</p>
+                            <p className="text-xs text-gray-500">View CV</p>
                           </div>
                         </a>
                       )}
                       
                       {proposal.docFile && (
                         <a 
-                          href={`/api/files/${proposal.docFile}`}
-                          download
+                          href={proposal.docFile}
+                          target="_blank"
+                          rel="noopener noreferrer"
                           className="flex items-center p-3 border border-gray-200 rounded-md hover:bg-gray-50"
                         >
-                          <Download className="h-5 w-5 text-purple-700 mr-2" />
+                          <FileText className="h-5 w-5 text-purple-700 mr-2" />
                           <div>
                             <p className="text-sm font-medium text-gray-800">Full Proposal Document</p>
-                            <p className="text-xs text-gray-500">Download Document</p>
+                            <p className="text-xs text-gray-500">View Document</p>
                           </div>
                         </a>
                       )}

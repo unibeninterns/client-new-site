@@ -64,30 +64,23 @@ api.interceptors.response.use(
       } catch (refreshError: any) {
         // If refresh fails, redirect to login
         console.error("Token refresh failed:", refreshError);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("userData");
 
         // Only redirect if we're in the browser
         if (typeof window !== "undefined") {
           // Redirect based on the stored user role
-          const userData = localStorage.getItem("userData");
+          const currentPath = window.location.pathname;
           let redirectPath = "/admin/login"; // Default
 
-          if (userData) {
-            try {
-              const user = JSON.parse(userData);
-              if (user.role === "reviewer") {
-                redirectPath = "/reviewers/login";
-              } else if (user.role === "researcher") {
-                redirectPath = "/researchers/login";
-              }
-            } catch (e) {
-              console.error("Error parsing user data:", e);
-            }
+          if (currentPath.startsWith("/reviewers")) {
+            redirectPath = "/reviewers/login";
+          } else if (currentPath.startsWith("/researchers")) {
+            redirectPath = "/researchers/login";
           }
 
           window.location.href = redirectPath;
         }
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("userData");
       }
     }
 
@@ -508,7 +501,38 @@ export const getReviewById = async (reviewId: string) => {
   }
 };
 
-export const submitReview = async (reviewId: string, reviewData: any) => {
+export const submitReview = async (
+  reviewId: string,
+  reviewData: {
+    scores: {
+      relevanceToNationalPriorities: number; // 0-10
+      originalityAndInnovation: number; // 0-15
+      clarityOfResearchProblem: number; // 0-10
+      methodology: number; // 0-15
+      literatureReview: number; // 0-10
+      teamComposition: number; // 0-10
+      feasibilityAndTimeline: number; // 0-10
+      budgetJustification: number; // 0-10
+      expectedOutcomes: number; // 0-5
+      sustainabilityAndScalability: number; // 0-5
+    };
+    comments: {
+      relevanceToNationalPriorities?: string;
+      originalityAndInnovation?: string;
+      clarityOfResearchProblem?: string;
+      methodology?: string;
+      literatureReview?: string;
+      teamComposition?: string;
+      feasibilityAndTimeline?: string;
+      budgetJustification?: string;
+      expectedOutcomes?: string;
+      sustainabilityAndScalability?: string;
+      strengths?: string;
+      weaknesses?: string;
+      overall?: string;
+    };
+  }
+) => {
   try {
     const response = await api.post(
       `/reviewsys/${reviewId}/submit`,
@@ -523,7 +547,35 @@ export const submitReview = async (reviewId: string, reviewData: any) => {
 
 export const saveReviewProgress = async (
   reviewId: string,
-  progressData: any
+  progressData: {
+    scores?: {
+      relevanceToNationalPriorities?: number; // 0-10
+      originalityAndInnovation?: number; // 0-15
+      clarityOfResearchProblem?: number; // 0-10
+      methodology?: number; // 0-15
+      literatureReview?: number; // 0-10
+      teamComposition?: number; // 0-10
+      feasibilityAndTimeline?: number; // 0-10
+      budgetJustification?: number; // 0-10
+      expectedOutcomes?: number; // 0-5
+      sustainabilityAndScalability?: number; // 0-5
+    };
+    comments?: {
+      relevanceToNationalPriorities?: string;
+      originalityAndInnovation?: string;
+      clarityOfResearchProblem?: string;
+      methodology?: string;
+      literatureReview?: string;
+      teamComposition?: string;
+      feasibilityAndTimeline?: string;
+      budgetJustification?: string;
+      expectedOutcomes?: string;
+      sustainabilityAndScalability?: string;
+      strengths?: string;
+      weaknesses?: string;
+      overall?: string;
+    };
+  }
 ) => {
   try {
     const response = await api.patch(
@@ -533,6 +585,16 @@ export const saveReviewProgress = async (
     return response.data;
   } catch (error) {
     console.error("Error saving review progress:", error);
+    throw error;
+  }
+};
+
+export const getProposalReviews = async (proposalId: string) => {
+  try {
+    const response = await api.get(`/admin/reviews/proposal/${proposalId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching reviews for proposal ${proposalId}:`, error);
     throw error;
   }
 };
