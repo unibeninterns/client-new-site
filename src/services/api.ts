@@ -623,4 +623,47 @@ export const getResearcherProposalDetails = async (proposalId: string) => {
   }
 };
 
+// Reconciliation and Final Decision Endpoints
+export const getDiscrepancyDetails = async (proposalId: string) => {
+  try {
+    const response = await api.get(`/admin/reconciliation/discrepancy/${proposalId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching discrepancy details for proposal ${proposalId}:`, error);
+    throw error;
+  }
+};
+
+export const processReconciliationReview = async (reviewId: string) => {
+  try {
+    const response = await api.post(`/admin/reconciliation/process/${reviewId}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error processing reconciliation review ${reviewId}:`, error);
+    throw error;
+  }
+};
+
+export const finalizeProposalDecision = async (
+  proposalId: string,
+  decision: 'accepted' | 'rejected',
+  finalScore?: number,
+  fundingAmount?: number,
+  feedbackComments?: string
+) => {
+  try {
+    const response = await api.post(`/admin/proposals/${proposalId}/finalize-decision`, {
+      decision,
+      finalScore,
+      fundingAmount,
+      feedbackComments,
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Error finalizing decision for proposal ${proposalId}:`, error);
+    throw error;
+  }
+};
+
+
 export default api;
