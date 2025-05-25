@@ -19,6 +19,7 @@ export default function DecisionsPanel() {
   const [proposals, setProposals] = useState<ProposalDecision[]>([]);
   const [sortBy, setSortBy] = useState<'score' | 'title' | 'field'>('score');
   const [filterBy, setFilterBy] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
+  const [searchQuery, setSearchQuery] = useState(''); // Added searchQuery state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,6 +28,7 @@ export default function DecisionsPanel() {
       try {
         setIsLoading(true);
         const response = await getProposalsForDecision();
+        console.log('Proposals fetched:', response.data); // Debugging line
         setProposals(response.data);
         setError(null);
       } catch (err) {
@@ -44,9 +46,12 @@ export default function DecisionsPanel() {
     try {
       await updateProposalStatus(proposalId, { status: decision });
       setProposals(prevProposals => 
-        prevProposals.map(p => 
-          p.id === proposalId ? { ...p, status: decision } : p
-        )
+        prevProposals.map(p => {
+          if (p.id === proposalId) {
+            return { ...p, status: decision };
+          }
+          return p;
+        })
       );
     } catch (error) {
       console.error('Failed to update proposal status:', error);
@@ -56,7 +61,9 @@ export default function DecisionsPanel() {
   const handleNotifyApplicants = async () => {
     try {
       const decidedProposals = proposals.filter(p => p.status !== 'pending').map(p => p.id);
-      await notifyApplicants(decidedProposals);
+      for (const proposalId of decidedProposals) {
+        await notifyApplicants(proposalId);
+      }
       // Show success message
       alert('Applicants notified successfully!'); // Using a simple alert for now
     } catch (error) {
@@ -67,17 +74,15 @@ export default function DecisionsPanel() {
 
   const handleExportReport = async () => {
     try {
-      const blob = await exportDecisionsReport();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `proposals-decisions-${new Date().toISOString().split('T')[0]}.xlsx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      const result = await exportDecisionsReport();
+      if (result.success) {
+        alert(result.message);
+      } else {
+        alert('Failed to export report.');
+      }
     } catch (error) {
       console.error('Failed to export report:', error);
+      alert('Failed to export report.');
     }
   };
 

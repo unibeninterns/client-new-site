@@ -665,5 +665,79 @@ export const finalizeProposalDecision = async (
   }
 };
 
+// Define the ProposalDecision type for frontend use
+export type ProposalDecision = {
+  id: string;
+  title: string;
+  fieldOfResearch: string;
+  totalScore: number;
+  status: 'pending' | 'approved' | 'rejected';
+  scores: {
+    ai: number;
+    reviewer1: number;
+    reviewer2: number;
+  };
+};
+
+// Admin endpoints for Proposal Decision Management
+export const getProposalsForDecision = async (params = {}) => {
+  try {
+    const response = await api.get("/admin/proposals-for-decision", { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching proposals for decision:", error);
+    throw error;
+  }
+};
+
+export const updateProposalStatus = async (
+  proposalId: string,
+  statusData: {
+    status: ProposalDecision['status']; // Corrected type here
+    finalScore?: number;
+    fundingAmount?: number;
+    feedbackComments?: string;
+  }
+) => {
+  try {
+    const response = await api.patch(`/admin/proposals/${proposalId}/status`, statusData);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating status for proposal ${proposalId}:`, error);
+    throw error;
+  }
+};
+
+export const notifyApplicants = async (proposalId: string) => {
+  try {
+    const response = await api.post(`/admin/proposals/${proposalId}/notify-applicants`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error notifying applicants for proposal ${proposalId}:`, error);
+    throw error;
+  }
+};
+
+export const exportDecisionsReport = async () => {
+  try {
+    const response = await api.get("/admin/proposals/export-decisions", {
+      responseType: 'blob', // Important for handling file downloads
+    });
+    // Create a blob from the response data
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    // Create a link element
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.download = 'decisions_report.csv'; // Set the filename
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    return { success: true, message: 'Decisions report downloaded successfully' };
+  } catch (error) {
+    console.error("Error exporting decisions report:", error);
+    throw error;
+  }
+};
+
 
 export default api;
