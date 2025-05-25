@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 import { 
   Search, 
   ChevronDown, 
@@ -238,30 +239,31 @@ const ReviewersDashboard: React.FC = () => {
   const { reviewer, statistics, assignedProposals } = dashboardData;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
-                Welcome back, {reviewer.name}
-              </h1>
-              <p className="text-gray-600 flex items-center">
-                <Award className="w-4 h-4 mr-2" />
-                {reviewer.academicTitle} • {reviewer.department?.name || 'Department'}
-              </p>
+    <ReviewerLayout>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100">
+        <div className="container mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
+                  Welcome back, {reviewer.name}
+                </h1>
+                <p className="text-gray-600 flex items-center">
+                  <Award className="w-4 h-4 mr-2" />
+                  {reviewer.academicTitle} • {reviewer.department?.name || 'Department'}
+                </p>
+              </div>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="flex items-center px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
             </div>
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="flex items-center px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Refresh
-            </button>
           </div>
-        </div>
 
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
@@ -482,6 +484,7 @@ const ReviewersDashboard: React.FC = () => {
         </div>
       </div>
     </div>
+  </ReviewerLayout>
   );
 };
 

@@ -57,9 +57,11 @@ export default function DecisionsPanel() {
     try {
       const decidedProposals = proposals.filter(p => p.status !== 'pending').map(p => p.id);
       await notifyApplicants(decidedProposals);
-      // TODO: Show success message
+      // Show success message
+      alert('Applicants notified successfully!'); // Using a simple alert for now
     } catch (error) {
       console.error('Failed to notify applicants:', error);
+      alert('Failed to notify applicants.'); // Show error message
     }
   };
 
@@ -103,6 +105,10 @@ export default function DecisionsPanel() {
 
   const filteredProposals = proposals
     .filter(p => filterBy === 'all' || p.status === filterBy)
+    .filter(p => 
+      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.fieldOfResearch.toLowerCase().includes(searchQuery.toLowerCase())
+    )
     .sort((a, b) => {
       if (sortBy === 'score') return b.totalScore - a.totalScore;
       if (sortBy === 'title') return a.title.localeCompare(b.title);
@@ -122,6 +128,8 @@ export default function DecisionsPanel() {
               type="text"
               placeholder="Search"
               className="w-full px-4 py-2 border rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
             <Select 
@@ -191,7 +199,10 @@ export default function DecisionsPanel() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredProposals.map((proposal) => (
-                <tr key={proposal.id}>
+                <tr 
+                  key={proposal.id} 
+                  className={`${proposal.totalScore >= approvalThreshold ? 'bg-green-50' : ''}`}
+                >
                   <td className="px-6 py-4 text-sm text-gray-900">
                     {proposal.title}
                   </td>

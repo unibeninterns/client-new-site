@@ -68,7 +68,7 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
       
       setIsLoading(false);
     };
-    
+
     checkAuth();
   }, [userType]);
 
