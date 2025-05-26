@@ -9,16 +9,6 @@ import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { getReviewById, submitReview, saveReviewProgress } from '@/services/api';
 
-interface ReviewerData {
-  name: string;
-  scores: Record<string, number>;
-}
-
-interface PreviousScores {
-  reviewerA: ReviewerData;
-  reviewerB: ReviewerData;
-}
-
 interface ReviewCriteria {
   id: keyof ScoreData;
   name: string;
@@ -460,7 +450,6 @@ const ProposalReviewForm: React.FC = () => {
           {isReconciliation && discrepancyInfo && (
             <DiscrepancyAlert 
             discrepancyInfo={discrepancyInfo}
-            totalCriteria={reviewCriteria.length}
             />
       )}
 
