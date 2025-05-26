@@ -423,7 +423,7 @@ const ReviewerAssignments: React.FC = () => {
                             className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
                           >
                             <Eye className="w-4 h-4 mr-2" />
-                            {assignment.status === 'completed' ? 'View Review' : 'Start Review'}
+                            {assignment.status === 'in_progress' ? 'Continue Review' : assignment.status === 'completed' ? 'View Review' : 'Start Review'}
                           </Link>
                           
                           {assignment.status === 'completed' && assignment.completedAt && (

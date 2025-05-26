@@ -442,7 +442,7 @@ const ReviewersDashboard: React.FC = () => {
                       <div className="flex flex-col sm:flex-row gap-2">
                         {proposal.reviewStatus === 'reviewed' ? (
                           <Link
-                            href={`./dashboard/proposal?id=${proposal._id}`}
+                            href={`./dashboard/assignments/${proposal._id}`}
                             className="inline-flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg text-sm hover:bg-gray-700 transition-colors"
                           >
                             <Eye size={16} className="mr-2" />
@@ -450,7 +450,7 @@ const ReviewersDashboard: React.FC = () => {
                           </Link>
                         ) : (
                           <Link
-                            href={`./dashboard/proposal?id=${proposal._id}`}
+                            href={`./dashboard/assignments/${proposal._id}`}
                             className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 transition-colors"
                           >
                             <Edit3 size={16} className="mr-2" />
