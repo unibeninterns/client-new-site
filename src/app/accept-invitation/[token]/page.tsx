@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { completeReviewerProfile, getFaculties, getDepartmentsByFaculty } from '@/services/api';
 import {
@@ -48,13 +48,13 @@ interface Department {
 }
 
 interface ReviewerRegisterPageProps {
-  params: {
+  params: Promise<{
     token: string;
-  };
+  }>;
 }
 
 export default function ReviewerRegisterPage({ params }: ReviewerRegisterPageProps) {
-  const { token } = params;
+  const { token } = use(params);
   const [name, setName] = useState("");
   const [facultyId, setFacultyId] = useState("");
   const [departmentId, setDepartmentId] = useState("");
@@ -169,7 +169,7 @@ export default function ReviewerRegisterPage({ params }: ReviewerRegisterPagePro
 
       // Redirect to login page after 3 seconds
       setTimeout(() => {
-        router.push("/reviewer-login");
+        router.push("/reviewers/login");
       }, 3000);
     } catch (error: any) {
       setError(
@@ -242,52 +242,52 @@ export default function ReviewerRegisterPage({ params }: ReviewerRegisterPagePro
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="faculty" className="text-sm font-medium">
-                Faculty *
-              </label>
-              <Select value={facultyId} onValueChange={setFacultyId}>
-                <SelectTrigger className={validationErrors.facultyId ? "border-red-500" : ""}>
-                  <SelectValue placeholder="Select Faculty" />
-                </SelectTrigger>
-                <SelectContent>
-                  {faculties.map((faculty) => (
-                    <SelectItem key={faculty._id} value={faculty._id}>
-                      {faculty.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {validationErrors.facultyId && (
-                <p className="text-sm text-red-500">{validationErrors.facultyId}</p>
-              )}
-            </div>
+  <label htmlFor="faculty" className="text-sm font-medium">
+    Faculty *
+  </label>
+  <Select value={facultyId} onValueChange={setFacultyId}>
+    <SelectTrigger className={validationErrors.facultyId ? "border-red-500" : ""}>
+      <SelectValue placeholder="Select Faculty" />
+    </SelectTrigger>
+    <SelectContent className="max-h-60 overflow-y-auto">
+      {faculties.map((faculty) => (
+        <SelectItem key={faculty._id} value={faculty._id}>
+          {faculty.title} ({faculty.code})
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  {validationErrors.facultyId && (
+    <p className="text-sm text-red-500">{validationErrors.facultyId}</p>
+  )}
+</div>
 
-            <div className="space-y-2">
-              <label htmlFor="department" className="text-sm font-medium">
-                Department *
-              </label>
-              <Select 
-                value={departmentId} 
-                onValueChange={setDepartmentId}
-                disabled={!facultyId || loadingDepartments}
-              >
-                <SelectTrigger className={validationErrors.departmentId ? "border-red-500" : ""}>
-                  <SelectValue placeholder={
-                    loadingDepartments ? "Loading departments..." : "Select Department"
-                  } />
-                </SelectTrigger>
-                <SelectContent>
-                  {departments.map((department) => (
-                    <SelectItem key={department._id} value={department._id}>
-                      {department.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {validationErrors.departmentId && (
-                <p className="text-sm text-red-500">{validationErrors.departmentId}</p>
-              )}
-            </div>
+<div className="space-y-2">
+  <label htmlFor="department" className="text-sm font-medium">
+    Department *
+  </label>
+  <Select 
+    value={departmentId} 
+    onValueChange={setDepartmentId}
+    disabled={!facultyId || loadingDepartments}
+  >
+    <SelectTrigger className={validationErrors.departmentId ? "border-red-500" : ""}>
+      <SelectValue placeholder={
+        loadingDepartments ? "Loading departments..." : "Select Department"
+      } />
+    </SelectTrigger>
+    <SelectContent className="max-h-60 overflow-y-auto">
+      {departments.map((department) => (
+        <SelectItem key={department._id} value={department._id}>
+          {department.title} ({department.code})
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+  {validationErrors.departmentId && (
+    <p className="text-sm text-red-500">{validationErrors.departmentId}</p>
+  )}
+</div>
 
             <div className="space-y-2">
               <label htmlFor="phoneNumber" className="text-sm font-medium">

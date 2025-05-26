@@ -516,21 +516,7 @@ export const submitReview = async (
       expectedOutcomes: number; // 0-5
       sustainabilityAndScalability: number; // 0-5
     };
-    comments: {
-      relevanceToNationalPriorities?: string;
-      originalityAndInnovation?: string;
-      clarityOfResearchProblem?: string;
-      methodology?: string;
-      literatureReview?: string;
-      teamComposition?: string;
-      feasibilityAndTimeline?: string;
-      budgetJustification?: string;
-      expectedOutcomes?: string;
-      sustainabilityAndScalability?: string;
-      strengths?: string;
-      weaknesses?: string;
-      overall?: string;
-    };
+    comments: string;
   }
 ) => {
   try {
@@ -560,21 +546,7 @@ export const saveReviewProgress = async (
       expectedOutcomes?: number; // 0-5
       sustainabilityAndScalability?: number; // 0-5
     };
-    comments?: {
-      relevanceToNationalPriorities?: string;
-      originalityAndInnovation?: string;
-      clarityOfResearchProblem?: string;
-      methodology?: string;
-      literatureReview?: string;
-      teamComposition?: string;
-      feasibilityAndTimeline?: string;
-      budgetJustification?: string;
-      expectedOutcomes?: string;
-      sustainabilityAndScalability?: string;
-      strengths?: string;
-      weaknesses?: string;
-      overall?: string;
-    };
+    comments?: string;
   }
 ) => {
   try {
@@ -623,44 +595,30 @@ export const getResearcherProposalDetails = async (proposalId: string) => {
   }
 };
 
-// Reconciliation and Final Decision Endpoints
-export const getDiscrepancyDetails = async (proposalId: string) => {
-  try {
-    const response = await api.get(`/admin/reconciliation/discrepancy/${proposalId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error fetching discrepancy details for proposal ${proposalId}:`, error);
-    throw error;
-  }
-};
-
-export const processReconciliationReview = async (reviewId: string) => {
-  try {
-    const response = await api.post(`/admin/reconciliation/process/${reviewId}`);
-    return response.data;
-  } catch (error) {
-    console.error(`Error processing reconciliation review ${reviewId}:`, error);
-    throw error;
-  }
-};
-
+// Final Decision Endpoints
 export const finalizeProposalDecision = async (
   proposalId: string,
-  decision: 'accepted' | 'rejected',
+  decision: "accepted" | "rejected",
   finalScore?: number,
   fundingAmount?: number,
   feedbackComments?: string
 ) => {
   try {
-    const response = await api.post(`/admin/proposals/${proposalId}/finalize-decision`, {
-      decision,
-      finalScore,
-      fundingAmount,
-      feedbackComments,
-    });
+    const response = await api.post(
+      `/admin/proposals/${proposalId}/finalize-decision`,
+      {
+        decision,
+        finalScore,
+        fundingAmount,
+        feedbackComments,
+      }
+    );
     return response.data;
   } catch (error) {
-    console.error(`Error finalizing decision for proposal ${proposalId}:`, error);
+    console.error(
+      `Error finalizing decision for proposal ${proposalId}:`,
+      error
+    );
     throw error;
   }
 };
@@ -671,7 +629,7 @@ export type ProposalDecision = {
   title: string;
   fieldOfResearch: string;
   totalScore: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   scores: {
     ai: number;
     reviewer1: number;
@@ -693,14 +651,17 @@ export const getProposalsForDecision = async (params = {}) => {
 export const updateProposalStatus = async (
   proposalId: string,
   statusData: {
-    status: ProposalDecision['status']; // Corrected type here
+    status: ProposalDecision["status"]; // Corrected type here
     finalScore?: number;
     fundingAmount?: number;
     feedbackComments?: string;
   }
 ) => {
   try {
-    const response = await api.patch(`/admin/proposals/${proposalId}/status`, statusData);
+    const response = await api.patch(
+      `/admin/proposals/${proposalId}/status`,
+      statusData
+    );
     return response.data;
   } catch (error) {
     console.error(`Error updating status for proposal ${proposalId}:`, error);
@@ -710,10 +671,15 @@ export const updateProposalStatus = async (
 
 export const notifyApplicants = async (proposalId: string) => {
   try {
-    const response = await api.post(`/admin/proposals/${proposalId}/notify-applicants`);
+    const response = await api.post(
+      `/admin/proposals/${proposalId}/notify-applicants`
+    );
     return response.data;
   } catch (error) {
-    console.error(`Error notifying applicants for proposal ${proposalId}:`, error);
+    console.error(
+      `Error notifying applicants for proposal ${proposalId}:`,
+      error
+    );
     throw error;
   }
 };
@@ -721,23 +687,25 @@ export const notifyApplicants = async (proposalId: string) => {
 export const exportDecisionsReport = async () => {
   try {
     const response = await api.get("/admin/proposals/export-decisions", {
-      responseType: 'blob', // Important for handling file downloads
+      responseType: "blob", // Important for handling file downloads
     });
     // Create a blob from the response data
-    const blob = new Blob([response.data], { type: 'text/csv' });
+    const blob = new Blob([response.data], { type: "text/csv" });
     // Create a link element
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = window.URL.createObjectURL(blob);
-    link.download = 'decisions_report.csv'; // Set the filename
+    link.download = "decisions_report.csv"; // Set the filename
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    return { success: true, message: 'Decisions report downloaded successfully' };
+    return {
+      success: true,
+      message: "Decisions report downloaded successfully",
+    };
   } catch (error) {
     console.error("Error exporting decisions report:", error);
     throw error;
   }
 };
-
 
 export default api;
