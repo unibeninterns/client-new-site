@@ -133,12 +133,6 @@ const CompletedReviews: React.FC = () => {
     })
   );
 
-  const calculateAverageScore = () => {
-    if (completedReviews.length === 0) return 0;
-    const total = completedReviews.reduce((sum, review) => sum + review.totalScore, 0);
-    return Math.round(total / completedReviews.length);
-  };
-
   const getReviewTypeStats = () => {
     const human = completedReviews.filter(r => r.reviewType === 'human').length;
     const reconciliation = completedReviews.filter(r => r.reviewType === 'reconciliation').length;
@@ -179,7 +173,6 @@ const CompletedReviews: React.FC = () => {
   }
 
   const reviewTypeStats = getReviewTypeStats();
-  const averageScore = calculateAverageScore();
 
   return (
     <ReviewerLayout>
@@ -212,21 +205,6 @@ const CompletedReviews: React.FC = () => {
                 </div>
                 <div className="bg-green-100 p-3 rounded-lg">
                   <CheckCircle className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Average Score</p>
-                  <p className={`text-2xl font-bold ${getScoreColor(averageScore)}`}>
-                    {averageScore}/100
-                  </p>
-                  <p className="text-xs text-gray-500">{getScoreGrade(averageScore)}</p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <BarChart3 className="w-6 h-6 text-blue-600" />
                 </div>
               </div>
             </div>
