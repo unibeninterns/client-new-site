@@ -13,7 +13,6 @@ import {
   DollarSign,
   User,
   Building,
-  TrendingUp,
   Award,
   Eye,
   Download,
@@ -239,4 +238,237 @@ const CompletedReviews: React.FC = () => {
                   <p className="text-2xl font-bold text-purple-600">{reviewTypeStats.human}</p>
                 </div>
                 <div className="bg-purple-100 p-3 rounded-lg">
-                  <FileText className="w-6 h-6
+                  <FileText className="w-6 h-6 text-purple-600" />
+                </div>
+                </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Reconciliation Reviews</p>
+                  <p className="text-2xl font-bold text-purple-600">{reviewTypeStats.reconciliation}</p>
+                </div>
+                <div className="bg-purple-100 p-3 rounded-lg">
+                  <Award className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Controls */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex items-center space-x-2">
+                  <Filter className="w-5 h-5 text-gray-500" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as any)}
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  >
+                    <option value="recent">Sort by Recent</option>
+                    <option value="score">Sort by Score</option>
+                    <option value="title">Sort by Title</option>
+                  </select>
+                </div>
+                
+                <div className="flex space-x-2">
+                  {['all', 'human', 'reconciliation'].map((type) => (
+                    <button
+                      key={type}
+                      onClick={() => setFilterType(type as any)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        filterType === type
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {type === 'all' ? 'All Types' : type.charAt(0).toUpperCase() + type.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="relative">
+                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search completed reviews..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent w-full sm:w-80"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Completed Reviews List */}
+        <div className="max-w-7xl mx-auto">
+          {filteredAndSortedReviews.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+              <CheckCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No completed reviews found</h3>
+              <p className="text-gray-500">
+                {searchTerm || filterType !== 'all' 
+                  ? 'Try adjusting your search or filter criteria' 
+                  : 'You haven\'t completed any reviews yet'}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredAndSortedReviews.map((review) => (
+                <div
+                  key={review._id}
+                  className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border-l-4 border-l-green-500"
+                >
+                  <div className="p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                              {review.proposal.projectTitle}
+                            </h3>
+                            <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                              <div className="flex items-center">
+                                <User className="w-4 h-4 mr-1" />
+                                {review.proposal.submitter.name}
+                              </div>
+                              {review.proposal.submitter.faculty && (
+                                <div className="flex items-center">
+                                  <Building className="w-4 h-4 mr-1" />
+                                  {review.proposal.submitter.faculty.title}
+                                </div>
+                              )}
+                              <div className="flex items-center">
+                                <Calendar className="w-4 h-4 mr-1" />
+                                Completed: {new Date(review.completedAt).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            {review.reviewType === 'reconciliation' && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                <Award className="w-3 h-3 mr-1" />
+                                Reconciliation
+                              </span>
+                            )}
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              Completed
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center">
+                              <Star className="w-4 h-4 mr-2 text-yellow-500" />
+                              <span className="text-sm font-medium text-gray-700">Score</span>
+                            </div>
+                            <div className="text-right">
+                              <span className={`text-lg font-bold ${getScoreColor(review.totalScore)}`}>
+                                {review.totalScore}/100
+                              </span>
+                              <p className="text-xs text-gray-500">{getScoreGrade(review.totalScore)}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                            <div className="flex items-center">
+                              <Clock className="w-4 h-4 mr-2 text-blue-500" />
+                              <span className="text-sm font-medium text-gray-700">Due Date</span>
+                            </div>
+                            <span className="text-sm text-gray-600">
+                              {new Date(review.dueDate).toLocaleDateString()}
+                            </span>
+                          </div>
+
+                          {review.proposal.estimatedBudget && (
+                            <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                              <div className="flex items-center">
+                                <DollarSign className="w-4 h-4 mr-2 text-green-500" />
+                                <span className="text-sm font-medium text-gray-700">Budget</span>
+                              </div>
+                              <span className="text-sm text-gray-600">
+                                ₦{review.proposal.estimatedBudget.toLocaleString()}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Score Breakdown */}
+                        <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                          <div className="flex items-center mb-3">
+                            <BarChart3 className="w-4 h-4 mr-2 text-purple-500" />
+                            <span className="text-sm font-medium text-gray-700">Score Breakdown</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+                            <div
+                              className="bg-gradient-to-r from-purple-500 to-blue-500 rounded-full h-3 transition-all duration-500"
+                              style={{ width: `${review.totalScore}%` }}
+                            ></div>
+                          </div>
+                          <div className="flex justify-between text-xs text-gray-600">
+                            <span>0</span>
+                            <span className="font-medium">{review.totalScore}/100</span>
+                            <span>100</span>
+                          </div>
+                        </div>
+
+                        {/* Comments Preview */}
+                        {review.comments && (
+                          <div className="bg-blue-50 rounded-lg p-4">
+                            <div className="flex items-start">
+                              <MessageSquare className="w-4 h-4 mr-2 text-blue-500 mt-0.5 flex-shrink-0" />
+                              <div>
+                                <p className="text-sm font-medium text-gray-700 mb-1">Review Comments</p>
+                                <p className="text-sm text-gray-600 line-clamp-3">
+                                  {review.comments.length > 150 
+                                    ? `${review.comments.substring(0, 150)}...` 
+                                    : review.comments}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col gap-2">
+                        <Link
+                          href={`/reviewers/assignments/${review._id}`}
+                          className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Details
+                        </Link>
+                        
+                        <button
+                          onClick={() => {
+                            // Handle download/export functionality
+                            console.log('Export review:', review._id);
+                          }}
+                          className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Export
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </ReviewerLayout>
+  );
+};
+
+export default CompletedReviews;
