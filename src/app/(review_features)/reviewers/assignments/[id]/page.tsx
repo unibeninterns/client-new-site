@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, Clock, AlertCircle, Save, Send, FileText, User, Calendar, DollarSign } from 'lucide-react';
+import { Eye, Clock, AlertCircle, Save, Send, FileText, User } from 'lucide-react';
 import DiscrepancyAlert from '@/components/reviewers/DiscrepancyAlert';
 import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,6 +77,41 @@ interface ReviewData {
   completedAt?: string;
 }
 
+interface DiscrepancyInfo {
+  message: string;
+  conflictingReviews: Array<{
+    reviewId: string;
+    scores: ScoreData;
+    totalScore: number;
+    comments: string;
+    submittedAt: string;
+  }>;
+  discrepancyAnalysis: {
+    overallScoreRange: {
+      highest: number;
+      lowest: number;
+      average: number;
+      percentageDifference: number;
+    };
+    criteriaWithHighestDiscrepancy: Array<{
+      criterion: string;
+      scores: number[];
+      averageScore: number;
+      percentageDifference: number;
+    }>;
+  };
+  reconciliationGuidance: {
+    purpose: string;
+    instruction: string;
+    weightage: string;
+  };
+}
+
+interface ReviewResponseData {
+  review: ReviewData;
+  discrepancyInfo?: DiscrepancyInfo;  
+}
+
 const ProposalReviewForm: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -88,7 +123,7 @@ const ProposalReviewForm: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [previousScores, setPreviousScores] = useState<PreviousScores | null>(null);
+  const [discrepancyInfo, setDiscrepancyInfo] = useState<DiscrepancyInfo | null>(null);
 
   const [reviewCriteria, setReviewCriteria] = useState<ReviewCriteria[]>([
     {
@@ -172,9 +207,14 @@ const ProposalReviewForm: React.FC = () => {
         const response = await getReviewById(reviewId);
         
         if (response.success) {
-          const review = response.data;
+          const { review, discrepancyInfo } = response.data as ReviewResponseData;
           setReviewData(review);
           setReviewComments(review.comments || '');
+
+          // Set discrepancy info if available
+        if (discrepancyInfo) {
+          setDiscrepancyInfo(discrepancyInfo);
+        }
           
           // Update criteria with existing scores
           setReviewCriteria(prev => 
@@ -183,44 +223,6 @@ const ProposalReviewForm: React.FC = () => {
               scoreGiven: review.scores[criteria.id] || undefined
             }))
           );
-
-          // If this is a reconciliation review, fetch previous scores
-          if (review.reviewType === 'reconciliation') {
-            // Mock previous scores for reconciliation - in real implementation,
-            // you might need another API endpoint to get previous review scores
-            setPreviousScores({
-              reviewerA: {
-                name: "Reviewer A",
-                scores: {
-                  'relevanceToNationalPriorities': Math.floor(Math.random() * 10) + 1,
-                  'originalityAndInnovation': Math.floor(Math.random() * 15) + 1,
-                  'clarityOfResearchProblem': Math.floor(Math.random() * 10) + 1,
-                  'methodology': Math.floor(Math.random() * 15) + 1,
-                  'literatureReview': Math.floor(Math.random() * 10) + 1,
-                  'teamComposition': Math.floor(Math.random() * 10) + 1,
-                  'feasibilityAndTimeline': Math.floor(Math.random() * 10) + 1,
-                  'budgetJustification': Math.floor(Math.random() * 10) + 1,
-                  'expectedOutcomes': Math.floor(Math.random() * 5) + 1,
-                  'sustainabilityAndScalability': Math.floor(Math.random() * 5) + 1,
-                }
-              },
-              reviewerB: {
-                name: "Reviewer B",
-                scores: {
-                  'relevanceToNationalPriorities': Math.floor(Math.random() * 10) + 1,
-                  'originalityAndInnovation': Math.floor(Math.random() * 15) + 1,
-                  'clarityOfResearchProblem': Math.floor(Math.random() * 10) + 1,
-                  'methodology': Math.floor(Math.random() * 15) + 1,
-                  'literatureReview': Math.floor(Math.random() * 10) + 1,
-                  'teamComposition': Math.floor(Math.random() * 10) + 1,
-                  'feasibilityAndTimeline': Math.floor(Math.random() * 10) + 1,
-                  'budgetJustification': Math.floor(Math.random() * 10) + 1,
-                  'expectedOutcomes': Math.floor(Math.random() * 5) + 1,
-                  'sustainabilityAndScalability': Math.floor(Math.random() * 5) + 1,
-                }
-              }
-            });
-          }
         } else {
           setError('Failed to load review data');
         }
@@ -455,79 +457,167 @@ const ProposalReviewForm: React.FC = () => {
           </div>
 
           {/* Discrepancy Alert for Reconciliation Reviews */}
-          {isReconciliation && previousScores && (
-            <DiscrepancyAlert previousScores={previousScores} />
-          )}
+          {isReconciliation && discrepancyInfo && (
+            <DiscrepancyAlert 
+            discrepancyInfo={discrepancyInfo}
+            totalCriteria={reviewCriteria.length}
+            />
+      )}
 
-          {/* Previous Scores for Reconciliation */}
-          {isReconciliation && previousScores && (
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-              <h2 className="text-xl font-bold text-gray-800 mb-4">Previous Review Scores</h2>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 font-semibold">Criteria</th>
-                      <th className="text-left py-3 font-semibold">Reviewer A</th>
-                      <th className="text-left py-3 font-semibold">Reviewer B</th>
-                      <th className="text-left py-3 font-semibold">Difference</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {reviewCriteria.map((criteria) => {
-                      const scoreA = previousScores.reviewerA.scores[criteria.id] || 0;
-                      const scoreB = previousScores.reviewerB.scores[criteria.id] || 0;
-                      const difference = Math.abs(scoreA - scoreB);
-                      
-                      return (
-                        <tr key={criteria.id} className="border-b">
-                          <td className="py-3">
-                            <div>
-                              <div className="font-medium">{criteria.name}</div>
-                              <div className="text-sm text-gray-500">Max: {criteria.maxScore}</div>
-                            </div>
-                          </td>
-                          <td className="py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-blue-500 rounded-full h-2" 
-                                  style={{ width: `${(scoreA / criteria.maxScore) * 100}%` }}
-                                ></div>
-                              </div>
-                              <span className="font-medium">{scoreA}/{criteria.maxScore}</span>
-                            </div>
-                          </td>
-                          <td className="py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 bg-gray-200 rounded-full h-2">
-                                <div 
-                                  className="bg-green-500 rounded-full h-2" 
-                                  style={{ width: `${(scoreB / criteria.maxScore) * 100}%` }}
-                                ></div>
-                              </div>
-                              <span className="font-medium">{scoreB}/{criteria.maxScore}</span>
-                            </div>
-                          </td>
-                          <td className="py-3">
-                            <span className={`font-medium ${
-                              difference > criteria.maxScore * 0.3 
-                                ? 'text-red-600' 
-                                : difference > criteria.maxScore * 0.2 
-                                ? 'text-yellow-600' 
-                                : 'text-green-600'
-                            }`}>
-                              {difference}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+          {isReconciliation && discrepancyInfo && (
+  <>
+    {/* Reconciliation Guidance Card */}
+    <div className="bg-blue-50 border border-blue-200 rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-bold text-blue-800 mb-4">Reconciliation Review Guidance</h2>
+      <div className="space-y-3">
+        <div>
+          <h3 className="font-semibold text-blue-700">Purpose:</h3>
+          <p className="text-blue-600">{discrepancyInfo.reconciliationGuidance.purpose}</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-blue-700">Instructions:</h3>
+          <p className="text-blue-600">{discrepancyInfo.reconciliationGuidance.instruction}</p>
+        </div>
+        <div>
+          <h3 className="font-semibold text-blue-700">Scoring Weight:</h3>
+          <p className="text-blue-600">{discrepancyInfo.reconciliationGuidance.weightage}</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Discrepancy Analysis */}
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Discrepancy Analysis</h2>
+      
+      {/* Overall Score Range */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+        <h3 className="font-semibold text-yellow-800 mb-2">Overall Score Range</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div className="text-center">
+            <div className="font-bold text-lg text-green-600">{discrepancyInfo.discrepancyAnalysis.overallScoreRange.highest}</div>
+            <div className="text-gray-600">Highest</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-lg text-red-600">{discrepancyInfo.discrepancyAnalysis.overallScoreRange.lowest}</div>
+            <div className="text-gray-600">Lowest</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-lg text-blue-600">{discrepancyInfo.discrepancyAnalysis.overallScoreRange.average}</div>
+            <div className="text-gray-600">Average</div>
+          </div>
+          <div className="text-center">
+            <div className="font-bold text-lg text-orange-600">{discrepancyInfo.discrepancyAnalysis.overallScoreRange.percentageDifference}%</div>
+            <div className="text-gray-600">Difference</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Top Discrepancy Criteria */}
+      <div>
+        <h3 className="font-semibold text-gray-700 mb-3">Criteria with Highest Discrepancies</h3>
+        <div className="space-y-3">
+          {discrepancyInfo.discrepancyAnalysis.criteriaWithHighestDiscrepancy.map((criteria, index) => (
+            <div key={index} className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-red-800">{criteria.criterion}</h4>
+                <span className="text-red-600 font-bold">{criteria.percentageDifference}% difference</span>
+              </div>
+              <div className="flex items-center gap-4 text-sm">
+                <div>Scores: {criteria.scores.join(', ')}</div>
+                <div>Average: {criteria.averageScore}</div>
               </div>
             </div>
-          )}
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Previous Review Scores with Real Data */}
+    <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <h2 className="text-xl font-bold text-gray-800 mb-4">Previous Review Scores</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b">
+              <th className="text-left py-3 font-semibold">Criteria</th>
+              {discrepancyInfo.conflictingReviews.map((review, index) => (
+                <th key={index} className="text-left py-3 font-semibold">{review.reviewId}</th>
+              ))}
+              <th className="text-left py-3 font-semibold">Score Range</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reviewCriteria.map((criteria) => {
+              const scores = discrepancyInfo.conflictingReviews.map(review => 
+                review.scores[criteria.id] || 0
+              );
+              const minScore = Math.min(...scores);
+              const maxScore = Math.max(...scores);
+              const difference = maxScore - minScore;
+              
+              return (
+                <tr key={criteria.id} className="border-b">
+                  <td className="py-3">
+                    <div>
+                      <div className="font-medium">{criteria.name}</div>
+                      <div className="text-sm text-gray-500">Max: {criteria.maxScore}</div>
+                    </div>
+                  </td>
+                  {scores.map((score, index) => (
+                    <td key={index} className="py-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-20 bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`rounded-full h-2 ${
+                              index === 0 ? 'bg-blue-500' : 'bg-green-500'
+                            }`}
+                            style={{ width: `${(score / criteria.maxScore) * 100}%` }}
+                          ></div>
+                        </div>
+                        <span className="font-medium">{score}/{criteria.maxScore}</span>
+                      </div>
+                    </td>
+                  ))}
+                  <td className="py-3">
+                    <span className={`font-medium ${
+                      difference > criteria.maxScore * 0.3 
+                        ? 'text-red-600' 
+                        : difference > criteria.maxScore * 0.2 
+                        ? 'text-yellow-600' 
+                        : 'text-green-600'
+                    }`}>
+                      {minScore}-{maxScore} ({difference} diff)
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Previous Comments */}
+      <div className="mt-6">
+        <h3 className="font-semibold text-gray-700 mb-3">Previous Review Comments</h3>
+        <div className="space-y-4">
+          {discrepancyInfo.conflictingReviews.map((review, index) => (
+            <div key={index} className="bg-gray-50 rounded-lg p-4">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-medium text-gray-800">{review.reviewId}</h4>
+                <div className="text-sm text-gray-500">
+                  Total Score: {review.totalScore}/{calculateMaxTotalScore()}
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm whitespace-pre-wrap">
+                {review.comments || 'No comments provided.'}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </>
+)}
 
           {/* Proposal Details */}
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -732,4 +822,66 @@ const ProposalReviewForm: React.FC = () => {
             {!isCompleted && (
               <div className="flex flex-col sm:flex-row gap-3">
                 <button 
-                  onClick={handleSaveProgress
+                  onClick={handleSaveProgress}
+                  disabled={saving}
+                  className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Save Progress
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {submitting ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Submit Review
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={handleReset}
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+            )}
+
+            {/* Completion Message */}
+            {isCompleted && (
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                <div className="flex items-center gap-2 text-green-800">
+                  <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                    <div className="w-2 h-2 bg-white rounded-full"></div>
+                  </div>
+                  <span className="font-medium">
+                    Review completed on {reviewData.completedAt ? formatDate(reviewData.completedAt) : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </ReviewerLayout>
+  );
+};
+
+export default ProposalReviewForm;
