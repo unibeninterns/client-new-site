@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { getAllReviewers, getReviewerById } from '@/services/api';
+import { getAllReviewers, getReviewerById, checkOverdueReviews  } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { 
   Users, 
@@ -23,7 +23,9 @@ import {
   Loader2,
   Calendar,
   Award,
-  BarChart3
+  BarChart3,
+  Bell,
+  Send,
 } from 'lucide-react';
 
 interface ReviewerStatistics {
@@ -96,6 +98,12 @@ export default function AdminReviewersPage() {
     totalPages: 1,
     count: 0
   });
+  const [isCheckingOverdue, setIsCheckingOverdue] = useState(false);
+  const [overdueCheckResult, setOverdueCheckResult] = useState<{
+    approachingDeadline: number;
+    overdue: number;
+  } | null>(null);
+  const [showOverdueAlert, setShowOverdueAlert] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -167,6 +175,25 @@ export default function AdminReviewersPage() {
   }
 };
 
+const handleCheckOverdueReviews = async () => {
+  try {
+    setIsCheckingOverdue(true);
+    const response = await checkOverdueReviews();
+    setOverdueCheckResult(response.data);
+    setShowOverdueAlert(true);
+    
+    // Auto-hide the alert after 5 seconds
+    setTimeout(() => {
+      setShowOverdueAlert(false);
+    }, 5000);
+  } catch (err) {
+    console.error('Failed to check overdue reviews:', err);
+    setError('Failed to check overdue reviews');
+  } finally {
+    setIsCheckingOverdue(false);
+  }
+};
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'accepted':
@@ -227,29 +254,89 @@ export default function AdminReviewersPage() {
     <AdminLayout>
       <div className="py-6">
         <div className="mx-auto px-4 sm:px-6 md:px-8">
-          {/* Header */}
+
+{/*Reviewer Management Header*/}
           <div className="flex justify-between items-center mb-6">
-            <div>
-              <h1 className="text-2xl font-semibold text-gray-900">Reviewer Management</h1>
-              <p className="text-gray-600 mt-1">Manage and monitor reviewer activities</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-5 w-5 text-purple-800" />
-                  <span className="text-sm font-medium text-gray-700">
-                    {pagination.count} Total Reviewers
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div>
+    <h1 className="text-2xl font-semibold text-gray-900">Reviewer Management</h1>
+    <p className="text-gray-600 mt-1">Manage and monitor reviewer activities</p>
+  </div>
+  <div className="flex items-center space-x-4">
+    {/* Add this button before the existing Total Reviewers display */}
+    <button
+      onClick={handleCheckOverdueReviews}
+      disabled={isCheckingOverdue}
+      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+    >
+      {isCheckingOverdue ? (
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+      ) : (
+        <Bell className="h-4 w-4 mr-2" />
+      )}
+      {isCheckingOverdue ? 'Checking...' : 'Check Overdue Reviews'}
+    </button>
+    
+    <div className="bg-white px-3 py-2 rounded-lg shadow-sm border">
+      <div className="flex items-center space-x-2">
+        <Users className="h-5 w-5 text-purple-800" />
+        <span className="text-sm font-medium text-gray-700">
+          {pagination.count} Total Reviewers
+        </span>
+      </div>
+    </div>
+  </div>
+</div>
 
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
               {error}
             </div>
           )}
+
+           {/* Overdue Reviews Alert */}
+           {showOverdueAlert && overdueCheckResult && (
+  <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-md">
+    <div className="flex items-start">
+      <div className="flex-shrink-0">
+        <Send className="h-5 w-5 text-blue-400 mt-0.5" />
+      </div>
+      <div className="ml-3 flex-1">
+        <h3 className="text-sm font-medium text-blue-800">
+          Review Deadline Check Completed
+        </h3>
+        <div className="mt-2 text-sm text-blue-700">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center space-x-2">
+              <Clock className="h-4 w-4 text-orange-500" />
+              <span>
+                <span className="font-semibold">{overdueCheckResult.approachingDeadline}</span> 
+                {' '}reviews approaching deadline (reminders sent)
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <span>
+                <span className="font-semibold">{overdueCheckResult.overdue}</span> 
+                {' '}overdue reviews (notifications sent)
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className="ml-auto pl-3">
+        <div className="-mx-1.5 -my-1.5">
+          <button
+            type="button"
+            onClick={() => setShowOverdueAlert(false)}
+            className="inline-flex bg-blue-50 rounded-md p-1.5 text-blue-500 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-50 focus:ring-blue-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
 
           {/* Search and Filter Bar */}
           <div className="bg-white shadow rounded-lg p-4 mb-6">
