@@ -619,18 +619,6 @@ const ProposalReviewForm: React.FC = () => {
 
             {/* Submitter Information */}
             <div className="grid md:grid-cols-2 gap-6 mb-6">
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <User className="w-5 h-5 text-purple-600" />
-                  <h4 className="font-semibold text-gray-700">Principal Investigator</h4>
-                </div>
-                <div className="space-y-1">
-                  <p className="font-medium">{reviewData.proposal.submitter.academicTitle} {reviewData.proposal.submitter.name}</p>
-                  <p className="text-sm text-gray-600">{reviewData.proposal.submitter.department.title}</p>
-                  <p className="text-sm text-gray-600">{reviewData.proposal.submitter.faculty.title}</p>
-                  <p className="text-sm text-gray-500">{reviewData.proposal.submitter.email}</p>
-                </div>
-              </div>
 
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-3">

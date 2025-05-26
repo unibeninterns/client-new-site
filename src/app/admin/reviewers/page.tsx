@@ -22,8 +22,15 @@ import {
   X,
   Loader2,
   Calendar,
-  Award
+  Award,
+  BarChart3
 } from 'lucide-react';
+
+interface ReviewerStatistics {
+  assigned: number;
+  completed: number;
+  completionRate: number;
+}
 
 interface Reviewer {
   _id: string;
@@ -48,6 +55,7 @@ interface Reviewer {
   completedReviews: any[];
   createdAt: string;
   lastLogin?: string;
+  statistics: ReviewerStatistics;
 }
 
 interface ReviewerDetails extends Reviewer {
@@ -130,18 +138,34 @@ export default function AdminReviewersPage() {
   };
 
   const loadReviewerDetails = async (id: string) => {
-    try {
-      setIsLoadingDetails(true);
-      const response = await getReviewerById(id);
-      setSelectedReviewer(response.data);
-      setShowDetails(true);
-    } catch (err) {
-      console.error('Failed to load reviewer details:', err);
-      setError('Failed to load reviewer details');
-    } finally {
-      setIsLoadingDetails(false);
-    }
-  };
+  try {
+    setIsLoadingDetails(true);
+    
+    // Get statistics from existing list data
+    const existingReviewer = reviewers.find(r => r._id === id);
+    const response = await getReviewerById(id);
+
+    // Merge statistics from list with detailed data
+    const mergedData: ReviewerDetails = {
+      ...response.data,
+      statistics: existingReviewer?.statistics || {
+        assigned: response.data.assignedProposals.length,
+        completed: response.data.completedReviews.length,
+        completionRate: response.data.assignedProposals.length > 0 
+          ? Math.round((response.data.completedReviews.length / response.data.assignedProposals.length) * 100)
+          : 0
+      }
+    };
+
+    setSelectedReviewer(mergedData);
+    setShowDetails(true);
+  } catch (err) {
+    console.error('Failed to load reviewer details:', err);
+    setError('Failed to load reviewer details');
+  } finally {
+    setIsLoadingDetails(false);
+  }
+};
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -171,6 +195,13 @@ export default function AdminReviewersPage() {
       default:
         return <User className="h-4 w-4" />;
     }
+  };
+
+  const getCompletionRateColor = (rate: number) => {
+    if (rate >= 80) return 'text-green-600';
+    if (rate >= 60) return 'text-yellow-600';
+    if (rate >= 40) return 'text-orange-600';
+    return 'text-red-600';
   };
 
   const filteredReviewers = reviewers.filter(reviewer => {
@@ -313,15 +344,20 @@ export default function AdminReviewersPage() {
                               </div>
                             </div>
                             <div className="mt-2 flex items-center space-x-6 text-sm">
-                              <div className="flex items-center text-green-600">
+                              <div className="flex items-center text-blue-600">
                                 <FileText className="h-4 w-4 mr-1" />
-                                <span className="font-medium">{reviewer.assignedProposals.length}</span>
+                                <span className="font-medium">{reviewer.statistics.assigned}</span>
                                 <span className="ml-1">Assigned</span>
                               </div>
-                              <div className="flex items-center text-blue-600">
+                              <div className="flex items-center text-green-600">
                                 <CheckCircle className="h-4 w-4 mr-1" />
-                                <span className="font-medium">{reviewer.completedReviews.length}</span>
+                                <span className="font-medium">{reviewer.statistics.completed}</span>
                                 <span className="ml-1">Completed</span>
+                              </div>
+                              <div className={`flex items-center ${getCompletionRateColor(reviewer.statistics.completionRate)}`}>
+                                <BarChart3 className="h-4 w-4 mr-1" />
+                                <span className="font-medium">{reviewer.statistics.completionRate}%</span>
+                                <span className="ml-1">Rate</span>
                               </div>
                               <div className="flex items-center text-gray-500">
                                 <Calendar className="h-4 w-4 mr-1" />
@@ -440,9 +476,9 @@ export default function AdminReviewersPage() {
                         <FileText className="h-6 w-6 text-blue-800" />
                       </div>
                       <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-500">Assigned Proposals</p>
+                        <p className="text-sm font-medium text-gray-500">Assigned Reviews</p>
                         <p className="text-2xl font-semibold text-gray-900">
-                          {selectedReviewer.assignedProposals.length}
+                          {selectedReviewer.statistics.assigned}
                         </p>
                       </div>
                     </div>
@@ -455,7 +491,7 @@ export default function AdminReviewersPage() {
                       <div className="ml-4">
                         <p className="text-sm font-medium text-gray-500">Completed Reviews</p>
                         <p className="text-2xl font-semibold text-gray-900">
-                          {selectedReviewer.completedReviews.length}
+                          {selectedReviewer.statistics.completed}
                         </p>
                       </div>
                     </div>
@@ -467,10 +503,8 @@ export default function AdminReviewersPage() {
                       </div>
                       <div className="ml-4">
                         <p className="text-sm font-medium text-gray-500">Completion Rate</p>
-                        <p className="text-2xl font-semibold text-gray-900">
-                          {selectedReviewer.assignedProposals.length > 0 
-                            ? Math.round((selectedReviewer.completedReviews.length / selectedReviewer.assignedProposals.length) * 100)
-                            : 0}%
+                        <p className={`text-2xl font-semibold ${getCompletionRateColor(selectedReviewer.statistics.completionRate)}`}>
+                          {selectedReviewer.statistics.completionRate}%
                         </p>
                       </div>
                     </div>

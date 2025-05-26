@@ -348,16 +348,6 @@ const ReviewerAssignments: React.FC = () => {
                               </h3>
                               <div className="flex items-center space-x-4 text-sm text-gray-600">
                                 <div className="flex items-center">
-                                  <User className="w-4 h-4 mr-1" />
-                                  {assignment.proposal.submitter.name}
-                                </div>
-                                {assignment.proposal.submitter.faculty && (
-                                  <div className="flex items-center">
-                                    <Building className="w-4 h-4 mr-1" />
-                                    {assignment.proposal.submitter.faculty.title}
-                                  </div>
-                                )}
-                                <div className="flex items-center">
                                   <Calendar className="w-4 h-4 mr-1" />
                                   {new Date(assignment.proposal.createdAt).toLocaleDateString()}
                                 </div>
