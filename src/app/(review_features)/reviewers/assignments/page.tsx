@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DiscrepancyAlert from '@/components/reviewers/DiscrepancyAlert';
 import Link from 'next/link';
 import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
 
 
 interface ReviewerData {
@@ -25,7 +27,16 @@ interface ReviewCriteria {
 }
 
 const ProposalReviewForm: React.FC = () => {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
   const [isDiscrepancyReview] = useState(true); // This would come from your API/props
+
+  // Add this useEffect for authentication check
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/admin/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   const [previousScores] = useState<PreviousScores>({
     reviewerA: {
@@ -186,6 +197,18 @@ const ProposalReviewForm: React.FC = () => {
     );
     setReviewComments('');
   };
+
+  // Add loading state handling
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

@@ -15,7 +15,6 @@ import {
   User,
   Award,
   TrendingUp,
-  Filter,
   RefreshCw
 } from 'lucide-react';
 import Link from 'next/link';
@@ -94,7 +93,7 @@ const ReviewersDashboard: React.FC = () => {
 
   useEffect(() => {
       if (!authLoading && !isAuthenticated) {
-        router.push('/admin/login');
+        router.push('/reviewers/login');
       }
     }, [authLoading, isAuthenticated, router]);
 
