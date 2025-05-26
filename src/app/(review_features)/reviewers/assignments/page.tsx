@@ -1,435 +1,448 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import DiscrepancyAlert from '@/components/reviewers/DiscrepancyAlert';
 import Link from 'next/link';
 import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
+import { getReviewerAssignments, getReviewerStatistics } from '@/services/api';
+import {
+  Clock,
+  AlertTriangle,
+  FileText,
+  Calendar,
+  DollarSign,
+  User,
+  Building,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Filter,
+  Search,
+  TrendingUp,
+  Award,
+  RefreshCw,
+} from 'lucide-react';
 
-
-interface ReviewerData {
-  name: string;
-  scores: Record<string, number>;
+interface ReviewAssignment {
+  _id: string;
+  proposal: {
+    _id: string;
+    projectTitle: string;
+    submitterType: 'staff' | 'master_student';
+    status: string;
+    createdAt: string;
+    estimatedBudget?: number;
+    submitter: {
+      name: string;
+      email: string;
+      faculty?: {
+        title: string;
+      };
+      department?: {
+        title: string;
+      };
+    };
+  };
+  reviewType: 'human' | 'reconciliation';
+  status: 'in_progress' | 'completed' | 'overdue';
+  dueDate: string;
+  completedAt?: string;
+  totalScore?: number;
 }
 
-interface PreviousScores {
-  reviewerA: ReviewerData;
-  reviewerB: ReviewerData;
+interface ReviewerStats {
+  totalAssigned: number;
+  completed: number;
+  pending: number;
+  overdue: number;
 }
 
-interface ReviewCriteria {
-  id: string;
-  name: string;
-  description: string;
-  maxScore: number;
-  scoreGiven?: number;
-}
-
-const ProposalReviewForm: React.FC = () => {
+const ReviewerAssignments: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const [isDiscrepancyReview] = useState(true); // This would come from your API/props
+  const [assignments, setAssignments] = useState<ReviewAssignment[]>([]);
+  const [statistics, setStatistics] = useState<ReviewerStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'pending' | 'overdue' | 'reconciliation'>('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
-  // Add this useEffect for authentication check
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/admin/login');
     }
   }, [authLoading, isAuthenticated, router]);
 
-  const [previousScores] = useState<PreviousScores>({
-    reviewerA: {
-      name: "Dr. John Smith",
-      scores: {
-        'relevance': 8,
-        'innovation': 12,
-        'objectives': 8,
-        'methodology': 12,
-        'literature': 8,
-        'team': 7,
-        'feasibility': 8,
-        'budget': 7,
-        'impact': 4,
-        'sustainability': 4
-      }
-    },
-    reviewerB: {
-      name: "Dr. Jane Doe",
-      scores: {
-        'relevance': 6,
-        'innovation': 9,
-        'objectives': 7,
-        'methodology': 13,
-        'literature': 6,
-        'team': 8,
-        'feasibility': 6,
-        'budget': 8,
-        'impact': 3,
-        'sustainability': 3
-      }
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [assignmentsData, statsData] = await Promise.all([
+        getReviewerAssignments(),
+        getReviewerStatistics(),
+      ]);
+      
+      setAssignments(assignmentsData.data || []);
+      setStatistics(statsData.data.statistics || null);
+    } catch (err) {
+      console.error('Error fetching data:', err);
+      setError('Failed to load assignments. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
+
+  const getStatusBadge = (status: string, dueDate: string) => {
+    const isOverdue = new Date(dueDate) < new Date() && status !== 'completed';
+    
+    if (isOverdue) {
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <AlertTriangle className="w-3 h-3 mr-1" />
+          Overdue
+        </span>
+      );
+    }
+    
+    switch (status) {
+      case 'completed':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Completed
+          </span>
+        );
+      case 'in_progress':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <Clock className="w-3 h-3 mr-1" />
+            In Progress
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+            {status}
+          </span>
+        );
+    }
+  };
+
+  const getPriorityLevel = (dueDate: string, reviewType: string) => {
+    const days = Math.ceil((new Date(dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (reviewType === 'reconciliation') return 'high';
+    if (days < 0) return 'overdue';
+    if (days <= 2) return 'high';
+    if (days <= 7) return 'medium';
+    return 'low';
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'overdue': return 'border-l-red-500 bg-red-50';
+      case 'high': return 'border-l-orange-500 bg-orange-50';
+      case 'medium': return 'border-l-yellow-500 bg-yellow-50';
+      case 'reconciliation': return 'border-l-purple-500 bg-purple-50';
+      default: return 'border-l-green-500 bg-green-50';
+    }
+  };
+
+  const filteredAssignments = assignments.filter(assignment => {
+    const matchesSearch = assignment.proposal.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         assignment.proposal.submitter.name.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    switch (filter) {
+      case 'pending':
+        return assignment.status === 'in_progress';
+      case 'overdue':
+        return new Date(assignment.dueDate) < new Date() && assignment.status !== 'completed';
+      case 'reconciliation':
+        return assignment.reviewType === 'reconciliation';
+      default:
+        return true;
     }
   });
 
-  const [reviewCriteria, setReviewCriteria] = useState<ReviewCriteria[]>([
-    {
-      id: 'relevance',
-      name: 'Relevance to National/Institutional Priorities',
-      description: "Alignment with Nigeria's national development goals or UNIBEN research priorities",
-      maxScore: 10,
-      scoreGiven: undefined
-    },
-    {
-      id: 'innovation',
-      name: 'Originality and Innovation',
-      description: 'Novelty of research idea; advancement of knowledge; creativity',
-      maxScore: 15,
-      scoreGiven: undefined
-    },
-    {
-      id: 'objectives',
-      name: 'Clarity of Research Problem and Objectives',
-      description: 'Clearly defined problem statement and SMART objectives',
-      maxScore: 10,
-      scoreGiven: undefined
-    },
-    {
-      id: 'methodology',
-      name: 'Methodology',
-      description: 'Appropriateness, rigor, and feasibility of the research design, tools, and approach',
-      maxScore: 15,
-      scoreGiven: undefined
-    },
-    {
-      id: 'literature',
-      name: 'Literature Review and Theoretical Framework',
-      description: 'Sound grounding in existing literature; clear conceptual framework',
-      maxScore: 10,
-      scoreGiven: undefined
-    },
-    {
-      id: 'team',
-      name: 'Team Composition and Expertise',
-      description: 'Appropriateness of team, interdisciplinary balance, qualifications',
-      maxScore: 10,
-      scoreGiven: undefined
-    },
-    {
-      id: 'feasibility',
-      name: 'Feasibility and Timeline',
-      description: 'Realistic scope, milestones, and timeline within funding duration',
-      maxScore: 10,
-      scoreGiven: undefined
-    },
-    {
-      id: 'budget',
-      name: 'Budget Justification and Cost-Effectiveness',
-      description: 'Clear and justified budget aligned with project goals',
-      maxScore: 10,
-      scoreGiven: undefined
-    },
-    {
-      id: 'impact',
-      name: 'Expected Outcomes and Impact',
-      description: 'Potential contributions to policy, community, academia, industry',
-      maxScore: 5,
-      scoreGiven: undefined
-    },
-    {
-      id: 'sustainability',
-      name: 'Sustainability and Scalability',
-      description: 'Potential for continuation, replication, or scale-up beyond funding',
-      maxScore: 5,
-      scoreGiven: undefined
-    }
-  ]);
-
-  const [reviewComments, setReviewComments] = useState<string>('');
-
-  const handleScoreChange = (id: string, score: number) => {
-    setReviewCriteria(prev => 
-      prev.map(criteria => 
-        criteria.id === id 
-          ? { ...criteria, scoreGiven: score } 
-          : criteria
-      )
-    );
-  };
-
-  const calculateTotalScore = () => {
-    return reviewCriteria.reduce((total, criteria) => 
-      total + (criteria.scoreGiven || 0), 0
-    );
-  };
-
-  const calculateMaxTotalScore = () => {
-    return reviewCriteria.reduce((total, criteria) => 
-      total + criteria.maxScore, 0
-    );
-  };
-
-  const handleSubmit = () => {
-    // Validate all scores are entered
-    const allScoresEntered = reviewCriteria.every(criteria => 
-      criteria.scoreGiven !== undefined
-    );
-
-    if (!allScoresEntered) {
-      alert('Please enter scores for all criteria');
-      return;
-    }
-
-    // Prepare submission data
-    const submissionData = {
-      reviewCriteria,
-      reviewComments,
-      totalScore: calculateTotalScore()
-    };
-
-    // TODO: Replace with actual submission logic
-    console.log('Submitting review:', submissionData);
-    // Typically, you would send this to an API endpoint
-  };
-
-  const handleReset = () => {
-    setReviewCriteria(prev => 
-      prev.map(criteria => ({ ...criteria, scoreGiven: undefined }))
-    );
-    setReviewComments('');
-  };
-
-  // Add loading state handling
-  if (authLoading) {
+  if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+      <ReviewerLayout>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading assignments...</p>
+          </div>
         </div>
-      </div>
+      </ReviewerLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <ReviewerLayout>
+        <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 flex items-center justify-center">
+          <div className="text-center">
+            <XCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={fetchData}
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </ReviewerLayout>
     );
   }
 
   return (
-    <>
-      <ReviewerLayout>
-        <div className="min-h-screen bg-gray-50 p-6">
-        <h1 className="text-2xl md:text-4xl font-bold text-gray-700 text-center my-3">Review Proposal</h1>
-      
-            
-            {/* Previous Scores Comparison - Only shown for re-reviews */}
-            {isDiscrepancyReview && (
-          <DiscrepancyAlert previousScores={previousScores} />
-        )}
-            {isDiscrepancyReview && (
-              <div className="max-w-4xl mx-auto mb-6">
-                <div className="bg-white rounded-lg shadow-md p-6">
-                  <h2 className="text-xl font-bold mb-4">Previous scores</h2>
-                  <table className="w-full">
-                    <thead>
-                      <tr>
-                        <th className="text-left py-2">Metric</th>
-                        <th className="text-left py-2">Score A</th>
-                        <th className="text-left py-2">Score B</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {reviewCriteria.map((criteria) => {
-                        const scoreA = previousScores.reviewerA.scores[criteria.id] || 0;
-                        const scoreB = previousScores.reviewerB.scores[criteria.id] || 0;
-                        
-                        return (
-                          <tr key={criteria.id} className="border-t">
-                            <td className="py-3">{criteria.name}</td>
-                            <td className="py-3">
-                              <div className="flex items-center">
-                                <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
-                                  <div 
-                                    className="bg-purple-600 rounded-full h-2" 
-                                    style={{ width: `${(scoreA / criteria.maxScore) * 100}%` }}
-                                  ></div>
-                                </div>
-                                <span>{scoreA}/{criteria.maxScore}</span>
-                              </div>
-                            </td>
-                            <td className="py-3">
-                              <div className="flex items-center">
-                                <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
-                                  <div 
-                                    className="bg-purple-600 rounded-full h-2" 
-                                    style={{ width: `${(scoreB / criteria.maxScore) * 100}%` }}
-                                  ></div>
-                                </div>
-                                <span>{scoreB}/{criteria.maxScore}</span>
-                              </div>
-                            </td>
-                          </tr>
-                        );                      })}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t-2">
-                        <td className="py-4 font-bold">Total Score</td>
-                        <td className="py-4">
-                          <div className="flex items-center">
-                            <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
-                              <div 
-                                className="bg-purple-600 rounded-full h-2" 
-                                style={{ width: `${(Object.values(previousScores.reviewerA.scores).reduce((a, b) => a + b, 0) / calculateMaxTotalScore()) * 100}%` }}
-                              ></div>
-                            </div>
-                            <span className="font-bold">{Object.values(previousScores.reviewerA.scores).reduce((a, b) => a + b, 0)}/{calculateMaxTotalScore()}</span>
-                          </div>
-                        </td>
-                        <td className="py-4">
-                          <div className="flex items-center">
-                            <div className="w-32 bg-gray-200 rounded-full h-2 mr-2">
-                              <div 
-                                className="bg-purple-600 rounded-full h-2" 
-                                style={{ width: `${(Object.values(previousScores.reviewerB.scores).reduce((a, b) => a + b, 0) / calculateMaxTotalScore()) * 100}%` }}
-                              ></div>
-                            </div>
-                            <span className="font-bold">{Object.values(previousScores.reviewerB.scores).reduce((a, b) => a + b, 0)}/{calculateMaxTotalScore()}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    </tfoot>
-                  </table>
+    <ReviewerLayout>
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-indigo-100 p-6">
+        {/* Header */}
+        <div className="max-w-7xl mx-auto mb-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Review Assignments</h1>
+              <p className="text-gray-600">Manage your proposal reviews and track progress</p>
+            </div>
+            <button
+              onClick={fetchData}
+              className="mt-4 md:mt-0 inline-flex items-center px-4 py-2 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Statistics Cards */}
+        {statistics && (
+          <div className="max-w-7xl mx-auto mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Total Assigned</p>
+                    <p className="text-2xl font-bold text-gray-900">{statistics.totalAssigned}</p>
+                  </div>
+                  <div className="bg-blue-100 p-3 rounded-lg">
+                    <FileText className="w-6 h-6 text-blue-600" />
+                  </div>
                 </div>
               </div>
-            )}
 
-                <section className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 my-7  mx-auto max-w-4xl">
-                    <div className="p-6">
-                        <h2 className="text-xl font-bold text-purple-700 mb-4 border-b pb-2">Proposal Details</h2>
-                        <div className="mt-4">
-                            <div className="flex justify-between items-center mb-2">
-                              <h3 className="font-semibold text-gray-600">Project Summary</h3>
-                                <Link href="../review-guideline" target="_blank" className="bg-gray-200 px-3 py-1 rounded-md text-purple-600 hover:text-purple-800 text-sm">
-                                Review Guidelines
-                                </Link>
-                            </div>
-                            <p className="text-gray-700 leading-relaxed">
-                                Lorem ipsum dolor sit amet consectetur. Nunc aliquam a curabitur nec massa. Massa magnis nunc tellus libero volputat orci. Vitae tellus est adipiscing commodo lorem diam vitae.
-                            </p>
-                        </div>
-                        <div className="my-4">
-                            <table className="w-full border-collapse">
-                                <tbody>
-                                    <tr className="border-b">
-                                        <td className="py-2">
-                                            <h3 className="font-semibold text-gray-600">Field of Research</h3>
-                                            <p className="text-gray-800">Computer Science</p>
-                                        </td>
-                                        <td className="py-2">
-                                            <h3 className="font-semibold text-gray-600">Budget</h3>
-                                            <p className="text-gray-800">₦5,000,000.00</p>
-                                        </td>
-                                        <td className="py-2">
-                                            <h3 className="font-semibold text-gray-600">Keywords</h3>
-                                            <p className="text-gray-800">Machine Learning, AI, Data Science</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </section>
-        <div className="container mx-auto max-w-4xl bg-white shadow-lg rounded-lg overflow-hidden">
-            <div className="p-6">
-            <h1 className="text-2xl font-bold text-purple-700 mb-6">
-                Proposal Review Scoring
-            </h1>
-            {/* Scoring Criteria */}
-            <div className="space-y-4 mb-6">
-                {reviewCriteria.map((criteria) => (
-                <div key={criteria.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-center mb-2">
-                    <div>
-                        <h3 className="font-semibold text-purple-700">
-                        {criteria.name}
-                        </h3>
-                        <p className="text-sm text-gray-600 mb-2">
-                        {criteria.description}
-                        </p>
-                    </div>
-                    <div className="flex items-center">
-                        <input 
-                        type="number"
-                        min="0"
-                        max={criteria.maxScore}
-                        value={criteria.scoreGiven ?? ''}
-                        onChange={(e) => {
-                            const score = parseInt(e.target.value);
-                            handleScoreChange(
-                            criteria.id, 
-                            isNaN(score) ? 0 : Math.min(score, criteria.maxScore)
-                            );
-                        }}
-                        className="w-20 p-2 border rounded text-center"
-                        placeholder={`/${criteria.maxScore}`}
-                        />
-                    </div>
-                    </div>
-                    <div className="bg-gray-200 rounded-full h-2.5 mt-2">
-                    <div 
-                        className="bg-purple-600 rounded-full h-2.5" 
-                        style={{ 
-                        width: `${criteria.scoreGiven 
-                            ? (criteria.scoreGiven / criteria.maxScore) * 100 
-                            : 0}%` 
-                        }}
-                    ></div>
-                    </div>
+              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Completed</p>
+                    <p className="text-2xl font-bold text-green-600">{statistics.completed}</p>
+                  </div>
+                  <div className="bg-green-100 p-3 rounded-lg">
+                    <CheckCircle className="w-6 h-6 text-green-600" />
+                  </div>
                 </div>
-                ))}
-            </div>
+              </div>
 
-            {/* Total Score */}
-            <div className="bg-gray-100 rounded-lg p-4 mb-6 flex justify-between items-center">
-                <span className="font-bold text-lg">Total Score</span>
-                <span className="text-xl font-bold text-purple-700">
-                {calculateTotalScore()}/{calculateMaxTotalScore()}
-                </span>
-            </div>
+              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Pending</p>
+                    <p className="text-2xl font-bold text-yellow-600">{statistics.pending}</p>
+                  </div>
+                  <div className="bg-yellow-100 p-3 rounded-lg">
+                    <Clock className="w-6 h-6 text-yellow-600" />
+                  </div>
+                </div>
+              </div>
 
-            {/* Review Comments */}
-            <div className="mb-6">
-                <label 
-                htmlFor="review-comments" 
-                className="block text-lg font-semibold text-purple-700 mb-2"
-                >
-                Review Comments
-                </label>
-                <textarea 
-                id="review-comments"
-                value={reviewComments}
-                onChange={(e) => setReviewComments(e.target.value)}
-                className="w-full h-48 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-                placeholder="Provide detailed review comments for the proposal..."
+              <div className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Overdue</p>
+                    <p className="text-2xl font-bold text-red-600">{statistics.overdue}</p>
+                  </div>
+                  <div className="bg-red-100 p-3 rounded-lg">
+                    <AlertTriangle className="w-6 h-6 text-red-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Filters and Search */}
+        <div className="max-w-7xl mx-auto mb-6">
+          <div className="bg-white rounded-xl shadow-md p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <Filter className="w-5 h-5 text-gray-500" />
+                <div className="flex space-x-2">
+                  {['all', 'pending', 'overdue', 'reconciliation'].map((filterOption) => (
+                    <button
+                      key={filterOption}
+                      onClick={() => setFilter(filterOption as any)}
+                      className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
+                        filter === filterOption
+                          ? 'bg-purple-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="relative">
+                <Search className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Search proposals..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
+              </div>
             </div>
+          </div>
+        </div>
 
-            {/* Action Buttons */}
-            <div className="flex space-x-4">
-                <button 
-                onClick={handleSubmit}
-                className="flex-grow bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition-colors"
-                >
-                Submit Review
-                </button>
-                <button 
-                onClick={handleReset}
-                className="flex-grow bg-gray-100 text-gray-700 py-3 rounded-lg hover:bg-gray-200 transition-colors"
-                >
-                Reset
-                </button>
+        {/* Assignments List */}
+        <div className="max-w-7xl mx-auto">
+          {filteredAssignments.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-md p-12 text-center">
+              <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No assignments found</h3>
+              <p className="text-gray-500">
+                {searchTerm || filter !== 'all' 
+                  ? 'Try adjusting your search or filter criteria' 
+                  : 'You have no review assignments at the moment'}
+              </p>
             </div>
+          ) : (
+            <div className="space-y-4">
+              {filteredAssignments.map((assignment) => {
+                const priority = getPriorityLevel(assignment.dueDate, assignment.reviewType);
+                const daysUntilDue = Math.ceil((new Date(assignment.dueDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                
+                return (
+                  <div
+                    key={assignment._id}
+                    className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-200 border-l-4 ${getPriorityColor(priority)}`}
+                  >
+                    <div className="p-6">
+                      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between mb-3">
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                                {assignment.proposal.projectTitle}
+                              </h3>
+                              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                                <div className="flex items-center">
+                                  <User className="w-4 h-4 mr-1" />
+                                  {assignment.proposal.submitter.name}
+                                </div>
+                                {assignment.proposal.submitter.faculty && (
+                                  <div className="flex items-center">
+                                    <Building className="w-4 h-4 mr-1" />
+                                    {assignment.proposal.submitter.faculty.title}
+                                  </div>
+                                )}
+                                <div className="flex items-center">
+                                  <Calendar className="w-4 h-4 mr-1" />
+                                  {new Date(assignment.proposal.createdAt).toLocaleDateString()}
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              {assignment.reviewType === 'reconciliation' && (
+                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                  <Award className="w-3 h-3 mr-1" />
+                                  Reconciliation
+                                </span>
+                              )}
+                              {getStatusBadge(assignment.status, assignment.dueDate)}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div className="flex items-center text-sm text-gray-600">
+                              <Clock className="w-4 h-4 mr-2 text-gray-400" />
+                              <span>
+                                Due: {new Date(assignment.dueDate).toLocaleDateString()}
+                                {daysUntilDue >= 0 ? (
+                                  <span className="ml-1 text-green-600">({daysUntilDue} days left)</span>
+                                ) : (
+                                  <span className="ml-1 text-red-600">({Math.abs(daysUntilDue)} days overdue)</span>
+                                )}
+                              </span>
+                            </div>
+                            
+                            {assignment.proposal.estimatedBudget && (
+                              <div className="flex items-center text-sm text-gray-600">
+                                <DollarSign className="w-4 h-4 mr-2 text-gray-400" />
+                                <span>₦{assignment.proposal.estimatedBudget.toLocaleString()}</span>
+                              </div>
+                            )}
+
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="capitalize">
+                                {assignment.proposal.submitterType.replace('_', ' ')} Proposal
+                              </span>
+                            </div>
+                          </div>
+
+                          {assignment.totalScore && (
+                            <div className="mb-4">
+                              <div className="flex items-center text-sm text-gray-600">
+                                <TrendingUp className="w-4 h-4 mr-2 text-gray-400" />
+                                <span>Score: {assignment.totalScore}/100</span>
+                                <div className="ml-3 w-24 bg-gray-200 rounded-full h-2">
+                                  <div
+                                    className="bg-purple-600 rounded-full h-2"
+                                    style={{ width: `${assignment.totalScore}%` }}
+                                  ></div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-4 lg:mt-0 lg:ml-6 flex flex-col sm:flex-row lg:flex-col gap-2">
+                          <Link
+                            href={`/reviewers/assignments/${assignment._id}`}
+                            className="inline-flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm font-medium"
+                          >
+                            <Eye className="w-4 h-4 mr-2" />
+                            {assignment.status === 'completed' ? 'View Review' : 'Start Review'}
+                          </Link>
+                          
+                          {assignment.status === 'completed' && assignment.completedAt && (
+                            <span className="text-xs text-gray-500 text-center lg:text-left">
+                              Completed {new Date(assignment.completedAt).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
+          )}
         </div>
-        </div>
-       </ReviewerLayout>
-    </>
+      </div>
+    </ReviewerLayout>
   );
 };
 
-export default ProposalReviewForm;
+export default ReviewerAssignments;
