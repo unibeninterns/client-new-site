@@ -133,12 +133,12 @@ export default function AdminProposalsPage() {
   };
 
   const handleAssignReviewer = async (proposalId: string) => {
-    toast("Assigning reviewer...");
+    toast.info("Assigning reviewer...");
     try {
       // The api.assignReviewers function expects only the proposalId
       const response = await api.assignReviewers(proposalId);
-      if(response.data.success) {
-        toast("Assigned reviewer successfully.");
+      if(response.success) {
+        toast.success("Assigned reviewer successfully.");
         refreshData(); // Refresh the list after assignment
       }
       else {
