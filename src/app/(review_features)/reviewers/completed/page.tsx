@@ -425,17 +425,6 @@ const CompletedReviews: React.FC = () => {
                           <Eye className="w-4 h-4 mr-2" />
                           View Details
                         </Link>
-                        
-                        <button
-                          onClick={() => {
-                            // Handle download/export functionality
-                            console.log('Export review:', review._id);
-                          }}
-                          className="inline-flex items-center justify-center px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Export
-                        </button>
                       </div>
                     </div>
                   </div>
