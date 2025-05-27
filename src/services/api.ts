@@ -684,9 +684,9 @@ export const notifyApplicants = async (proposalId: string) => {
   }
 };
 
-export const toggleProposalArchiveStatus = async (proposalId: string, isArchived: boolean) => {
+export const toggleProposalArchiveStatus = async (proposalId: string, isArchived: boolean, comment?: string) => {
   try {
-    const response = await api.patch(`/admin/proposals/${proposalId}/archive`, { isArchived });
+    const response = await api.put(`/admin/proposals/${proposalId}/archive`, { isArchived, comment });
     return response.data;
   } catch (error) {
     console.error(`Error toggling archive status for proposal ${proposalId}:`, error);

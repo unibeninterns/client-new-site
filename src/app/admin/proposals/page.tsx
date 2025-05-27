@@ -50,8 +50,6 @@ export default function AdminProposalsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0); // New state to trigger refresh
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [proposalToArchive, setProposalToArchive] = useState<{ id: string; isArchived: boolean } | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     submitterType: '',
@@ -62,11 +60,19 @@ export default function AdminProposalsPage() {
   });
   const router = useRouter();
 
+  // State for comment modal
+  const [showCommentModal, setShowCommentModal] = useState(false);
+  const [currentProposalId, setCurrentProposalId] = useState<string | null>(null);
+  const [isArchivingAction, setIsArchivingAction] = useState(false); // true for archive, false for unarchive
+  const [comment, setComment] = useState('');
+  const [commentError, setCommentError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/admin/login');
     }
   }, [authLoading, isAuthenticated, router]);
+
 
   // Fetch faculties with proposals
   useEffect(() => {
@@ -76,8 +82,12 @@ export default function AdminProposalsPage() {
       try {
         const facultyData = await getFacultiesWithProposals();
         setFaculties(facultyData);
-      } catch (err) {
-        console.error('Failed to fetch faculties:', err);
+      } catch (err: any) {
+        if (err.name === 'CanceledError') {
+          // console.log('Faculties fetch aborted (expected)');
+        } else {
+          console.error('Failed to fetch faculties:', err);
+        }
       }
     };
 
@@ -104,9 +114,13 @@ export default function AdminProposalsPage() {
           totalPages: response.totalPages,
           currentPage: response.currentPage
         });
-      } catch (err) {
-        console.error('Failed to fetch proposals:', err);
-        setError('Failed to load proposals. Please try again.');
+      } catch (err: any) {
+        if (err.name === 'CanceledError') {
+          // console.log('Proposals fetch aborted (expected)');
+        } else {
+          console.error('Failed to fetch proposals:', err);
+          setError('Failed to load proposals. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -156,31 +170,52 @@ export default function AdminProposalsPage() {
     }
   };
 
-  const handleArchiveClick = (proposalId: string, isArchived: boolean) => {
-    setProposalToArchive({ id: proposalId, isArchived });
-    setShowConfirmDialog(true);
+  const handleArchiveClick = (proposalId: string, archive: boolean) => {
+    setCurrentProposalId(proposalId);
+    setIsArchivingAction(archive);
+    setComment(''); // Clear previous comment
+    setCommentError(null); // Clear previous error
+    // Use setTimeout to allow DropdownMenu to close before Dialog opens
+    setTimeout(() => {
+      setShowCommentModal(true);
+    }, 50); // A small delay
   };
 
-  const confirmArchiveAction = async () => {
-    if (!proposalToArchive) return;
+  const handleSubmitComment = async () => {
+    if (isArchivingAction && !comment.trim()) {
+      setCommentError("Comment is mandatory for archiving.");
+      return;
+    }
 
-    const { id, isArchived } = proposalToArchive;
-    setShowConfirmDialog(false); // Close dialog immediately
-    toast.info(isArchived ? "Archiving proposal..." : "Unarchiving proposal...");
+    if (!currentProposalId) {
+      toast.error("No proposal selected.");
+      return;
+    }
+
+    setCommentError(null);
+    setShowCommentModal(false); // Close dialog immediately
+
+    if (!currentProposalId) {
+      toast.error("No proposal selected.");
+      return;
+    }
+
+    toast.info(isArchivingAction ? "Archiving proposal..." : "Unarchiving proposal...");
 
     try {
-      const response = await toggleProposalArchiveStatus(id, isArchived);
+      const response = await toggleProposalArchiveStatus(currentProposalId, isArchivingAction, comment);
       if (response.success) {
-        toast.success(isArchived ? "Proposal archived successfully." : "Proposal unarchived successfully.");
+        toast.success(isArchivingAction ? "Proposal archived successfully." : "Proposal unarchived successfully.");
         refreshData(); // Refresh the list after archiving/unarchiving
       } else {
-        toast.error(isArchived ? "Archiving failed." : "Unarchiving failed.");
+        toast.error(isArchivingAction ? "Archiving failed." : "Unarchiving failed.");
       }
     } catch (error) {
       console.error("Failed to toggle archive status:", error);
       toast.error("Error while toggling archive status.");
     } finally {
-      setProposalToArchive(null); // Clear the state
+      setCurrentProposalId(null);
+      setComment('');
     }
   };
 
@@ -466,9 +501,15 @@ export default function AdminProposalsPage() {
                               <DropdownMenuItem onSelect={() => handleAssignReviewer(proposal._id)}>
                                 <UserPlus className="h-4 w-4 mr-2" /> Assign Reviewer
                               </DropdownMenuItem>)}
-                              <DropdownMenuItem onSelect={() => handleArchiveClick(proposal._id, true)} className="text-red-500 focus:text-red-500">
-                                <Archive className="h-4 w-4 mr-2" /> Archive
-                              </DropdownMenuItem>
+                              {proposal.isArchived ? (
+                                <DropdownMenuItem onSelect={() => handleArchiveClick(proposal._id, false)}>
+                                  <FolderOpen className="h-4 w-4 mr-2" /> Unarchive
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onSelect={() => handleArchiveClick(proposal._id, true)} className="text-red-500 focus:text-red-500">
+                                  <Archive className="h-4 w-4 mr-2" /> Archive
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -512,28 +553,47 @@ export default function AdminProposalsPage() {
           </div>
         </div>
       </div>
-      <Toaster />
 
-      {/* Confirmation Dialog */}
-      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-        <DialogContent>
+      {/* Comment Modal */}
+      <Dialog open={showCommentModal} onOpenChange={setShowCommentModal} key={showCommentModal ? "open" : "closed"}>
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogTitle>{isArchivingAction ? "Archive Proposal" : "Unarchive Proposal"}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to {proposalToArchive?.isArchived ? 'archive' : 'unarchive'} this proposal?
-              This action cannot be undone.
+              {isArchivingAction ? 
+                "Please provide a mandatory comment explaining why you are archiving this proposal." : 
+                "Optionally, provide a comment explaining why you are unarchiving this proposal."
+              }
             </DialogDescription>
           </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="comment" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Comment
+              </label>
+              <textarea
+                id="comment"
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows={4}
+                placeholder={isArchivingAction ? "e.g., Proposal archived due to..." : "e.g., Proposal unarchived for further review."}
+              />
+              {commentError && <p className="text-red-500 text-xs mt-1">{commentError}</p>}
+            </div>
+          </div>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button variant="default" className="bg-red-500 text-white hover:bg-red-600" onClick={confirmArchiveAction}>
-              {proposalToArchive?.isArchived ? 'Archive' : 'Unarchive'}
+            <Button type="button" variant="outline" onClick={() => setShowCommentModal(false)}>
+                Cancel
+            </Button>
+            <Button type="submit" onClick={handleSubmitComment}>
+              {isArchivingAction ? "Archive" : "Unarchive"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Toaster />
     </AdminLayout>
   );
 }
