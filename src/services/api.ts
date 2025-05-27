@@ -708,4 +708,50 @@ export const exportDecisionsReport = async () => {
   }
 };
 
+// get proposal reviews information
+export const getAllProposalReviews = async (params = {}) => {
+  try {
+    const response = await api.get("/admin/proposal-reviews", { params });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching proposal reviews:", error);
+    throw error;
+  }
+};
+
+export const getProposalReviewStatistics = async () => {
+  try {
+    const response = await api.get("/admin/proposal-reviews/statistics");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching review statistics:", error);
+    throw error;
+  }
+};
+
+export const getDiscrepancyProposals = async (params = {}) => {
+  try {
+    const response = await api.get("/admin/proposal-reviews/discrepancy", {
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching discrepancy proposals:", error);
+    throw error;
+  }
+};
+
+export const getProposalReviewDetailsById = async (proposalId: string) => {
+  try {
+    const response = await api.get(`/admin/proposal-reviews/${proposalId}`);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching proposal review details for ID ${proposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
 export default api;
