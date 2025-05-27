@@ -270,7 +270,6 @@ const ProposalReviewForm: React.FC = () => {
       
       if (response.success) {
         // Show success message (you might want to add a toast notification)
-        console.log('Progress saved successfully');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save progress');

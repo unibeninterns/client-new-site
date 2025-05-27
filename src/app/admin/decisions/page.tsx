@@ -28,7 +28,6 @@ export default function DecisionsPanel() {
       try {
         setIsLoading(true);
         const response = await getProposalsForDecision();
-        console.log('Proposals fetched:', response.data); // Debugging line
         setProposals(response.data);
         setError(null);
       } catch (err) {

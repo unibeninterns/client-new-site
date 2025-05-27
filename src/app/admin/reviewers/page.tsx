@@ -130,7 +130,6 @@ export default function AdminReviewersPage() {
       
       const response = await getAllReviewers(params);
       setReviewers(response.data || []);
-      console.log('Reviewers loaded:', response.data);
       setPagination({
         currentPage: response.currentPage || 1,
         totalPages: response.totalPages || 1,

@@ -52,7 +52,6 @@ function AdminResearchersPage() {
     const fetchResearchers = async () => {
       try {
         const response = await api.getResearchersWithProposals(); // Use the correct API
-        console.log(response.data)
         setResearchers(response.data); // Assuming response.data is the array of researchers
         setIsLoading(false);
       } catch (error: any) {
