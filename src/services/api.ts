@@ -684,6 +684,16 @@ export const notifyApplicants = async (proposalId: string) => {
   }
 };
 
+export const toggleProposalArchiveStatus = async (proposalId: string, isArchived: boolean) => {
+  try {
+    const response = await api.patch(`/admin/proposals/${proposalId}/archive`, { isArchived });
+    return response.data;
+  } catch (error) {
+    console.error(`Error toggling archive status for proposal ${proposalId}:`, error);
+    throw error;
+  }
+};
+
 export const exportDecisionsReport = async () => {
   try {
     const response = await api.get("/admin/proposals/export-decisions", {

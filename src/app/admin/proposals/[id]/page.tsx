@@ -7,6 +7,7 @@ import { getProposalById } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Loader2, ArrowLeft, Calendar, User, Phone, Mail, Building, BookOpen, Banknote, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 interface Submitter {
   _id: string;
@@ -142,13 +143,14 @@ export default function ProposalDetailPage() {
         <div className="mx-auto px-4 sm:px-6 md:px-8">
           {/* Back link */}
           <div className="mb-6">
-            <Link
-              href="/admin/proposals"
-              className="inline-flex items-center text-sm font-medium text-purple-600 hover:text-purple-800"
+            <Button
+              className="inline-flex items-center text-sm font-medium text-purple-600 hover:bg-gray-300 bg-transparent"
+              onClick={(e) => {
+                router.back()
+              }}
             >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Back to Proposals
-            </Link>
+              <ArrowLeft className="h-4 w-4 mr-1" /> Back to Proposals
+              </Button>
           </div>
 
           {/* Title */}

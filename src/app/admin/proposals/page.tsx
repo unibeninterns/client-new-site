@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as api from '@/services/api';
-import { getProposals, getFacultiesWithProposals } from '@/services/api';
+import { getProposals, getFacultiesWithProposals, toggleProposalArchiveStatus } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical } from 'lucide-react';
+import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical, Archive, FolderOpen, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 
 interface Faculty {
   _id: string;
@@ -28,6 +29,7 @@ interface Proposal {
     name: string;
     email: string;
   };
+  isArchived: boolean; // Add isArchived property
 }
 
 interface PaginationData {
@@ -47,12 +49,16 @@ export default function AdminProposalsPage() {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // New state to trigger refresh
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [proposalToArchive, setProposalToArchive] = useState<{ id: string; isArchived: boolean } | null>(null);
   const [filters, setFilters] = useState({
     status: '',
     submitterType: '',
     faculty: '', // Add faculty filter
     sort: 'createdAt',
-    order: 'desc'
+    order: 'desc',
+    isArchived: false, // Default to unarchived proposals
   });
   const router = useRouter();
 
@@ -89,7 +95,8 @@ export default function AdminProposalsPage() {
         const response = await getProposals({
           page: pagination.currentPage,
           limit: 10,
-          ...filters
+          ...filters,
+          isArchived: filters.isArchived, // Ensure this filter is passed
         });
         console.log(response.data)
         setProposals(response.data);
@@ -107,7 +114,7 @@ export default function AdminProposalsPage() {
     };
 
     fetchProposals();
-  }, [isAuthenticated, pagination.currentPage, filters]);
+  }, [isAuthenticated, pagination.currentPage, filters, refreshTrigger]); // Add refreshTrigger to dependencies
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -129,7 +136,7 @@ export default function AdminProposalsPage() {
   };
 
   const refreshData = () => {
-    setPagination(prev => ({ ...prev })); // Trigger useEffect to reload data
+    setRefreshTrigger(prev => prev + 1); // Increment to force useEffect re-run
   };
 
   const handleAssignReviewer = async (proposalId: string) => {
@@ -147,6 +154,34 @@ export default function AdminProposalsPage() {
     } catch (error) {
       console.error("Failed to assign reviewer:", error);
       toast.error("Error while assigning reviewer.");
+    }
+  };
+
+  const handleArchiveClick = (proposalId: string, isArchived: boolean) => {
+    setProposalToArchive({ id: proposalId, isArchived });
+    setShowConfirmDialog(true);
+  };
+
+  const confirmArchiveAction = async () => {
+    if (!proposalToArchive) return;
+
+    const { id, isArchived } = proposalToArchive;
+    setShowConfirmDialog(false); // Close dialog immediately
+    toast.info(isArchived ? "Archiving proposal..." : "Unarchiving proposal...");
+
+    try {
+      const response = await toggleProposalArchiveStatus(id, isArchived);
+      if (response.success) {
+        toast.success(isArchived ? "Proposal archived successfully." : "Proposal unarchived successfully.");
+        refreshData(); // Refresh the list after archiving/unarchiving
+      } else {
+        toast.error(isArchived ? "Archiving failed." : "Unarchiving failed.");
+      }
+    } catch (error) {
+      console.error("Failed to toggle archive status:", error);
+      toast.error("Error while toggling archive status.");
+    } finally {
+      setProposalToArchive(null); // Clear the state
     }
   };
 
@@ -201,14 +236,25 @@ export default function AdminProposalsPage() {
       <div className="py-6">
         <div className="mx-auto px-4 sm:px-6 md:px-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-semibold text-gray-900">All Proposals</h1>
-            <button 
-              onClick={refreshData}
-              className="flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </button>
+            <h1 className="text-2xl font-semibold text-gray-900">Unarchived Proposals</h1>
+            <div className="flex space-x-4">
+              <Link href="/admin/proposals/archived" passHref>
+                <Button
+                  variant="outline"
+                  className="flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  Archived Proposals
+                </Button>
+              </Link>
+              <button 
+                onClick={refreshData}
+                className="flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </button>
+            </div>
           </div>
           
           {error && (
@@ -261,7 +307,7 @@ export default function AdminProposalsPage() {
                   >
                     <option value="">All Types</option>
                     <option value="staff">Staff</option>
-                    <option value="master_student">Master&apos;s Student</option>
+                    <option value="master_student">Master's Student</option>
                   </select>
                 </div>
                 
@@ -415,12 +461,15 @@ export default function AdminProposalsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <DropdownMenuItem onSelect={() => router.push(`/admin/proposals/${proposal._id}`)}>
-                                View
+                                <Eye className="h-4 w-4 mr-2" /> View
                               </DropdownMenuItem>
                               {proposal.status !== "under_review" && (
                               <DropdownMenuItem onSelect={() => handleAssignReviewer(proposal._id)}>
-                                Assign Reviewer
+                                <UserPlus className="h-4 w-4 mr-2" /> Assign Reviewer
                               </DropdownMenuItem>)}
+                              <DropdownMenuItem onSelect={() => handleArchiveClick(proposal._id, true)} className="text-red-500 focus:text-red-500">
+                                <Archive className="h-4 w-4 mr-2" /> Archive
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -465,6 +514,27 @@ export default function AdminProposalsPage() {
         </div>
       </div>
       <Toaster />
+
+      {/* Confirmation Dialog */}
+      <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Action</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to {proposalToArchive?.isArchived ? 'archive' : 'unarchive'} this proposal?
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button variant="default" className="bg-red-500 text-white hover:bg-red-600" onClick={confirmArchiveAction}>
+              {proposalToArchive?.isArchived ? 'Archive' : 'Unarchive'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
