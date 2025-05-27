@@ -13,8 +13,13 @@ import {
 } from "@/components/ui/select";
 import { getProposalsForDecision, updateProposalStatus, notifyApplicants, exportDecisionsReport, type ProposalDecision } from '@/services/api';
 import { Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function DecisionsPanel() {
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const router = useRouter();
+
   const [approvalThreshold, setApprovalThreshold] = useState(75);
   const [proposals, setProposals] = useState<ProposalDecision[]>([]);
   const [sortBy, setSortBy] = useState<'score' | 'title' | 'field'>('score');
@@ -22,6 +27,12 @@ export default function DecisionsPanel() {
   const [searchQuery, setSearchQuery] = useState(''); // Added searchQuery state
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/admin/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
     const loadProposals = async () => {
@@ -84,6 +95,14 @@ export default function DecisionsPanel() {
       alert('Failed to export report.');
     }
   };
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
