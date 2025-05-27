@@ -84,6 +84,11 @@ api.interceptors.response.use(
       }
     }
 
+    if (axios.isCancel(error)) {
+      // console.log('Request cancelled (expected)');
+      return Promise.reject(error); // Re-throw the error so calling code can handle it if needed
+    }
+
     return Promise.reject(error);
   }
 );

@@ -77,18 +77,23 @@ export default function AdminArchivedProposalsPage() {
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
+    let mounted = true; // Flag to track if component is mounted
 
     const fetchFaculties = async () => {
       if (!isAuthenticated) return;
       
       try {
         const facultyData = await getFacultiesWithProposals({ signal });
-        setFaculties(facultyData);
+        if (mounted) { // Only update state if component is still mounted
+          setFaculties(facultyData);
+        }
       } catch (err: any) {
-        if (err.name === 'CanceledError') {
-          // console.log('Faculties fetch aborted (expected)');
-        } else {
-          console.error('Failed to fetch faculties:', err);
+        if (mounted) { // Only log error if component is still mounted
+          if (err.name === 'CanceledError') {
+            // console.log('Faculties fetch aborted (expected)');
+          } else {
+            console.error('Failed to fetch faculties:', err);
+          }
         }
       }
     };
@@ -96,6 +101,7 @@ export default function AdminArchivedProposalsPage() {
     fetchFaculties();
 
     return () => {
+      mounted = false; // Set mounted to false on cleanup
       controller.abort();
     };
   }, [isAuthenticated]);
@@ -103,12 +109,15 @@ export default function AdminArchivedProposalsPage() {
   useEffect(() => {
     const controller = new AbortController();
     const signal = controller.signal;
+    let mounted = true; // Flag to track if component is mounted
 
     const fetchProposals = async () => {
       if (!isAuthenticated) return;
       
-      setIsLoading(true);
-      setError(null);
+      if (mounted) { // Only set loading state if component is still mounted
+        setIsLoading(true);
+        setError(null);
+      }
       
       try {
         const response = await getProposals({
@@ -117,27 +126,34 @@ export default function AdminArchivedProposalsPage() {
           ...filters,
           isArchived: filters.isArchived, // Ensure this filter is passed
         }, { signal });
-        setProposals(response.data);
-        setPagination({
-          count: response.count,
-          totalPages: response.totalPages,
-          currentPage: response.currentPage
-        });
+        if (mounted) { // Only update state if component is still mounted
+          setProposals(response.data);
+          setPagination({
+            count: response.count,
+            totalPages: response.totalPages,
+            currentPage: response.currentPage
+          });
+        }
       } catch (err: any) {
-        if (err.name === 'CanceledError') {
-          // console.log('Proposals fetch aborted (expected)');
-        } else {
-          console.error('Failed to fetch proposals:', err);
-          setError('Failed to load proposals. Please try again.');
+        if (mounted) { // Only log error and set error state if component is still mounted
+          if (err.name === 'CanceledError') {
+            // console.log('Proposals fetch aborted (expected)');
+          } else {
+            console.error('Failed to fetch proposals:', err);
+            setError('Failed to load proposals. Please try again.');
+          }
         }
       } finally {
-        setIsLoading(false);
+        if (mounted) { // Ensure isLoading is set to false only if mounted
+          setIsLoading(false);
+        }
       }
     };
 
     fetchProposals();
 
     return () => {
+      mounted = false; // Set mounted to false on cleanup
       controller.abort();
     };
   }, [isAuthenticated, pagination.currentPage, filters, refreshTrigger]); // Add refreshTrigger to dependencies
