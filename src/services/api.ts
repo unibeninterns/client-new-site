@@ -238,9 +238,9 @@ export const verifyToken = async () => {
 };
 
 // Admin endpoints
-export const getProposals = async (params = {}) => {
+export const getProposals = async (params = {}, options?: { signal?: AbortSignal }) => {
   try {
-    const response = await api.get("/admin/proposals", { params });
+    const response = await api.get("/admin/proposals", { params, signal: options?.signal });
     return response.data;
   } catch (error) {
     console.error("Error fetching proposals:", error);
@@ -258,9 +258,9 @@ export const getProposalById = async (id: string) => {
   }
 };
 
-export const getFacultiesWithProposals = async () => {
+export const getFacultiesWithProposals = async (options?: { signal?: AbortSignal }) => {
   try {
-    const response = await api.get("/admin/faculties-with-proposals");
+    const response = await api.get("/admin/faculties-with-proposals", { signal: options?.signal });
     return response.data.data;
   } catch (error) {
     console.error("Error fetching faculties with proposals:", error);

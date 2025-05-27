@@ -104,12 +104,9 @@ export default function TETFundForm() {
     
     try {
       setLoading(true);
-      console.log('facultyValue', facultyValue);
-      console.log('faculties', faculties);
       
       // First, find the faculty by its ID to get the code
       const selectedFaculty = faculties.find(f => f._id === facultyValue);
-      console.log('selectedFaculty', selectedFaculty);
       
       if (!selectedFaculty) {
         console.error('Selected faculty not found');
@@ -143,7 +140,6 @@ export default function TETFundForm() {
       if (savedData.faculty) {
         loadDepartments(savedData.faculty);
       }
-      console.log('savedData', savedData);
     }
   }, [loadDepartments]);
 
@@ -409,13 +405,9 @@ export default function TETFundForm() {
         apiFormData.append('cvFile', formData.cvFile);
       }
       
-      // Log what's being sent (for debugging)
-      console.log('Form data keys being submitted:', Array.from(apiFormData.keys()));
-      
       // Submit the form
       const result = await submitStaffProposal(apiFormData);
       
-      console.log('Form submitted successfully:', result);
       setSubmitSuccess(true);
       localStorage.removeItem("v2SavedInputs");
       

@@ -74,7 +74,6 @@ function ResearcherDetailsPage() {
       try {
         const response = await api.getResearcherDetails(researcherId); // Use the correct API
         setResearcherData(response.data);
-        console.log("Researcher Data:", response.data);
         setIsLoading(false);
       } catch (error: any) {
         console.error(`Error fetching researcher details for ID ${researcherId}:`, error);

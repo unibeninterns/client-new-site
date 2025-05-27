@@ -43,7 +43,6 @@ export default function ProposalDetails() {
       try {
         const response = await getResearcherProposalDetails(proposalId);
         setProposal(response.data);
-        console.log('Fetched proposal details:', response.data);
       } catch (err) {
         console.error('Error fetching proposal details:', err);
         setError('Failed to load proposal details. Please try again later.');

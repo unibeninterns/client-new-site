@@ -98,7 +98,6 @@ export default function AdminProposalsPage() {
           ...filters,
           isArchived: filters.isArchived, // Ensure this filter is passed
         });
-        console.log(response.data)
         setProposals(response.data);
         setPagination({
           count: response.count,

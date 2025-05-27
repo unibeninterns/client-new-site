@@ -94,7 +94,6 @@ const ReviewersDashboard: React.FC = () => {
       const response = await getReviewerDashboard();
       if (response.success) {
         setDashboardData(response.data);
-        console.log('Dashboard data:', response.data);
       } else {
         setError('Failed to load dashboard data');
       }

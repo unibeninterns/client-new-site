@@ -70,21 +70,35 @@ export default function AdminArchivedProposalsPage() {
 
   // Fetch faculties with proposals
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchFaculties = async () => {
       if (!isAuthenticated) return;
       
       try {
-        const facultyData = await getFacultiesWithProposals();
+        const facultyData = await getFacultiesWithProposals({ signal });
         setFaculties(facultyData);
-      } catch (err) {
-        console.error('Failed to fetch faculties:', err);
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          // console.log('Faculties fetch aborted');
+        } else {
+          console.error('Failed to fetch faculties:', err);
+        }
       }
     };
 
     fetchFaculties();
+
+    return () => {
+      controller.abort();
+    };
   }, [isAuthenticated]);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const signal = controller.signal;
+
     const fetchProposals = async () => {
       if (!isAuthenticated) return;
       
@@ -97,23 +111,30 @@ export default function AdminArchivedProposalsPage() {
           limit: 10,
           ...filters,
           isArchived: filters.isArchived, // Ensure this filter is passed
-        });
-        console.log(response.data)
+        }, { signal });
         setProposals(response.data);
         setPagination({
           count: response.count,
           totalPages: response.totalPages,
           currentPage: response.currentPage
         });
-      } catch (err) {
-        console.error('Failed to fetch proposals:', err);
-        setError('Failed to load proposals. Please try again.');
+      } catch (err: any) {
+        if (err.name === 'AbortError') {
+          // console.log('Proposals fetch aborted');
+        } else {
+          console.error('Failed to fetch proposals:', err);
+          setError('Failed to load proposals. Please try again.');
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchProposals();
+
+    return () => {
+      controller.abort();
+    };
   }, [isAuthenticated, pagination.currentPage, filters, refreshTrigger]); // Add refreshTrigger to dependencies
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

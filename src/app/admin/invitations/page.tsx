@@ -90,7 +90,6 @@ function AdminInvitationsPage() {
         const response = await api.getReviewerInvitations(); // Changed API call
         setInvitations(response.data || []);
         setIsLoading(false);
-        console.log("Invitations:", response.data);
       } catch (error: any) {
         console.error("Error fetching invitations:", error);
         setError(error.message || "Failed to load invitations");
@@ -106,7 +105,6 @@ function AdminInvitationsPage() {
       try {
         const response = await api.getFaculties();
         setFaculties(response);
-        console.log("Faculties:", response);
       } catch (error) {
         console.error("Error fetching faculties:", error);
       }
