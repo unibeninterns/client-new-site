@@ -19,9 +19,9 @@ interface ResearcherDetails {
   createdAt: string;
   credentialsSent: boolean;
   credentialsSentAt?: string;
-  department: string; // Assuming department ID
+  department: { title: string };
   email: string;
-  faculty: string; // Assuming faculty ID
+  faculty: { title: string }; 
   invitationStatus: string;
   isActive: boolean;
   name: string;
@@ -144,6 +144,14 @@ function ResearcherDetailsPage() {
               <p className="text-sm font-medium">Email:</p>
               <p>{researcher.email}</p>
             </div>
+            <div>
+  <p className="text-sm font-medium">Faculty:</p>
+  <p>{researcher.faculty?.title || 'N/A'}</p>
+</div>
+<div>
+  <p className="text-sm font-medium">Department:</p>
+  <p>{researcher.department?.title || 'N/A'}</p>
+</div>
             <div>
               <p className="text-sm font-medium">Status:</p>
               <p>{researcher.isActive ? "Active" : "Inactive"}</p>

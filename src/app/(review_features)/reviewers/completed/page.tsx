@@ -124,8 +124,7 @@ const CompletedReviews: React.FC = () => {
 
   const filteredAndSortedReviews = sortReviews(
     completedReviews.filter(review => {
-      const matchesSearch = review.proposal.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           review.proposal.submitter.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = review.proposal.projectTitle.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesFilter = filterType === 'all' || review.reviewType === filterType;
       
@@ -311,17 +310,7 @@ const CompletedReviews: React.FC = () => {
                             <h3 className="text-lg font-semibold text-gray-900 mb-1">
                               {review.proposal.projectTitle}
                             </h3>
-                            <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                              <div className="flex items-center">
-                                <User className="w-4 h-4 mr-1" />
-                                {review.proposal.submitter.name}
-                              </div>
-                              {review.proposal.submitter.faculty && (
-                                <div className="flex items-center">
-                                  <Building className="w-4 h-4 mr-1" />
-                                  {review.proposal.submitter.faculty.title}
-                                </div>
-                              )}
+                            <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">  
                               <div className="flex items-center">
                                 <Calendar className="w-4 h-4 mr-1" />
                                 Completed: {new Date(review.completedAt).toLocaleDateString()}

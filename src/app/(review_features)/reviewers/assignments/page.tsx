@@ -155,8 +155,7 @@ const ReviewerAssignments: React.FC = () => {
   };
 
   const filteredAssignments = assignments.filter(assignment => {
-    const matchesSearch = assignment.proposal.projectTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         assignment.proposal.submitter.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = assignment.proposal.projectTitle.toLowerCase().includes(searchTerm.toLowerCase());
     
     if (!matchesSearch) return false;
     
