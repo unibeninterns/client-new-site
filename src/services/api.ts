@@ -16,7 +16,20 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("accessToken");
+    let token = null;
+    const currentPath = window.location.pathname;
+
+    if (currentPath.startsWith("/admin")) {
+      token = localStorage.getItem("adminAccessToken");
+    } else if (currentPath.startsWith("/reviewers")) {
+      token = localStorage.getItem("reviewerAccessToken");
+    } else if (currentPath.startsWith("/researchers")) {
+      token = localStorage.getItem("researcherAccessToken");
+    } else {
+      // Fallback for other paths or if no specific role path is matched
+      token = localStorage.getItem("accessToken");
+    }
+
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -51,8 +64,17 @@ api.interceptors.response.use(
         const refreshResponse = await api.post("/auth/refresh-token");
 
         if (refreshResponse.data.accessToken) {
-          // Save the new token
-          localStorage.setItem("accessToken", refreshResponse.data.accessToken);
+          // Save the new token based on the current path/role context
+          const currentPath = window.location.pathname;
+          if (currentPath.startsWith("/admin")) {
+            localStorage.setItem("adminAccessToken", refreshResponse.data.accessToken);
+          } else if (currentPath.startsWith("/reviewers")) {
+            localStorage.setItem("reviewerAccessToken", refreshResponse.data.accessToken);
+          } else if (currentPath.startsWith("/researchers")) {
+            localStorage.setItem("researcherAccessToken", refreshResponse.data.accessToken);
+          } else {
+            localStorage.setItem("accessToken", refreshResponse.data.accessToken);
+          }
 
           // Update the original request with the new token
           originalRequest.headers["Authorization"] =
@@ -64,8 +86,12 @@ api.interceptors.response.use(
       } catch (refreshError: any) {
         // If refresh fails, redirect to login
         console.error("Token refresh failed:", refreshError);
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("userData");
+        // Clear all potential tokens on refresh failure
+        localStorage.removeItem("adminAccessToken");
+        localStorage.removeItem("reviewerAccessToken");
+        localStorage.removeItem("researcherAccessToken");
+        localStorage.removeItem("accessToken"); // Fallback
+        localStorage.removeItem("userData"); // Assuming userData is generic
 
         // Only redirect if we're in the browser
         if (typeof window !== "undefined") {
@@ -167,9 +193,9 @@ export const loginAdmin = async (credentials: {
     const response = await api.post("/auth/admin-login", credentials);
 
     if (response.data.accessToken) {
-      localStorage.setItem("accessToken", response.data.accessToken);
-      api.defaults.headers.common["Authorization"] =
-        `Bearer ${response.data.accessToken}`;
+      localStorage.setItem("adminAccessToken", response.data.accessToken);
+      // No need to set api.defaults.headers.common["Authorization"] here
+      // as the interceptor will handle it based on the path.
     }
 
     return response.data;
@@ -188,9 +214,7 @@ export const loginReviewer = async (credentials: {
     const response = await api.post("/auth/reviewer-login", credentials);
 
     if (response.data.accessToken) {
-      localStorage.setItem("accessToken", response.data.accessToken);
-      api.defaults.headers.common["Authorization"] =
-        `Bearer ${response.data.accessToken}`;
+      localStorage.setItem("reviewerAccessToken", response.data.accessToken);
     }
 
     return response.data;
@@ -209,9 +233,7 @@ export const loginResearcher = async (credentials: {
     const response = await api.post("/auth/researcher-login", credentials);
 
     if (response.data.accessToken) {
-      localStorage.setItem("accessToken", response.data.accessToken);
-      api.defaults.headers.common["Authorization"] =
-        `Bearer ${response.data.accessToken}`;
+      localStorage.setItem("researcherAccessToken", response.data.accessToken);
     }
 
     return response.data;
@@ -227,7 +249,11 @@ export const logout = async () => {
   } catch (error) {
     console.error("Logout API call failed:", error);
   } finally {
-    localStorage.removeItem("accessToken");
+    // Clear all potential tokens on logout
+    localStorage.removeItem("adminAccessToken");
+    localStorage.removeItem("reviewerAccessToken");
+    localStorage.removeItem("researcherAccessToken");
+    localStorage.removeItem("accessToken"); // Fallback
     localStorage.removeItem("userData");
   }
 };
