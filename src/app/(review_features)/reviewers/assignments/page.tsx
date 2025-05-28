@@ -169,7 +169,7 @@ const ReviewerAssignments: React.FC = () => {
       default:
         return true;
     }
-  });
+  }).sort((a, b) => new Date(b.proposal.createdAt).getTime() - new Date(a.proposal.createdAt).getTime());
 
   if (authLoading || loading) {
     return (
