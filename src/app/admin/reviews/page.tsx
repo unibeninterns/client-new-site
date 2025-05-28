@@ -155,7 +155,7 @@ export default function ProposalReviewsPage() {
   ]);
 
   const handleViewDetails = (proposalId: string) => {
-    router.push(`/admin/proposal-reviews/${proposalId}`);
+    router.push(`/admin/reviews/${proposalId}`);
   };
 
   const getStatusBadge = (status: string, hasDiscrepancy: boolean) => {
