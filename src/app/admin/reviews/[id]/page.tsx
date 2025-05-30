@@ -6,7 +6,6 @@ import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { 
   ArrowLeft, 
@@ -19,10 +18,11 @@ import {
   Bot,
   FileText,
   Calendar,
-  Award,
   MessageSquare,
-  TrendingUp,
-  BarChart3
+  BarChart3,
+  Mail,
+  Building,
+  GraduationCap
 } from 'lucide-react';
 import { getProposalReviewDetailsById } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -201,6 +201,19 @@ export default function ProposalReviewDetailsPage() {
     }
   };
 
+  const getReviewTypeBadgeColor = (type: string) => {
+    switch (type) {
+      case 'ai':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'human':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'reconciliation':
+        return 'bg-orange-100 text-orange-800 border-orange-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
@@ -274,4 +287,454 @@ export default function ProposalReviewDetailsPage() {
     return (
       <Card className="border-orange-200 bg-orange-50">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-orange
+          <CardTitle className="flex items-center gap-2 text-orange-800">
+            <AlertTriangle size={20} />
+            Discrepancy Analysis
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Overall Score Discrepancy */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-3">Overall Score Variance</h4>
+            <div className="bg-white rounded-lg p-4 border border-orange-200">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-red-600">
+                    {discrepancyInfo.overallScores.max}
+                  </div>
+                  <div className="text-xs text-gray-600">Highest</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">
+                    {discrepancyInfo.overallScores.avg}
+                  </div>
+                  <div className="text-xs text-gray-600">Average</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">
+                    {discrepancyInfo.overallScores.min}
+                  </div>
+                  <div className="text-xs text-gray-600">Lowest</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-orange-600">
+                    {discrepancyInfo.overallScores.percentDifference}%
+                  </div>
+                  <div className="text-xs text-gray-600">Variance</div>
+                </div>
+              </div>
+              
+              <div className="text-sm text-gray-600">
+                Individual scores: {discrepancyInfo.overallScores.scores.join(', ')}
+              </div>
+            </div>
+          </div>
+
+          {/* Criteria-level Discrepancies */}
+          <div>
+            <h4 className="font-semibold text-gray-900 mb-3">Top Criteria Discrepancies</h4>
+            <div className="space-y-3">
+              {discrepancyInfo.criteriaDiscrepancies.map((item, index) => (
+                <div key={item.criterion} className="bg-white rounded-lg p-4 border border-orange-200">
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="font-medium text-gray-900">
+                      {criteriaLabels[item.criterion] || item.criterion}
+                    </div>
+                    <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                      {item.percentDifference}% variance
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <span>Scores: {item.scores.join(', ')}</span>
+                    <span>Avg: {item.avg}</span>
+                    <span>Range: {item.min}-{item.max}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  const renderReviewCard = (review: Review, index: number) => {
+    return (
+      <Card key={review.id} className="mb-6">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {getReviewTypeIcon(review.reviewType)}
+              <div>
+                <CardTitle className="text-lg">
+                  {getReviewTypeLabel(review.reviewType)}
+                  {review.reviewType === 'human' && ` #${index + 1}`}
+                </CardTitle>
+                {review.reviewer && (
+                  <div className="text-sm text-gray-600 mt-1">
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-1">
+                        <User size={12} />
+                        {review.reviewer.name}
+                      </span>
+                      {review.reviewer.academicTitle && (
+                        <span className="flex items-center gap-1">
+                          <GraduationCap size={12} />
+                          {review.reviewer.academicTitle}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 mt-1">
+                      <span className="flex items-center gap-1">
+                        <Mail size={12} />
+                        {review.reviewer.email}
+                      </span>
+                      {review.reviewer.faculty && (
+                        <span className="flex items-center gap-1">
+                          <Building size={12} />
+                          {review.reviewer.faculty.title}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className={getReviewTypeBadgeColor(review.reviewType)}>
+                {getReviewTypeIcon(review.reviewType)}
+                <span className="ml-1">{getReviewTypeLabel(review.reviewType)}</span>
+              </Badge>
+              {getStatusBadge(review.status)}
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Score Breakdown */}
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <BarChart3 size={16} />
+                Score Breakdown
+              </h4>
+              {renderScoreBreakdown(review)}
+            </div>
+
+            {/* Comments and Details */}
+            <div className="space-y-4">
+              <div>
+                <h4 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                  <MessageSquare size={16} />
+                  Comments & Feedback
+                </h4>
+                <div className="bg-gray-50 rounded-lg p-4 min-h-[120px]">
+                  {review.comments ? (
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                      {review.comments}
+                    </p>
+                  ) : (
+                    <p className="text-sm text-gray-500 italic">
+                      No comments provided
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="flex items-center gap-1 text-gray-600 mb-1">
+                    <Calendar size={12} />
+                    Due Date
+                  </div>
+                  <div className="font-medium">
+                    {new Date(review.dueDate).toLocaleDateString()}
+                  </div>
+                </div>
+                {review.completedAt && (
+                  <div>
+                    <div className="flex items-center gap-1 text-gray-600 mb-1">
+                      <CheckCircle size={12} />
+                      Completed
+                    </div>
+                    <div className="font-medium">
+                      {new Date(review.completedAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  if (authLoading || !isAuthenticated) {
+    return (
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+          <span className="ml-2 text-gray-600">Loading proposal details...</span>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error || !details) {
+    return (
+      <AdminLayout>
+        <div className="max-w-7xl mx-auto p-6">
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+            <p>{error || 'Proposal not found'}</p>
+          </div>
+          <Button 
+            onClick={() => router.back()} 
+            variant="outline" 
+            className="mt-4"
+          >
+            <ArrowLeft size={16} className="mr-2" />
+            Go Back
+          </Button>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  const allReviews = [
+    ...details.reviews.ai,
+    ...details.reviews.human,
+    ...details.reviews.reconciliation
+  ].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  return (
+    <AdminLayout>
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button 
+              onClick={() => router.back()} 
+              variant="outline" 
+              size="sm"
+            >
+              <ArrowLeft size={16} className="mr-2" />
+              Back to Reviews
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Proposal Review Details
+              </h1>
+              <p className="text-gray-600 mt-1">
+                Comprehensive review analysis and scoring breakdown
+              </p>
+            </div>
+          </div>
+          <Button onClick={loadProposalDetails} variant="outline" size="sm">
+            <RefreshCw size={16} className="mr-2" />
+            Refresh
+          </Button>
+        </div>
+
+        {/* Proposal Overview */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText size={20} />
+              Proposal Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-900">
+                    {details.proposal.projectTitle || 'Untitled Proposal'}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="outline">
+                      {details.proposal.submitterType === 'staff' ? 'Staff' : 'Master Student'}
+                    </Badge>
+                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                      {details.proposal.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-2">Submitter Information</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-2">
+                      <User size={14} className="text-gray-500" />
+                      <span>{details.proposal.submitter.name}</span>
+                      {details.proposal.submitter.academicTitle && (
+                        <Badge variant="outline" className="text-xs">
+                          {details.proposal.submitter.academicTitle}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Mail size={14} className="text-gray-500" />
+                      <span>{details.proposal.submitter.email}</span>
+                    </div>
+                    {details.proposal.submitter.faculty && (
+                      <div className="flex items-center gap-2">
+                        <Building size={14} className="text-gray-500" />
+                        <span>{details.proposal.submitter.faculty.title}</span>
+                        {details.proposal.submitter.department && (
+                          <span className="text-gray-500">
+                            • {details.proposal.submitter.department.title}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-medium text-gray-900 mb-3">Review Summary</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-purple-50 rounded-lg p-3 border border-purple-200">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {details.reviewSummary.totalReviews}
+                      </div>
+                      <div className="text-sm text-purple-700">Total Reviews</div>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-3 border border-green-200">
+                      <div className="text-2xl font-bold text-green-600">
+                        {details.reviewSummary.completedReviews}
+                      </div>
+                      <div className="text-sm text-green-700">Completed</div>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-4 space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span>Review Progress</span>
+                      <span>{details.reviewSummary.completedReviews}/{details.reviewSummary.totalReviews}</span>
+                    </div>
+                    <Progress 
+                      value={details.reviewSummary.totalReviews > 0 ? 
+                        (details.reviewSummary.completedReviews / details.reviewSummary.totalReviews) * 100 : 0
+                      } 
+                      className="h-2" 
+                    />
+                  </div>
+
+                  <div className="flex gap-2 mt-4">
+                    {details.reviewSummary.hasAI && (
+                      <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+                        <Bot size={12} className="mr-1" />
+                        AI Review
+                      </Badge>
+                    )}
+                    {details.reviewSummary.hasHuman && (
+                      <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                        <User size={12} className="mr-1" />
+                        Human Review
+                      </Badge>
+                    )}
+                    {details.reviewSummary.hasReconciliation && (
+                      <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                        <RefreshCw size={12} className="mr-1" />
+                        Reconciliation
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  <div>Created: {new Date(details.proposal.createdAt).toLocaleString()}</div>
+                  <div>Updated: {new Date(details.proposal.updatedAt).toLocaleString()}</div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Discrepancy Analysis */}
+        {renderDiscrepancyAnalysis()}
+
+        {/* Reviews Section */}
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-semibold text-gray-900">
+              All Reviews ({allReviews.length})
+            </h2>
+            <div className="flex gap-2">
+              {details.reviews.ai.length > 0 && (
+                <Badge className="bg-purple-100 text-purple-800 border-purple-200">
+                  {details.reviews.ai.length} AI
+                </Badge>
+              )}
+              {details.reviews.human.length > 0 && (
+                <Badge className="bg-blue-100 text-blue-800 border-blue-200">
+                  {details.reviews.human.length} Human
+                </Badge>
+              )}
+              {details.reviews.reconciliation.length > 0 && (
+                <Badge className="bg-orange-100 text-orange-800 border-orange-200">
+                  {details.reviews.reconciliation.length} Reconciliation
+                </Badge>
+              )}
+            </div>
+          </div>
+
+          {/* AI Reviews */}
+          {details.reviews.ai.length > 0 && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <Bot size={18} className="text-purple-600" />
+                AI Reviews
+              </h3>
+              {details.reviews.ai.map((review, index) => renderReviewCard(review, index))}
+            </div>
+          )}
+
+          {/* Human Reviews */}
+          {details.reviews.human.length > 0 && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <User size={18} className="text-blue-600" />
+                Human Reviews
+              </h3>
+              {details.reviews.human.map((review, index) => renderReviewCard(review, index))}
+            </div>
+          )}
+
+          {/* Reconciliation Reviews */}
+          {details.reviews.reconciliation.length > 0 && (
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <RefreshCw size={18} className="text-orange-600" />
+                Reconciliation Reviews
+              </h3>
+              {details.reviews.reconciliation.map((review, index) => renderReviewCard(review, index))}
+            </div>
+          )}
+
+          {allReviews.length === 0 && (
+            <Card>
+              <CardContent className="text-center py-12">
+                <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Reviews Available</h3>
+                <p className="text-gray-600">
+                  This proposal has not been reviewed yet.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}
