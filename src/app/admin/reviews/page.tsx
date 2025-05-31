@@ -129,6 +129,7 @@ export default function ProposalReviewsPage() {
       }
 
       setProposals(response.data);
+      console.log('Loaded proposals:', response.data);
       setTotalPages(response.pagination.pages);
       setTotalCount(response.pagination.total);
 
