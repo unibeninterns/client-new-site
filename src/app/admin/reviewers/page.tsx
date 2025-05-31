@@ -155,11 +155,13 @@ export default function AdminReviewersPage() {
     // Merge statistics from list with detailed data
     const mergedData: ReviewerDetails = {
       ...response.data,
+      assignedProposals: response.data.assignedProposals || [], // Ensure it's an array
+      completedReviews: response.data.completedReviews || [],   // Ensure it's an array
       statistics: existingReviewer?.statistics || {
-        assigned: response.data.assignedProposals.length,
-        completed: response.data.completedReviews.length,
-        completionRate: response.data.assignedProposals.length > 0 
-          ? Math.round((response.data.completedReviews.length / response.data.assignedProposals.length) * 100)
+        assigned: (response.data.assignedProposals || []).length,
+        completed: (response.data.completedReviews || []).length,
+        completionRate: (response.data.assignedProposals || []).length > 0 
+          ? Math.round(((response.data.completedReviews || []).length / (response.data.assignedProposals || []).length) * 100)
           : 0
       }
     };

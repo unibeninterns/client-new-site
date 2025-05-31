@@ -271,12 +271,14 @@ export default function DecisionsPanel() {
                     {proposal.status === 'pending' ? (
                       <div className="flex gap-2">
                         <Button
+                          key={`${proposal.id}-approve`}
                           onClick={() => handleDecision(proposal.id, 'approved')}
                           className="bg-green-50 text-green-700 hover:bg-green-100"
                         >
                           Approve
                         </Button>
                         <Button
+                          key={`${proposal.id}-reject`}
                           onClick={() => handleDecision(proposal.id, 'rejected')}
                           className="bg-red-50 text-red-700 hover:bg-red-100"
                         >
@@ -284,7 +286,7 @@ export default function DecisionsPanel() {
                         </Button>
                       </div>
                     ) : (
-                      <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                      <span key={`${proposal.id}-status`} className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
                         proposal.status === 'approved' 
                           ? 'bg-green-100 text-green-800'
                           : 'bg-red-100 text-red-800'
