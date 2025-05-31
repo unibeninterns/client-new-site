@@ -239,29 +239,29 @@ export default function DecisionsPanel() {
                   <td className="px-6 py-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">AI {proposal.scores.ai}%</span>
+                        <span className="text-xs text-gray-500">AI {proposal.scores?.ai ?? 0}%</span>
                         <div className="w-24 h-1.5 bg-gray-200 rounded-full">
                           <div 
                             className="h-full bg-purple-600 rounded-full"
-                            style={{ width: `${proposal.scores.ai}%` }}
+                            style={{ width: `${proposal.scores?.ai ?? 0}%` }}
                           />
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">R1 {proposal.scores.reviewer1}%</span>
+                        <span className="text-xs text-gray-500">R1 {proposal.scores?.reviewer1 ?? 0}%</span>
                         <div className="w-24 h-1.5 bg-gray-200 rounded-full">
                           <div 
                             className="h-full bg-purple-400 rounded-full"
-                            style={{ width: `${proposal.scores.reviewer1}%` }}
+                            style={{ width: `${proposal.scores?.reviewer1 ?? 0}%` }}
                           />
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-500">R2 {proposal.scores.reviewer2}%</span>
+                        <span className="text-xs text-gray-500">R2 {proposal.scores?.reviewer2 ?? 0}%</span>
                         <div className="w-24 h-1.5 bg-gray-200 rounded-full">
                           <div 
                             className="h-full bg-purple-300 rounded-full"
-                            style={{ width: `${proposal.scores.reviewer2}%` }}
+                            style={{ width: `${proposal.scores?.reviewer2 ?? 0}%` }}
                           />
                         </div>
                       </div>
