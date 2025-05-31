@@ -5,72 +5,43 @@ import { ArrowRight } from 'lucide-react';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 to-indigo-900 text-white">
       {/* Header */}
       <Header />
 
-      {/* Hero Section */}
-      <main className="container mx-auto px-4 py-16">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-6">
-            Research Funding Opportunities
+      {/* Hero Section - Updated */}
+      <main className="container mx-auto px-4 py-24 flex items-center justify-center min-h-[calc(100vh-120px)]">
+        <div className="max-w-3xl mx-auto text-center bg-white/10 backdrop-blur-sm rounded-xl p-10 shadow-2xl border border-white/20">
+          <h1 className="text-5xl font-extrabold mb-6 leading-tight">
+            Proposal Submission Closed
           </h1>
-          <p className="text-xl text-gray-600 mb-12">
-            Select from available funding opportunities at the University of Benin
+          <p className="text-xl text-gray-200 mb-8">
+            The deadline for proposal submissions has been met. We appreciate your interest and participation.
           </p>
-
-          {/* CTAs */}
-          <div className="grid md:grid-cols-2 gap-8">
-            {/* TETFund Card */}
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="p-8">
-                <h2 className="text-2xl font-semibold text-purple-800 mb-4">
-                  TETFund IBR Grant
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Submit your concept note for the TETFund Institution Based Research (IBR) grant funding opportunity.
-                </p>
-                <Link 
-                  href="/tet-fund"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-800 hover:bg-purple-900 transition-colors duration-200"
-                >
-                  Apply for TETFund IBR
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Masters Funding Card */}
-            <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-              <div className="p-8">
-                <h2 className="text-2xl font-semibold text-purple-800 mb-4">
-                  Masters Research Grant
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  Apply for funding support for your masters research project at the University of Benin.
-                </p>
-                <Link 
-                  href="/masters-funding"
-                  className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-purple-800 hover:bg-purple-900 transition-colors duration-200"
-                >
-                  Apply for Masters Grant
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </div>
-            </div>
+          <p className="text-lg text-gray-300">
+            Please check back later for future funding opportunities or contact us for more information.
+          </p>
+          <div className="mt-10">
+            <Link 
+              href="/contact"
+              className="inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-full text-purple-800 bg-white hover:bg-gray-100 transition-all duration-300 shadow-lg transform hover:scale-105"
+            >
+              Contact Us
+              <ArrowRight className="ml-3 h-5 w-5" />
+            </Link>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-100 mt-12">
+      <footer className="bg-black/20 mt-auto">
         <div className="container mx-auto px-4 py-6">
-          <p className="text-center text-sm text-gray-600">
+          <p className="text-center text-sm text-gray-300">
             © {new Date().getFullYear()} DRID UNIBEN. All rights reserved.
           </p>
-          <p className="text-center text-xs text-gray-500 mt-1">
+          <p className="text-center text-xs text-gray-400 mt-1">
             For technical support, please contact:{' '}
-            <Link href="mailto:drid@uniben.edu" className="text-blue-500" title="send email">
+            <Link href="mailto:drid@uniben.edu" className="text-blue-300 hover:text-blue-100 transition-colors" title="send email">
               drid@uniben.edu
             </Link>
           </p>

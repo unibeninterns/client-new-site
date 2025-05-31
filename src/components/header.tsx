@@ -15,12 +15,7 @@ const Header = () => {
                         <Link href="/" className="hover:text-purple-800">
                             Home
                         </Link>
-                        <Link href="/tet-fund" className="hover:text-purple-800">
-                            IBR Concept
-                        </Link>
-                        <Link href="/masters-funding" className="hover:text-purple-800">
-                            Master's Funding
-                        </Link>
+
                     </nav>
                 </div>
             </header>

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
 
-export default function MastersFundingClosedPage() {
+export default function TetFundClosedPage() {
   notFound();
 }
