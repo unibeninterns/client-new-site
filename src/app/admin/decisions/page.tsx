@@ -40,6 +40,7 @@ export default function DecisionsPanel() {
         setIsLoading(true);
         const response = await getProposalsForDecision();
         setProposals(response.data);
+        console.log('Proposals loaded:', response.data);
         setError(null);
       } catch (err) {
         console.error('Failed to load proposals:', err);
@@ -129,12 +130,12 @@ export default function DecisionsPanel() {
   const filteredProposals = proposals
     .filter(p => filterBy === 'all' || p.status === filterBy)
     .filter(p => 
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      p.projectTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.fieldOfResearch.toLowerCase().includes(searchQuery.toLowerCase())
     )
     .sort((a, b) => {
       if (sortBy === 'score') return b.totalScore - a.totalScore;
-      if (sortBy === 'title') return a.title.localeCompare(b.title);
+      if (sortBy === 'title') return a.projectTitle.localeCompare(b.projectTitle);
       if (sortBy === 'field') return a.fieldOfResearch.localeCompare(b.fieldOfResearch);
       return 0;
     });
@@ -227,7 +228,7 @@ export default function DecisionsPanel() {
                   className={`${proposal.totalScore >= approvalThreshold ? 'bg-green-50' : ''}`}
                 >
                   <td className="px-6 py-4 text-sm text-gray-900">
-                    {proposal.title}
+                    {proposal.projectTitle}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">
                     {proposal.fieldOfResearch}

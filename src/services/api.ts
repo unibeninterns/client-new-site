@@ -67,13 +67,25 @@ api.interceptors.response.use(
           // Save the new token based on the current path/role context
           const currentPath = window.location.pathname;
           if (currentPath.startsWith("/admin")) {
-            localStorage.setItem("adminAccessToken", refreshResponse.data.accessToken);
+            localStorage.setItem(
+              "adminAccessToken",
+              refreshResponse.data.accessToken
+            );
           } else if (currentPath.startsWith("/reviewers")) {
-            localStorage.setItem("reviewerAccessToken", refreshResponse.data.accessToken);
+            localStorage.setItem(
+              "reviewerAccessToken",
+              refreshResponse.data.accessToken
+            );
           } else if (currentPath.startsWith("/researchers")) {
-            localStorage.setItem("researcherAccessToken", refreshResponse.data.accessToken);
+            localStorage.setItem(
+              "researcherAccessToken",
+              refreshResponse.data.accessToken
+            );
           } else {
-            localStorage.setItem("accessToken", refreshResponse.data.accessToken);
+            localStorage.setItem(
+              "accessToken",
+              refreshResponse.data.accessToken
+            );
           }
 
           // Update the original request with the new token
@@ -269,9 +281,15 @@ export const verifyToken = async () => {
 };
 
 // Admin endpoints
-export const getProposals = async (params = {}, options?: { signal?: AbortSignal }) => {
+export const getProposals = async (
+  params = {},
+  options?: { signal?: AbortSignal }
+) => {
   try {
-    const response = await api.get("/admin/proposals", { params, signal: options?.signal });
+    const response = await api.get("/admin/proposals", {
+      params,
+      signal: options?.signal,
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching proposals:", error);
@@ -289,9 +307,13 @@ export const getProposalById = async (id: string) => {
   }
 };
 
-export const getFacultiesWithProposals = async (options?: { signal?: AbortSignal }) => {
+export const getFacultiesWithProposals = async (options?: {
+  signal?: AbortSignal;
+}) => {
   try {
-    const response = await api.get("/admin/faculties-with-proposals", { signal: options?.signal });
+    const response = await api.get("/admin/faculties-with-proposals", {
+      signal: options?.signal,
+    });
     return response.data.data;
   } catch (error) {
     console.error("Error fetching faculties with proposals:", error);
@@ -657,7 +679,7 @@ export const finalizeProposalDecision = async (
 // Define the ProposalDecision type for frontend use
 export type ProposalDecision = {
   id: string;
-  title: string;
+  projectTitle: string;
   fieldOfResearch: string;
   totalScore: number;
   status: "pending" | "approved" | "rejected";
@@ -715,12 +737,22 @@ export const notifyApplicants = async (proposalId: string) => {
   }
 };
 
-export const toggleProposalArchiveStatus = async (proposalId: string, isArchived: boolean, comment?: string) => {
+export const toggleProposalArchiveStatus = async (
+  proposalId: string,
+  isArchived: boolean,
+  comment?: string
+) => {
   try {
-    const response = await api.put(`/admin/proposals/${proposalId}/archive`, { isArchived, comment });
+    const response = await api.put(`/admin/proposals/${proposalId}/archive`, {
+      isArchived,
+      comment,
+    });
     return response.data;
   } catch (error) {
-    console.error(`Error toggling archive status for proposal ${proposalId}:`, error);
+    console.error(
+      `Error toggling archive status for proposal ${proposalId}:`,
+      error
+    );
     throw error;
   }
 };
