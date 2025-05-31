@@ -649,30 +649,30 @@ const ProposalReviewForm: React.FC = () => {
             <div className="space-y-6">
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">Problem Statement</h4>
-                <p className="text-gray-600 leading-relaxed">{reviewData.proposal.problemStatement}</p>
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{reviewData.proposal.problemStatement}</p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">Research Objectives</h4>
-                <p className="text-gray-600 leading-relaxed">{reviewData.proposal.objectives}</p>
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{reviewData.proposal.objectives}</p>
               </div>
 
               <div>
                 <h4 className="font-semibold text-gray-700 mb-2">Methodology</h4>
-                <p className="text-gray-600 leading-relaxed">{reviewData.proposal.methodology}</p>
+                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{reviewData.proposal.methodology}</p>
               </div>
 
               {reviewData.proposal.expectedOutcomes && (
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-2">Expected Outcomes</h4>
-                  <p className="text-gray-600 leading-relaxed">{reviewData.proposal.expectedOutcomes}</p>
+                  <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{reviewData.proposal.expectedOutcomes}</p>
                 </div>
               )}
 
               {reviewData.proposal.workPlan && (
                 <div>
                   <h4 className="font-semibold text-gray-700 mb-2">Work Plan</h4>
-                  <p className="text-gray-600 leading-relaxed">{reviewData.proposal.workPlan}</p>
+                  <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">{reviewData.proposal.workPlan}</p>
                 </div>
               )}
             </div>
