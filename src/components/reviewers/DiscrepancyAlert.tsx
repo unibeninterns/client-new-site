@@ -55,8 +55,8 @@ const DiscrepancyAlert = ({ discrepancyInfo }: DiscrepancyAlertProps) => {
 
   // Get severity level based on percentage difference
   const getSeverityLevel = (percentage: number) => {
-    if (percentage >= 40) return 'high';
-    if (percentage >= 25) return 'medium';
+    if (percentage >= 20) return 'high';
+    if (percentage >= 5) return 'medium';
     return 'low';
   };
 
@@ -99,23 +99,6 @@ const DiscrepancyAlert = ({ discrepancyInfo }: DiscrepancyAlertProps) => {
             <h3 className={`text-lg font-bold ${colors.text}`}>
               Review Discrepancy Alert
             </h3>
-            <div className="flex items-center gap-4">
-              <div className="text-center">
-                <div className={`text-2xl font-bold ${colors.accent}`}>
-                  {overallScoreRange.percentageDifference}%
-                </div>
-                <div className={`text-xs ${colors.text}`}>Overall Difference</div>
-              </div>
-              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-                overallSeverity === 'high' 
-                  ? 'bg-red-100 text-red-800' 
-                  : overallSeverity === 'medium'
-                  ? 'bg-yellow-100 text-yellow-800'
-                  : 'bg-orange-100 text-orange-800'
-              }`}>
-                {overallSeverity.toUpperCase()} PRIORITY
-              </div>
-            </div>
           </div>
 
           <div className={`mb-4 ${colors.text}`}>

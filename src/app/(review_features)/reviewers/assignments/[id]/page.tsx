@@ -583,26 +583,6 @@ const ProposalReviewForm: React.FC = () => {
           </tbody>
         </table>
       </div>
-
-      {/* Previous Comments */}
-      <div className="mt-6">
-        <h3 className="font-semibold text-gray-700 mb-3">Previous Review Comments</h3>
-        <div className="space-y-4">
-          {discrepancyInfo.conflictingReviews.map((review, index) => (
-            <div key={index} className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-medium text-gray-800">{review.reviewId}</h4>
-                <div className="text-sm text-gray-500">
-                  Total Score: {review.totalScore}/{calculateMaxTotalScore()}
-                </div>
-              </div>
-              <p className="text-gray-600 text-sm whitespace-pre-wrap">
-                {review.comments || 'No comments provided.'}
-              </p>
-            </div>
-          ))}
-        </div>
-      </div>
     </div>
   </>
 )}
