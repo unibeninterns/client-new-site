@@ -8,10 +8,10 @@ import { getProposals, getFacultiesWithProposals, toggleProposalArchiveStatus } 
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical, Archive, FolderOpen, UserPlus } from 'lucide-react';
 import Link from 'next/link';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface Faculty {
   _id: string;
@@ -82,8 +82,8 @@ export default function AdminProposalsPage() {
       try {
         const facultyData = await getFacultiesWithProposals();
         setFaculties(facultyData);
-      } catch (err: any) {
-        if (err.name === 'CanceledError') {
+      } catch (err: unknown) {
+        if ((err as Error).name === 'CanceledError') {
           // console.log('Faculties fetch aborted (expected)');
         } else {
           console.error('Failed to fetch faculties:', err);
@@ -115,8 +115,8 @@ export default function AdminProposalsPage() {
           totalPages: response.totalPages,
           currentPage: response.currentPage
         });
-      } catch (err: any) {
-        if (err.name === 'CanceledError') {
+      } catch (err: unknown) {
+        if ((err as Error).name === 'CanceledError') {
           // console.log('Proposals fetch aborted (expected)');
         } else {
           console.error('Failed to fetch proposals:', err);
@@ -476,7 +476,7 @@ export default function AdminProposalsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {proposal.submitterType === 'staff' ? 'Staff' : 'Master\'s Student'}
+                          {proposal.submitterType === 'staff' ? 'Staff' : 'Master's Student'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(proposal.status)}`}>

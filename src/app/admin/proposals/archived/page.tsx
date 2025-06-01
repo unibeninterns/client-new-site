@@ -6,12 +6,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import * as api from '@/services/api';
 import { getProposals, getFacultiesWithProposals, toggleProposalArchiveStatus } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical, Archive, FolderOpen, UserPlus } from 'lucide-react';
+import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical, FolderOpen } from 'lucide-react';
 import Link from 'next/link';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface Faculty {
   _id: string;
@@ -87,9 +87,9 @@ export default function AdminArchivedProposalsPage() {
         if (mounted) { // Only update state if component is still mounted
           setFaculties(facultyData);
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (mounted) { // Only log error if component is still mounted
-          if (err.name === 'CanceledError') {
+          if ((err as Error).name === 'CanceledError') {
             // console.log('Faculties fetch aborted (expected)');
           } else {
             console.error('Failed to fetch faculties:', err);
@@ -134,9 +134,9 @@ export default function AdminArchivedProposalsPage() {
             currentPage: response.currentPage
           });
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (mounted) { // Only log error and set error state if component is still mounted
-          if (err.name === 'CanceledError') {
+          if ((err as Error).name === 'CanceledError') {
             // console.log('Proposals fetch aborted (expected)');
           } else {
             console.error('Failed to fetch proposals:', err);
@@ -179,24 +179,6 @@ export default function AdminArchivedProposalsPage() {
 
   const refreshData = () => {
     setRefreshTrigger(prev => prev + 1); // Increment to force useEffect re-run
-  };
-
-  const handleAssignReviewer = async (proposalId: string) => {
-    toast.info("Assigning reviewer...");
-    try {
-      // The api.assignReviewers function expects only the proposalId
-      const response = await api.assignReviewers(proposalId);
-      if(response.success) {
-        toast.success("Assigned reviewer successfully.");
-        refreshData(); // Refresh the list after assignment
-      }
-      else {
-        toast.error("Assignment failed")
-      }
-    } catch (error) {
-      console.error("Failed to assign reviewer:", error);
-      toast.error("Error while assigning reviewer.");
-    }
   };
 
   const handleArchiveClick = (proposalId: string, archive: boolean) => {
@@ -504,7 +486,7 @@ export default function AdminArchivedProposalsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {proposal.submitterType === 'staff' ? 'Staff' : 'Master\'s Student'}
+                          {proposal.submitterType === 'staff' ? 'Staff' : 'Master's Student'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(proposal.status)}`}>
@@ -616,3 +598,35 @@ export default function AdminArchivedProposalsPage() {
     </AdminLayout>
   );
 }
+
+</final_file_content>
+
+IMPORTANT: For any future changes to this file, use the final_file_content shown above as your reference. This content reflects the current state of the file, including any auto-formatting (e.g., if you used single quotes but the formatter converted them to double quotes). Always base your SEARCH/REPLACE operations on this final version to ensure accuracy.
+
+
+
+New problems detected after saving the file:
+src/app/admin/proposals/archived/page.tsx
+- [ts Error] Line 489: '}' expected.
+- [ts Error] Line 489: Unexpected token. Did you mean `{'}'}` or `&rbrace;`?<environment_details>
+# VSCode Visible Files
+src/app/admin/proposals/archived/page.tsx
+
+# VSCode Open Tabs
+src/app/admin/reviews/page.tsx
+src/app/(review_features)/reviewers/dashboard/page.tsx
+src/app/(review_features)/reviewers/login/page.tsx
+src/app/accept-invitation/[token]/page.tsx
+src/app/admin/invitations/page.tsx
+src/app/admin/login/page.tsx
+src/app/admin/proposals/archived/page.tsx
+
+# Current Time
+6/1/2025, 2:05:35 PM (Africa/Lagos, UTC+1:00)
+
+# Context Window Usage
+107,727 / 1,048.576K tokens used (10%)
+
+# Current Mode
+ACT MODE
+</environment_details>

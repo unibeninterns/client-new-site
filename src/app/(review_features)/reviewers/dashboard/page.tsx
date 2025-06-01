@@ -18,8 +18,8 @@ import { useRouter } from 'next/navigation';
 interface ReviewerInfo {
   name: string;
   email: string;
-  department: any;
-  faculty: any;
+  department?: { name: string; code?: string };
+  faculty?: { name: string; code?: string };
   academicTitle: string;
 }
 
@@ -96,8 +96,8 @@ const ReviewersDashboard: React.FC = () => {
       } else {
         setError('Failed to load dashboard data');
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load dashboard data');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load dashboard data');
       console.error('Dashboard fetch error:', err);
     } finally {
       setLoading(false);
@@ -154,7 +154,7 @@ const ReviewersDashboard: React.FC = () => {
     );
   }
 
-  const { reviewer, statistics, assignedProposals } = dashboardData;
+  const { reviewer, statistics } = dashboardData;
 
   return (
     <ReviewerLayout>
