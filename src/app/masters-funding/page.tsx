@@ -197,7 +197,7 @@ export default function MastersFundingPage() {
       }
       
       // Submit to API
-      const result = await submitMasterProposal(apiFormData);
+      await submitMasterProposal(apiFormData);
       setIsSubmitted(true);
       
     } catch (error) {
@@ -233,7 +233,7 @@ export default function MastersFundingPage() {
         <main className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
             <div className="bg-purple-800 text-white px-6 py-4">
-              <h1 className="text-xl font-semibold">Master's Funding Concept Note Submission</h1>
+              <h1 className="text-xl font-semibold">Master&apos;s Funding Concept Note Submission</h1>
             </div>
             <div className="p-8 text-center">
               <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
@@ -285,7 +285,7 @@ export default function MastersFundingPage() {
               Directorate of Research, Innovation and Development (DRID), University of Benin, Benin City.
             </p>
             <p className="mb-4 font-medium text-gray-800">
-              <strong>Concept Note Submission Template (Master's Students Only)</strong>
+              <strong>Concept Note Submission Template (Master&apos;s Students Only)</strong>
             </p>
 
             {showFullGuidelines ? (
@@ -365,7 +365,7 @@ export default function MastersFundingPage() {
                       drid@uniben.edu
                     </a>
                   </li>
-                  <li>Deadline: Monday, 2nd June 2025</li>
+                  <li>Deadline: Tuesday, 3rd June 2025</li>
                   <li>
                     For inquiries, contact the DRID Office or email{" "}
                     <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">
@@ -418,7 +418,7 @@ export default function MastersFundingPage() {
         {agreementChecked && (
           <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-md overflow-hidden">
             <div className="bg-purple-800 text-white px-6 py-4">
-              <h1 className="text-xl font-semibold">Master's Funding Concept Note Submission</h1>
+              <h1 className="text-xl font-semibold">Master&apos;s Funding Concept Note Submission</h1>
             </div>
             
             {submitError && (
