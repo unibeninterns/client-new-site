@@ -164,7 +164,7 @@ const ReviewersDashboard: React.FC = () => {
     );
   }
 
-  const { reviewer, statistics, assignedProposals } = dashboardData;
+  const { reviewer, statistics } = dashboardData;
 
   return (
     <ReviewerLayout>

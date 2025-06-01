@@ -171,10 +171,10 @@ export default function ReviewerRegisterPage({ params }: ReviewerRegisterPagePro
       setTimeout(() => {
         router.push("/reviewers/login");
       }, 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       setError(
-        error.response?.data?.message ||
-        error.message ||
+        (error as any)?.response?.data?.message ||
+        (error as Error)?.message ||
         "Failed to complete registration"
       );
     } finally {

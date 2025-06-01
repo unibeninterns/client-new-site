@@ -90,9 +90,9 @@ function AdminInvitationsPage() {
         const response = await api.getReviewerInvitations(); // Changed API call
         setInvitations(response.data || []);
         setIsLoading(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error fetching invitations:", error);
-        setError(error.message || "Failed to load invitations");
+        setError((error as Error).message || "Failed to load invitations");
         setIsLoading(false);
       }
     };
@@ -159,8 +159,8 @@ function AdminInvitationsPage() {
   
       setEmail("");
       setTimeout(() => setShowInviteDialog(false), 1500);
-    } catch (error: any) {
-      setError(error.response.data.message || "Failed to send invitation");
+    } catch (error: unknown) {
+      setError((error as any)?.response?.data?.message || "Failed to send invitation");
     } finally {
       setIsSubmitting(false);
     }
@@ -175,9 +175,9 @@ function AdminInvitationsPage() {
       setInvitations(response.data);
   
       setSuccess("Invitation resent successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error resending invitation:", error);
-      setError(error.message || "Failed to resend invitation");
+      setError((error as Error).message || "Failed to resend invitation");
     }
   };
 
@@ -189,9 +189,9 @@ function AdminInvitationsPage() {
           invitations.filter((invitation) => invitation.id !== id)
         );
         setSuccess("Invitation deleted successfully");
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error deleting invitation:", error);
-        setError(error.message || "Failed to delete invitation");
+        setError((error as Error).message || "Failed to delete invitation");
       }
     }
   };
@@ -218,8 +218,8 @@ function AdminInvitationsPage() {
       });
 
       setTimeout(() => setShowAddReviewerDialog(false), 1500);
-    } catch (error: any) {
-      setError(error.response.data.message || "Failed to create reviewer profile");
+    } catch (error: unknown) {
+      setError((error as any)?.response?.data?.message || "Failed to create reviewer profile");
     } finally {
       setIsSubmitting(false);
     }

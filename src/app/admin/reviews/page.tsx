@@ -160,6 +160,7 @@ export default function ProposalReviewsPage() {
   };
 
   const getStatusBadge = (status: string, hasDiscrepancy: boolean) => {
+    console.log(`getStatusBadge called with: status=${status}, hasDiscrepancy=${hasDiscrepancy}`);
     const baseClasses = "inline-flex items-center gap-1 text-xs font-medium";
     
     if (hasDiscrepancy) {

@@ -12,6 +12,7 @@ export default function ReviewerLoginPage() {
     const { login, isLoading, error, clearError } = useAuth();
 
     // Clear form error when user starts typing
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     useEffect(() => {
         if (formError) {
             setFormError('');
@@ -44,9 +45,9 @@ export default function ReviewerLoginPage() {
         try {
             await login(email, password);
             // Success handling is done in AuthContext
-        } catch (err: any) {
+        } catch (err: unknown) {
           console.error('Login submission error:', err);
-          setFormError(err.message || 'Login failed. Please try again.');
+          setFormError((err as Error).message || 'Login failed. Please try again.');
         }
     };
 
