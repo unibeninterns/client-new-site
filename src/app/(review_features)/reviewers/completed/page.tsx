@@ -11,11 +11,8 @@ import {
   FileText,
   Calendar,
   DollarSign,
-  User,
-  Building,
   Award,
   Eye,
-  Download,
   Search,
   Filter,
   RefreshCw,
@@ -77,7 +74,7 @@ const CompletedReviews: React.FC = () => {
       
       // Filter for completed reviews only
       const completed = allAssignments.filter(
-        (assignment: any) => assignment.status === 'completed'
+        (assignment: CompletedReview) => assignment.status === 'completed'
       );
       
       setCompletedReviews(completed);
@@ -243,7 +240,7 @@ const CompletedReviews: React.FC = () => {
                   <Filter className="w-5 h-5 text-gray-500" />
                   <select
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
+                    onChange={(e) => setSortBy(e.target.value as "recent" | "score" | "title")}
                     className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   >
                     <option value="recent">Sort by Recent</option>
@@ -256,7 +253,7 @@ const CompletedReviews: React.FC = () => {
                   {['all', 'human', 'reconciliation'].map((type) => (
                     <button
                       key={type}
-                      onClick={() => setFilterType(type as any)}
+                      onClick={() => setFilterType(type as "human" | "reconciliation" | "all")}
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                         filterType === type
                           ? 'bg-purple-600 text-white'

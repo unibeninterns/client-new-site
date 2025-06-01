@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, Clock, AlertCircle, Save, Send, FileText, User } from 'lucide-react';
+import { Eye, Clock, AlertCircle, Save, Send, FileText } from 'lucide-react';
 import DiscrepancyAlert from '@/components/reviewers/DiscrepancyAlert';
 import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 import { useAuth } from '@/contexts/AuthContext';

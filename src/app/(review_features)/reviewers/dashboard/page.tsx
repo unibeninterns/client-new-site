@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 import {
-  Edit3, 
-  Clock, 
+  Edit3,  
   CheckCircle, 
   AlertTriangle,
   Award,

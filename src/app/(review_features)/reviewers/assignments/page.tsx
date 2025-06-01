@@ -12,8 +12,6 @@ import {
   FileText,
   Calendar,
   DollarSign,
-  User,
-  Building,
   CheckCircle,
   XCircle,
   Eye,
@@ -288,7 +286,7 @@ const ReviewerAssignments: React.FC = () => {
                   {['all', 'pending', 'overdue', 'reconciliation'].map((filterOption) => (
                     <button
                       key={filterOption}
-                      onClick={() => setFilter(filterOption as any)}
+                      onClick={() => setFilter(filterOption as "all" | "pending" | "overdue" | "reconciliation")}
                       className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                         filter === filterOption
                           ? 'bg-purple-600 text-white'
