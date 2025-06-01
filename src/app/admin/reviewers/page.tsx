@@ -233,10 +233,14 @@ const handleCheckOverdueReviews = async () => {
   };
 
   const filteredReviewers = reviewers.filter(reviewer => {
+    // Safely access nested properties, providing empty strings if undefined
+    const facultyTitle = reviewer.faculty?.title || '';
+    const departmentTitle = reviewer.department?.title || '';
+
     const matchesSearch = reviewer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          reviewer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reviewer.faculty.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reviewer.department.title.toLowerCase().includes(searchTerm.toLowerCase());
+                         facultyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         departmentTitle.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || reviewer.invitationStatus === statusFilter;
     
