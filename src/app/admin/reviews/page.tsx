@@ -68,6 +68,14 @@ interface ReviewStatistics {
   completionRate: number;
 }
 
+interface Params {
+  page: number;
+  limit: number;
+  status?: string;
+  faculty?: string;
+  discrepancy?: string;
+}
+
 export default function ProposalReviewsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -105,7 +113,7 @@ export default function ProposalReviewsPage() {
       setStatistics(statsResponse.data);
 
       // Build params for proposals
-      const params: any = {
+      const params: Params = {
         page: currentPage,
         limit,
       };
@@ -139,7 +147,7 @@ export default function ProposalReviewsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentPage, discrepancyFilter, showDiscrepancyOnly, statusFilter, facultyFilter]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -341,6 +349,19 @@ export default function ProposalReviewsPage() {
                     <SelectItem value="under_review">Under Review</SelectItem>
                     <SelectItem value="reviewed">Reviewed</SelectItem>
                     <SelectItem value="reconciliation">Reconciliation</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select value={facultyFilter} onValueChange={setFacultyFilter}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue placeholder="Faculty" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Faculties</SelectItem>
+                    <SelectItem value="science">Science</SelectItem>
+                    <SelectItem value="engineering">Engineering</SelectItem>
+                    <SelectItem value="arts">Arts</SelectItem>
+                    {/* Add more faculty options as needed */}
                   </SelectContent>
                 </Select>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from "@/components/ui/button";
@@ -147,7 +147,6 @@ export default function ProposalReviewDetailsPage() {
   const [details, setDetails] = useState<ProposalReviewDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -155,25 +154,26 @@ export default function ProposalReviewDetailsPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
+  const loadProposalDetails = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    setError(null);
+    const response = await getProposalReviewDetailsById(proposalId);
+    setDetails(response.data);
+  } catch (err) {
+    console.error('Failed to load proposal details:', err);
+    setError('Failed to load proposal review details');
+  } finally {
+    setIsLoading(false);
+  }
+}, [proposalId, setIsLoading, setError, setDetails]);
+
   useEffect(() => {
     if (isAuthenticated && proposalId) {
       loadProposalDetails();
     }
-  }, [isAuthenticated, proposalId]);
+  }, [isAuthenticated, proposalId, loadProposalDetails]);
 
-  const loadProposalDetails = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await getProposalReviewDetailsById(proposalId);
-      setDetails(response.data);
-    } catch (err) {
-      console.error('Failed to load proposal details:', err);
-      setError('Failed to load proposal review details');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const getReviewTypeIcon = (type: string) => {
     switch (type) {
@@ -334,7 +334,7 @@ export default function ProposalReviewDetailsPage() {
           <div>
             <h4 className="font-semibold text-gray-900 mb-3">Top Criteria Discrepancies</h4>
             <div className="space-y-3">
-              {discrepancyInfo.criteriaDiscrepancies.map((item, index) => (
+              {discrepancyInfo.criteriaDiscrepancies.map((item) => (
                 <div key={item.criterion} className="bg-white rounded-lg p-4 border border-orange-200">
                   <div className="flex justify-between items-start mb-2">
                     <div className="font-medium text-gray-900">

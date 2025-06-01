@@ -6,6 +6,14 @@ import { getResearcherDashboard } from '@/services/api';
 import { FileText, ClipboardList, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+interface RecentProposal {
+  _id: string;
+  title: string;
+  projectTitle: string;
+  status: string;
+  updatedAt: string;
+}
+
 interface DashboardData {
   profile: {
     name: string;
@@ -21,7 +29,7 @@ interface DashboardData {
       revision_requested: number;
     };
   };
-  recentProposal: any;
+  recentProposal: RecentProposal;
 }
 
 export default function ResearcherDashboard() {
@@ -119,14 +127,6 @@ export default function ResearcherDashboard() {
                 </div>
                 <p className="text-lg font-bold text-gray-800">{dashboardData.stats.statusCounts.approved}</p>
                 <p className="text-sm text-gray-600">Approved</p>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
-                <div className="bg-orange-100 p-3 rounded-full mb-3">
-                  <AlertCircle className="h-6 w-6 text-orange-800" />
-                </div>
-                <p className="text-lg font-bold text-gray-800">{dashboardData.stats.statusCounts.revision_requested}</p>
-                <p className="text-sm text-gray-600">Needs Revision</p>
               </div>
             </div>
 
