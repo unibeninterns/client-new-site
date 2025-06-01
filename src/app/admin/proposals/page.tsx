@@ -342,7 +342,7 @@ export default function AdminProposalsPage() {
                   >
                     <option value="">All Types</option>
                     <option value="staff">Staff</option>
-                    <option value="master_student">Master's Student</option>
+                    <option value="master_student">Master&apos;s Student</option>
                   </select>
                 </div>
                 
@@ -476,7 +476,7 @@ export default function AdminProposalsPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {proposal.submitterType === 'staff' ? 'Staff' : 'Master's Student'}
+                          {proposal.submitterType === 'staff' ? 'Staff' : "Master's Student"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(proposal.status)}`}>

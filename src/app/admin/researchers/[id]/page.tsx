@@ -75,9 +75,9 @@ function ResearcherDetailsPage() {
         const response = await api.getResearcherDetails(researcherId); // Use the correct API
         setResearcherData(response.data);
         setIsLoading(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error(`Error fetching researcher details for ID ${researcherId}:`, error);
-        setError(error.message || "Failed to load researcher details");
+        setError((error as Error).message || "Failed to load researcher details");
         setIsLoading(false);
       }
     };

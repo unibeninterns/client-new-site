@@ -146,6 +146,7 @@ export default function ProposalDetailPage() {
             <Button
               className="inline-flex items-center text-sm font-medium text-purple-600 hover:bg-gray-300 bg-transparent"
               onClick={(e) => {
+                console.log(e);
                 router.back()
               }}
             >

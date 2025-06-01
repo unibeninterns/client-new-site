@@ -17,9 +17,6 @@ import { Toaster, toast } from "sonner"; // Import Toaster and toast from sonner
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { RefreshCw, MoreVertical, Loader2 } from "lucide-react"; // Import MoreVertical and Loader2
 import { Button } from "@/components/ui/button"; // Import Button
-import { Label } from "@/components/ui/label"; // Import Label
-import { Alert, AlertDescription } from "@/components/ui/alert"; // Import Alert components
-import { Check, AlertCircle } from "lucide-react"; // Import icons for alerts
 
 // Define the interface for researcher data based on the API response
 interface Researcher {
@@ -54,20 +51,15 @@ function AdminResearchersPage() {
         const response = await api.getResearchersWithProposals(); // Use the correct API
         setResearchers(response.data); // Assuming response.data is the array of researchers
         setIsLoading(false);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error("Error fetching researchers:", error);
-        setError(error.message || "Failed to load researchers");
+        setError((error as Error).message || "Failed to load researchers");
         setIsLoading(false);
       }
     };
 
     fetchResearchers();
   }, []); // Empty dependency array to fetch data only once
-
-  const handleRowClick = (researcherId: string) => { // Re-added handleRowClick
-    // Navigate to the researcher details page
-    router.push(`/admin/researchers/${researcherId}`);
-  };
 
   const handleSendCredentials = async (researcherId: string) => {
     setSendingCredentials(researcherId); // Set loading state for this researcher
@@ -81,9 +73,9 @@ function AdminResearchersPage() {
       setResearchers(researchers.map(r =>
         r._id === researcherId ? { ...r, credentialsSent: true } : r
       ));
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error sending credentials:", error);
-      const errorMessage = error.message || "Failed to send credentials.";
+      const errorMessage = (error as Error).message || "Failed to send credentials.";
       setError(errorMessage);
        toast.error(errorMessage); // Use sonner toast.error
     } finally {
@@ -98,11 +90,11 @@ function AdminResearchersPage() {
     try {
       await api.resendResearcherCredentials(researcherId); // Use researcherId parameter
       setSuccess("Credentials resent successfully.");
-       toast.success("Credentials resent successfully."); // Use sonner toast.success
+       toast.success(success); // Use sonner toast.success
       // No need to close dialog or reset selected researcher state
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error resending credentials:", error);
-       const errorMessage = error.message || "Failed to resend credentials.";
+       const errorMessage = (error as Error).message || "Failed to resend credentials.";
       setError(errorMessage);
        toast.error(errorMessage); // Use sonner toast.error
     } finally {

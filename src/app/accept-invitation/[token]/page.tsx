@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { z } from "zod";
+import axios from "axios";
 
 // Validation schema
 const reviewerProfileSchema = z.object({
@@ -172,11 +173,13 @@ export default function ReviewerRegisterPage({ params }: ReviewerRegisterPagePro
         router.push("/reviewers/login");
       }, 3000);
     } catch (error: unknown) {
-      setError(
-        (error as any)?.response?.data?.message ||
-        (error as Error)?.message ||
-        "Failed to complete registration"
-      );
+      if (axios.isAxiosError(error)) {
+    setError(error.response?.data?.message || error.message || "Failed to complete registration");
+  } else if (error instanceof Error) {
+    setError(error.message || "Failed to complete registration");
+  } else {
+    setError("An unknown error occurred");
+  }
     } finally {
       setIsLoading(false);
     }

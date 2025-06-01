@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { getAllReviewers, getReviewerById, checkOverdueReviews  } from '@/services/api';
@@ -34,6 +34,18 @@ interface ReviewerStatistics {
   completionRate: number;
 }
 
+interface Proposal {
+  _id: string;
+  projectTitle: string;
+  submitterType: string;
+  submitter: {
+    name: string;
+    email: string;
+  };
+  status: string;
+  createdAt: string;
+}
+
 interface Reviewer {
   _id: string;
   name: string;
@@ -53,14 +65,42 @@ interface Reviewer {
   };
   isActive: boolean;
   invitationStatus: 'pending' | 'accepted' | 'added' | 'expired';
-  assignedProposals: any[];
-  completedReviews: any[];
+  assignedProposals: Proposal[];
+  completedReviews: Proposal[];
   createdAt: string;
   lastLogin?: string;
   statistics: ReviewerStatistics;
 }
 
-interface ReviewerDetails extends Reviewer {
+interface CompletedReview {
+  _id: string;
+  proposal: {
+    projectTitle: string;
+    submitterType: string;
+  };
+  totalScore: number;
+  completedAt: string;
+}
+
+interface ReviewerDetails {
+  _id: string;
+  name: string;
+  email: string;
+  alternativeEmail?: string;
+  phoneNumber: string;
+  academicTitle?: string;
+  faculty: {
+    _id: string;
+    title: string;
+    code: string;
+  };
+  department: {
+    _id: string;
+    title: string;
+    code: string;
+  };
+  isActive: boolean;
+  invitationStatus: 'pending' | 'accepted' | 'added' | 'expired';
   assignedProposals: Array<{
     _id: string;
     projectTitle: string;
@@ -72,15 +112,10 @@ interface ReviewerDetails extends Reviewer {
     status: string;
     createdAt: string;
   }>;
-  completedReviews: Array<{
-    _id: string;
-    proposal: {
-      projectTitle: string;
-      submitterType: string;
-    };
-    totalScore: number;
-    completedAt: string;
-  }>;
+  completedReviews: CompletedReview[];
+  createdAt: string;
+  lastLogin?: string;
+  statistics: ReviewerStatistics;
 }
 
 export default function AdminReviewersPage() {
@@ -112,37 +147,38 @@ export default function AdminReviewersPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
+  const loadReviewers = useCallback(async () => {
+  try {
+    setIsLoading(true);
+    const params = {
+      page: 1,
+      limit: 20,
+      ...(statusFilter !== 'all' && { status: statusFilter }),
+      ...(searchTerm && { search: searchTerm })
+    };
+    
+    const response = await getAllReviewers(params);
+    setReviewers(response.data || []);
+    setPagination({
+      currentPage: response.currentPage || 1,
+      totalPages: response.totalPages || 1,
+      count: response.count || 0
+    });
+    setError(null);
+  } catch (err) {
+    console.error('Failed to load reviewers:', err);
+    setError('Failed to load reviewers');
+  } finally {
+    setIsLoading(false);
+  }
+}, [statusFilter, searchTerm]);
+
   useEffect(() => {
     if (isAuthenticated) {
       loadReviewers();
     }
-  }, [isAuthenticated, statusFilter, searchTerm]);
+  }, [isAuthenticated, statusFilter, searchTerm, loadReviewers]);
 
-  const loadReviewers = async () => {
-    try {
-      setIsLoading(true);
-      const params = {
-        page: 1,
-        limit: 20,
-        ...(statusFilter !== 'all' && { status: statusFilter }),
-        ...(searchTerm && { search: searchTerm })
-      };
-      
-      const response = await getAllReviewers(params);
-      setReviewers(response.data || []);
-      setPagination({
-        currentPage: response.currentPage || 1,
-        totalPages: response.totalPages || 1,
-        count: response.count || 0
-      });
-      setError(null);
-    } catch (err) {
-      console.error('Failed to load reviewers:', err);
-      setError('Failed to load reviewers');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const loadReviewerDetails = async (id: string) => {
   try {

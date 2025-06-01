@@ -12,12 +12,11 @@ export default function AdminLoginPage() {
   const { login, isLoading, error, clearError } = useAuth();
 
   // Clear form error when user starts typing
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (formError) {
       setFormError('');
     }
-  }, [email, password]);
+  }, [email, password, formError]);
 
   // Clear auth error when component mounts or when user starts interacting
   useEffect(() => {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import ReviewerLayout from '@/components/reviewers/ReviewerLayout';
 import {
   Edit3,  
@@ -82,6 +82,14 @@ interface DashboardData {
   overdueReviews: Review[];
 }
 
+interface ErrorType {
+  response: {
+    data: {
+      message: string;
+    };
+  };
+}
+
 const ReviewersDashboard: React.FC = () => {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -97,29 +105,29 @@ const ReviewersDashboard: React.FC = () => {
     }, [authLoading, isAuthenticated, router]);
 
   // Fetch dashboard data
-  const fetchDashboardData = async () => {
-    try {
-      setError(null);
-      const response = await getReviewerDashboard();
-      if (response.success) {
-        setDashboardData(response.data);
-      } else {
-        setError('Failed to load dashboard data');
-      }
-    } catch (err) {
-      setError(err?.response?.data?.message || 'Failed to load dashboard data');
-      console.error('Dashboard fetch error:', err);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+  const fetchDashboardData = useCallback(async () => {
+  try {
+    setError(null);
+    const response = await getReviewerDashboard();
+    if (response.success) {
+      setDashboardData(response.data);
+    } else {
+      setError('Failed to load dashboard data');
     }
-  };
+  } catch (err: unknown) {
+    setError((error as unknown as ErrorType)?.response?.data?.message || 'Failed to load dashboard data');
+    console.error('Dashboard fetch error:', err);
+  } finally {
+    setLoading(false);
+    setRefreshing(false);
+  }
+}, [setError, setDashboardData, setLoading, setRefreshing, error]);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchDashboardData();
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, authLoading, fetchDashboardData]);
 
   // Handle refresh
   const handleRefresh = async () => {

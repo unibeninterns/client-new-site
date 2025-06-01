@@ -52,6 +52,14 @@ interface Department {
   faculty: string;
 }
 
+interface ErrorType {
+  response: {
+    data: {
+      message: string;
+    };
+  };
+}
+
 function AdminInvitationsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [invitations, setInvitations] = useState<Invitation[]>([]);
@@ -160,7 +168,7 @@ function AdminInvitationsPage() {
       setEmail("");
       setTimeout(() => setShowInviteDialog(false), 1500);
     } catch (error: unknown) {
-      setError((error as any)?.response?.data?.message || "Failed to send invitation");
+      setError((error as ErrorType)?.response?.data?.message || "Failed to send invitation");
     } finally {
       setIsSubmitting(false);
     }
@@ -219,7 +227,7 @@ function AdminInvitationsPage() {
 
       setTimeout(() => setShowAddReviewerDialog(false), 1500);
     } catch (error: unknown) {
-      setError((error as any)?.response?.data?.message || "Failed to create reviewer profile");
+      setError((error as ErrorType)?.response?.data?.message || "Failed to create reviewer profile");
     } finally {
       setIsSubmitting(false);
     }
