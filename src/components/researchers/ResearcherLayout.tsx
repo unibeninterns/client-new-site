@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Menu, X, Home, FileText, ClipboardList, BookOpen, LogOut, ChevronDown, ChevronUp 
+  Menu, X, Home, FileText, LogOut, ChevronDown, ChevronUp 
 } from 'lucide-react';
 
 interface ResearcherLayoutProps {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { getResearcherProposalDetails } from '@/services/api';
 import ResearcherLayout from '@/components/researchers/ResearcherLayout';
 import { AlertCircle, ArrowLeft, FileText, Clock } from 'lucide-react';
@@ -31,7 +31,6 @@ interface Proposal {
 
 export default function ProposalDetails() {
   const params = useParams();
-  const router = useRouter();
   const proposalId = params.id as string;
   
   const [proposal, setProposal] = useState<Proposal | null>(null);
