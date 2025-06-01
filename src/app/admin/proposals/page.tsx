@@ -498,7 +498,7 @@ export default function AdminProposalsPage() {
                               <DropdownMenuItem onSelect={() => router.push(`/admin/proposals/${proposal._id}`)}>
                                 <Eye className="h-4 w-4 mr-2" /> View
                               </DropdownMenuItem>
-                              {proposal.status !== "under_review" && (
+                              {proposal.status == "submitted" && (
                               <DropdownMenuItem onSelect={() => handleAssignReviewer(proposal._id)}>
                                 <UserPlus className="h-4 w-4 mr-2" /> Assign Reviewer
                               </DropdownMenuItem>)}
