@@ -14,12 +14,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getReviewerDashboard } from '@/services/api';
 import { useRouter } from 'next/navigation';
 
+interface Department {
+  id: number;
+  name: string;
+}
+
+interface Faculty {
+  id: number;
+  name: string;
+}
+
 // Types based on your API response structure
 interface ReviewerInfo {
   name: string;
   email: string;
-  department: any;
-  faculty: any;
+  department: Department;
+  faculty: Faculty;
   academicTitle: string;
 }
 
@@ -96,7 +106,7 @@ const ReviewersDashboard: React.FC = () => {
       } else {
         setError('Failed to load dashboard data');
       }
-    } catch (err: any) {
+    } catch (err) {
       setError(err?.response?.data?.message || 'Failed to load dashboard data');
       console.error('Dashboard fetch error:', err);
     } finally {
