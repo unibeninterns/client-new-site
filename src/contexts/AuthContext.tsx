@@ -46,7 +46,12 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
   
   useEffect(() => {
     const checkAuth = () => {
-      const token = localStorage.getItem('accessToken');
+      const tokenKey = userType === 'admin' ? 'adminAccessToken' : 
+                    userType === 'reviewer' ? 'reviewerAccessToken' : 
+                    userType === 'researcher' ? 'researcherAccessToken' : 
+                    'accessToken';
+    
+    const token = localStorage.getItem(tokenKey);
       const userData = localStorage.getItem('userData');
       
       if (token && userData) {

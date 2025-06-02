@@ -203,6 +203,7 @@ export default function AdminReviewersPage() {
     };
 
     setSelectedReviewer(mergedData);
+    console.log('Reviewer details loaded:', mergedData);
     setShowDetails(true);
   } catch (err) {
     console.error('Failed to load reviewer details:', err);
