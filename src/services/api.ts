@@ -95,6 +95,7 @@ api.interceptors.response.use(
           // Retry the original request
           return api(originalRequest);
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (refreshError: any) {
         // If refresh fails, redirect to login
         console.error("Token refresh failed:", refreshError);

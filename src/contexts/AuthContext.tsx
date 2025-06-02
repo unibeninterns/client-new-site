@@ -117,6 +117,7 @@ export const AuthProvider = ({ children, userType = 'admin' }: AuthProviderProps
       } else {
         throw new Error('Invalid login response');
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       // Extract and throw the error - let the component handle display
     let errorMessage = 'An unknown error occurred';

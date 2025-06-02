@@ -13,10 +13,10 @@ export default function ResearcherLoginPage() {
 
   // Clear form error when user starts typing
   useEffect(() => {
-    if (formError) {
-      setFormError('');
-    }
-  }, [email, password]);
+  if (email || password) {
+    setFormError('');
+  }
+}, [email, password]);
 
   // Clear auth error when component mounts or when user starts interacting
   useEffect(() => {
@@ -44,9 +44,9 @@ export default function ResearcherLoginPage() {
     try {
       await login(email, password);
       // Success handling is done in AuthContext
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login submission error:', err);
-      setFormError(err.message || 'Login failed. Please try again.');
+      setFormError((err as Error).message || 'Login failed. Please try again.');
     }
   };
 

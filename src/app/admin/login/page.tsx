@@ -13,10 +13,10 @@ export default function AdminLoginPage() {
 
   // Clear form error when user starts typing
   useEffect(() => {
-    if (formError) {
-      setFormError('');
-    }
-  }, [email, password, formError]);
+  if (email || password) {
+    setFormError('');
+  }
+}, [email, password]);
 
   // Clear auth error when component mounts or when user starts interacting
   useEffect(() => {
