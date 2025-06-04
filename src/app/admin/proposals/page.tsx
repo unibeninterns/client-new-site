@@ -57,7 +57,6 @@ export default function AdminProposalsPage() {
     sort: 'createdAt',
     order: 'desc',
     isArchived: false, // Default to unarchived proposals
-    duplicates: false,
   });
   const router = useRouter();
 
@@ -108,7 +107,6 @@ export default function AdminProposalsPage() {
         limit: 10,
         ...filters,
         isArchived: filters.isArchived,
-        duplicates: filters.duplicates, // Include duplicates filter
       });
       setProposals(response.data);
       console.log('Proposals fetched:', response.data);
@@ -314,24 +312,9 @@ export default function AdminProposalsPage() {
     </div>
     
     <div className="flex flex-col gap-4 flex-grow">
-      {/* Checkbox Filter Row */}
-      <div className="flex items-center gap-4">
-        <div className="flex items-center space-x-2">
-          <input
-            id="duplicates"
-            name="duplicates"
-            type="checkbox"
-            checked={filters.duplicates}
-            onChange={handleFilterChange}
-            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
-          />
-          <label htmlFor="duplicates" className="text-sm font-medium text-gray-700">
-            Show only duplicate submissions (users with multiple proposals)
-          </label>
-        </div>
-      </div>
+      {/* Remove the entire checkbox filter row */}
       
-      {/* Existing Select Filters */}
+      {/* Updated Select Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {/* Status Filter */}
         <div>
@@ -393,7 +376,7 @@ export default function AdminProposalsPage() {
           </select>
         </div>
         
-        {/* Sort Order */}
+        {/* Updated Sort Order - Add duplicates option */}
         <div>
           <label htmlFor="sort" className="block text-xs font-medium text-gray-500 mb-1">
             Sort By
@@ -408,26 +391,13 @@ export default function AdminProposalsPage() {
             <option value="createdAt">Submission Date</option>
             <option value="projectTitle">Project Title</option>
             <option value="status">Status</option>
+            <option value="duplicates">Duplicate Submissions</option>
           </select>
         </div>
       </div>
     </div>
   </div>
 </div>
-
-{/* Updated table to show submitter grouping visual indicator (add this after the submitter name)*/}
-
-<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-  {proposals.map((proposal) => (
-  <div className="flex flex-col">
-    <span className="font-medium">{proposal.submitter.name}</span>
-    <span className="text-xs text-gray-400">{proposal.submitter.email}</span>
-    {filters.duplicates && (
-      <span className="text-xs text-purple-600 font-medium">Multiple submissions</span>
-    )}
-  </div>
-  ))}
-</td>
           
           {/* Proposals Table */}
           <div className="bg-white shadow overflow-hidden rounded-lg">
