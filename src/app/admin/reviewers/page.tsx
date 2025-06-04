@@ -46,6 +46,28 @@ interface Proposal {
   createdAt: string;
 }
 
+interface AssignedReviewItem {
+  _id: string;
+  comments: string;
+  createdAt: string;
+  dueDate: string;
+  proposal: Proposal; // This links to the existing Proposal interface
+  reviewType: string;
+  reviewer: string;
+  scores: {
+    relevanceToNationalPriorities: number;
+    originalityAndInnovation: number;
+    clarityOfResearchProblem: number;
+    methodology: number;
+    literatureReview: number;
+    // Add other score properties if they exist in your data
+  };
+  status: string;
+  totalScore: number;
+  updatedAt: string;
+  __v: number;
+}
+
 interface Reviewer {
   _id: string;
   name: string;
@@ -65,8 +87,8 @@ interface Reviewer {
   };
   isActive: boolean;
   invitationStatus: 'pending' | 'accepted' | 'added' | 'expired';
-  assignedProposals: Proposal[];
-  completedReviews: Proposal[];
+  assignedProposals: AssignedReviewItem[]; // Updated to use new interface
+  completedReviews: Proposal[]; // Keep as Proposal[] if it's just a simplified version
   createdAt: string;
   lastLogin?: string;
   statistics: ReviewerStatistics;
@@ -101,17 +123,7 @@ interface ReviewerDetails {
   };
   isActive: boolean;
   invitationStatus: 'pending' | 'accepted' | 'added' | 'expired';
-  assignedProposals: Array<{
-    _id: string;
-    projectTitle: string;
-    submitterType: string;
-    submitter: {
-      name: string;
-      email: string;
-    };
-    status: string;
-    createdAt: string;
-  }>;
+  assignedProposals: AssignedReviewItem[]; // Updated to use new interface
   completedReviews: CompletedReview[];
   createdAt: string;
   lastLogin?: string;
@@ -179,6 +191,14 @@ export default function AdminReviewersPage() {
     }
   }, [isAuthenticated, statusFilter, searchTerm, loadReviewers]);
 
+  // Effect to log selectedReviewer when it changes and manage loading state
+  useEffect(() => {
+    if (selectedReviewer) {
+      console.log('selectedReviewer state updated:', selectedReviewer);
+      setIsLoadingDetails(false); // Set loading to false once selectedReviewer is updated
+    }
+  }, [selectedReviewer]);
+
 
   const loadReviewerDetails = async (id: string) => {
   try {
@@ -208,8 +228,7 @@ export default function AdminReviewersPage() {
   } catch (err) {
     console.error('Failed to load reviewer details:', err);
     setError('Failed to load reviewer details');
-  } finally {
-    setIsLoadingDetails(false);
+    setIsLoadingDetails(false); // Set loading to false on error
   }
 };
 
@@ -274,8 +293,8 @@ const handleCheckOverdueReviews = async () => {
     const facultyTitle = reviewer.faculty?.title || '';
     const departmentTitle = reviewer.department?.title || '';
 
-    const matchesSearch = reviewer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         reviewer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = (reviewer.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (reviewer.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                          facultyTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          departmentTitle.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -648,27 +667,27 @@ const handleCheckOverdueReviews = async () => {
                   ) : (
                     <div className="bg-white border rounded-lg overflow-hidden">
                       <div className="divide-y divide-gray-200">
-                        {selectedReviewer.assignedProposals.map((proposal) => (
-                          <div key={proposal._id} className="p-4">
+                        {selectedReviewer.assignedProposals.map((prop) => (
+                          <div key={prop._id} className="p-4">
                             <div className="flex items-center justify-between">
                               <div>
-                                <h5 className="font-medium text-gray-900">{proposal.projectTitle}</h5>
+                                <h5 className="font-medium text-gray-900">{prop.proposal.projectTitle}</h5>
                                 <p className="text-sm text-gray-500 mt-1">
-                                  By {proposal.submitter.name} ({proposal.submitter.email})
+                                  By {prop.proposal.submitter.name} ({prop.proposal.submitter.email})
                                 </p>
                                 <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
-                                  <span className="capitalize">{proposal.submitterType.replace('_', ' ')}</span>
+                                  <span className="capitalize">{prop.proposal.submitterType.replace('_', ' ')}</span>
                                   <span>•</span>
-                                  <span>{new Date(proposal.createdAt).toLocaleDateString()}</span>
+                                  <span>{new Date(prop.proposal.createdAt).toLocaleDateString()}</span>
                                 </div>
                               </div>
                               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                proposal.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                proposal.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                proposal.status === 'under_review' ? 'bg-blue-100 text-blue-800' :
+                                prop.proposal.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                prop.proposal.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                prop.proposal.status === 'under_review' ? 'bg-blue-100 text-blue-800' :
                                 'bg-yellow-100 text-yellow-800'
                               }`}>
-                                {proposal.status.replace('_', ' ')}
+                                {prop.status.replace('_', ' ')}
                               </span>
                             </div>
                           </div>
