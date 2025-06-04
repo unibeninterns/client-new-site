@@ -57,6 +57,7 @@ export default function AdminProposalsPage() {
     sort: 'createdAt',
     order: 'desc',
     isArchived: false, // Default to unarchived proposals
+    duplicates: false,
   });
   const router = useRouter();
 
@@ -95,46 +96,52 @@ export default function AdminProposalsPage() {
   }, [isAuthenticated]);
 
   useEffect(() => {
-    const fetchProposals = async () => {
-      if (!isAuthenticated) return;
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const response = await getProposals({
-          page: pagination.currentPage,
-          limit: 10,
-          ...filters,
-          isArchived: filters.isArchived, // Ensure this filter is passed
-        });
-        setProposals(response.data);
-        console.log('Proposals fetched:', response.data);
-        setPagination({
-          count: response.count,
-          totalPages: response.totalPages,
-          currentPage: response.currentPage
-        });
-      } catch (err: unknown) {
-        if ((err as Error).name === 'CanceledError') {
-          // console.log('Proposals fetch aborted (expected)');
-        } else {
-          console.error('Failed to fetch proposals:', err);
-          setError('Failed to load proposals. Please try again.');
-        }
-      } finally {
-        setIsLoading(false);
+  const fetchProposals = async () => {
+    if (!isAuthenticated) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const response = await getProposals({
+        page: pagination.currentPage,
+        limit: 10,
+        ...filters,
+        isArchived: filters.isArchived,
+        duplicates: filters.duplicates, // Include duplicates filter
+      });
+      setProposals(response.data);
+      console.log('Proposals fetched:', response.data);
+      setPagination({
+        count: response.count,
+        totalPages: response.totalPages,
+        currentPage: response.currentPage
+      });
+    } catch (err: unknown) {
+      if ((err as Error).name === 'CanceledError') {
+        // console.log('Proposals fetch aborted (expected)');
+      } else {
+        console.error('Failed to fetch proposals:', err);
+        setError('Failed to load proposals. Please try again.');
       }
-    };
-
-    fetchProposals();
-  }, [isAuthenticated, pagination.currentPage, filters, refreshTrigger]); // Add refreshTrigger to dependencies
-
-  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
-    setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page on filter change
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  fetchProposals();
+}, [isAuthenticated, pagination.currentPage, filters, refreshTrigger]); // Add refreshTrigger to dependencies
+
+  const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
+  const { name, value, type } = e.target;
+  const checked = (e.target as HTMLInputElement).checked;
+  
+  setFilters(prev => ({ 
+    ...prev, 
+    [name]: type === 'checkbox' ? checked : value 
+  }));
+  setPagination(prev => ({ ...prev, currentPage: 1 })); // Reset to first page on filter change
+};
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > pagination.totalPages) return;
@@ -300,93 +307,127 @@ export default function AdminProposalsPage() {
           
           {/* Filters */}
           <div className="mb-6 bg-white p-4 rounded-lg shadow-sm">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              <div className="flex items-center">
-                <Filter className="text-gray-400 mr-2 h-5 w-5" />
-                <span className="text-sm font-medium text-gray-500">Filters:</span>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 flex-grow">
-                {/* Status Filter */}
-                <div>
-                  <label htmlFor="status" className="block text-xs font-medium text-gray-500 mb-1">
-                    Status
-                  </label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={filters.status}
-                    onChange={handleFilterChange}
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  >
-                    <option value="">All Statuses</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="under_review">Under Review</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="revision_requested">Needs Revision</option>
-                  </select>
-                </div>
-                
-                {/* Submitter Type Filter */}
-                <div>
-                  <label htmlFor="submitterType" className="block text-xs font-medium text-gray-500 mb-1">
-                    Submitter Type
-                  </label>
-                  <select
-                    id="submitterType"
-                    name="submitterType"
-                    value={filters.submitterType}
-                    onChange={handleFilterChange}
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  >
-                    <option value="">All Types</option>
-                    <option value="staff">Staff</option>
-                    <option value="master_student">Master&apos;s Student</option>
-                  </select>
-                </div>
-                
-                {/* Faculty Filter - NEW */}
-                <div>
-                  <label htmlFor="faculty" className="block text-xs font-medium text-gray-500 mb-1">
-                    Faculty
-                  </label>
-                  <select
-                    id="faculty"
-                    name="faculty"
-                    value={filters.faculty}
-                    onChange={handleFilterChange}
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  >
-                    <option value="">All Faculties</option>
-                    {faculties.map((faculty) => (
-                      <option key={faculty._id} value={faculty._id}>
-                        {faculty.title}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                {/* Sort Order */}
-                <div>
-                  <label htmlFor="sort" className="block text-xs font-medium text-gray-500 mb-1">
-                    Sort By
-                  </label>
-                  <select
-                    id="sort"
-                    name="sort"
-                    value={filters.sort}
-                    onChange={handleFilterChange}
-                    className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  >
-                    <option value="createdAt">Submission Date</option>
-                    <option value="projectTitle">Project Title</option>
-                    <option value="status">Status</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
+  <div className="flex flex-col md:flex-row items-start gap-4">
+    <div className="flex items-center">
+      <Filter className="text-gray-400 mr-2 h-5 w-5" />
+      <span className="text-sm font-medium text-gray-500">Filters:</span>
+    </div>
+    
+    <div className="flex flex-col gap-4 flex-grow">
+      {/* Checkbox Filter Row */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center space-x-2">
+          <input
+            id="duplicates"
+            name="duplicates"
+            type="checkbox"
+            checked={filters.duplicates}
+            onChange={handleFilterChange}
+            className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded"
+          />
+          <label htmlFor="duplicates" className="text-sm font-medium text-gray-700">
+            Show only duplicate submissions (users with multiple proposals)
+          </label>
+        </div>
+      </div>
+      
+      {/* Existing Select Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Status Filter */}
+        <div>
+          <label htmlFor="status" className="block text-xs font-medium text-gray-500 mb-1">
+            Status
+          </label>
+          <select
+            id="status"
+            name="status"
+            value={filters.status}
+            onChange={handleFilterChange}
+            className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          >
+            <option value="">All Statuses</option>
+            <option value="submitted">Submitted</option>
+            <option value="under_review">Under Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="revision_requested">Needs Revision</option>
+          </select>
+        </div>
+        
+        {/* Submitter Type Filter */}
+        <div>
+          <label htmlFor="submitterType" className="block text-xs font-medium text-gray-500 mb-1">
+            Submitter Type
+          </label>
+          <select
+            id="submitterType"
+            name="submitterType"
+            value={filters.submitterType}
+            onChange={handleFilterChange}
+            className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          >
+            <option value="">All Types</option>
+            <option value="staff">Staff</option>
+            <option value="master_student">Master&apos;s Student</option>
+          </select>
+        </div>
+        
+        {/* Faculty Filter */}
+        <div>
+          <label htmlFor="faculty" className="block text-xs font-medium text-gray-500 mb-1">
+            Faculty
+          </label>
+          <select
+            id="faculty"
+            name="faculty"
+            value={filters.faculty}
+            onChange={handleFilterChange}
+            className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          >
+            <option value="">All Faculties</option>
+            {faculties.map((faculty) => (
+              <option key={faculty._id} value={faculty._id}>
+                {faculty.title}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        {/* Sort Order */}
+        <div>
+          <label htmlFor="sort" className="block text-xs font-medium text-gray-500 mb-1">
+            Sort By
+          </label>
+          <select
+            id="sort"
+            name="sort"
+            value={filters.sort}
+            onChange={handleFilterChange}
+            className="w-full rounded-md border border-gray-300 py-2 px-3 text-sm shadow-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          >
+            <option value="createdAt">Submission Date</option>
+            <option value="projectTitle">Project Title</option>
+            <option value="status">Status</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{/* Updated table to show submitter grouping visual indicator (add this after the submitter name)*/}
+
+<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+  {proposals.map((proposal) => (
+  <div className="flex flex-col">
+    <span className="font-medium">{proposal.submitter.name}</span>
+    <span className="text-xs text-gray-400">{proposal.submitter.email}</span>
+    {filters.duplicates && (
+      <span className="text-xs text-purple-600 font-medium">Multiple submissions</span>
+    )}
+  </div>
+  ))}
+</td>
           
           {/* Proposals Table */}
           <div className="bg-white shadow overflow-hidden rounded-lg">
