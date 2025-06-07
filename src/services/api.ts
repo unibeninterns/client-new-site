@@ -399,6 +399,49 @@ export const assignReviewers = async (proposalId: string) => {
   }
 };
 
+export const reassignRegularReview = async (
+  proposalId: string,
+  newReviewerId?: string
+) => {
+  try {
+    const response = await api.put(`/admin/reassign/regular/${proposalId}`, {
+      newReviewerId,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error reassigning regular review:", error);
+    throw error;
+  }
+};
+
+export const reassignReconciliationReview = async (
+  proposalId: string,
+  newReviewerId?: string
+) => {
+  try {
+    const response = await api.put(
+      `/admin/reassign/reconciliation/${proposalId}`,
+      { newReviewerId }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error reassigning reconciliation review:", error);
+    throw error;
+  }
+};
+
+export const getEligibleReviewers = async (proposalId: string) => {
+  try {
+    const response = await api.get(
+      `/admin/reassign/eligible-reviewers/${proposalId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching eligible reviewers:", error);
+    throw error;
+  }
+};
+
 export const checkOverdueReviews = async () => {
   try {
     const response = await api.get("/admin/check-overdue");
