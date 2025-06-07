@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import * as api from '@/services/api';
-import { getProposals, getFacultiesWithProposals, toggleProposalArchiveStatus } from '@/services/api';
+import { getProposals, getFacultiesWithProposals, toggleProposalArchiveStatus, getEligibleReviewers, reassignRegularReview, reassignReconciliationReview } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical, Archive, FolderOpen, UserPlus } from 'lucide-react';
+import { Loader2, FileText, Filter, ArrowUpDown, Eye, RefreshCw, MoreVertical, Archive, FolderOpen, User, Users, Search, CheckCircle, UserPlus } from 'lucide-react';
 import Link from 'next/link';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { toast, Toaster } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+
 
 interface Faculty {
   _id: string;
@@ -66,6 +67,18 @@ export default function AdminProposalsPage() {
   const [isArchivingAction, setIsArchivingAction] = useState(false); // true for archive, false for unarchive
   const [comment, setComment] = useState('');
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [showReassignModal, setShowReassignModal] = useState(false);
+const [reassignData, setReassignData] = useState<{
+  proposalId: string;
+  isReconciliation: boolean;
+} | null>(null);
+const [reassignMode, setReassignMode] = useState<'auto' | 'manual' | null>(null);
+const [eligibleReviewers, setEligibleReviewers] = useState<any[]>([]);
+const [selectedReviewer, setSelectedReviewer] = useState<string | null>(null);
+const [searchTerm, setSearchTerm] = useState('');
+const [proposalInfo, setProposalInfo] = useState<any>(null);
+const [reassignLoading, setReassignLoading] = useState(false);
+const [reassignSuccess, setReassignSuccess] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -174,6 +187,84 @@ export default function AdminProposalsPage() {
       toast.error("Error while assigning reviewer.");
     }
   };
+
+  // Helper function to determine if reassign is available
+  const canReassignReview = (proposal: Proposal): { 
+  canReassign: boolean; 
+  isReconciliation: boolean 
+} => {
+  // For regular review reassignment
+  if (proposal.status === 'under_review') {
+    // You would need to check if reviewer hasn't completed their review
+    return { canReassign: true, isReconciliation: false };
+  }
+  
+  // For reconciliation review reassignment
+  if (proposal.status === 'revision_requested') {
+    // Check if reconciliation review is pending
+    return { canReassign: true, isReconciliation: true };
+  }
+
+  return { canReassign: false, isReconciliation: false };
+};
+
+// Function to handle reassign click
+const handleReassignClick = (proposalId: string, isReconciliation: boolean) => {
+  setReassignData({ proposalId, isReconciliation });
+  setReassignMode(null);
+  setSelectedReviewer(null);
+  setSearchTerm('');
+  setReassignSuccess(false);
+  setShowReassignModal(true);
+};
+
+// Function to load eligible reviewers
+const loadEligibleReviewers = async () => {
+  if (!reassignData) return;
+  
+  try {
+    setReassignLoading(true);
+    const response = await getEligibleReviewers(reassignData.proposalId);
+    setEligibleReviewers(response.data.eligibleReviewers);
+    setProposalInfo(response.data.proposalInfo);
+  } catch (err) {
+    console.error('Failed to load eligible reviewers:', err);
+    toast.error('Failed to load eligible reviewers');
+  } finally {
+    setReassignLoading(false);
+  }
+};
+
+// Function to handle the reassignment
+const handleReassignSubmit = async () => {
+  if (!reassignData) return;
+
+  try {
+    setReassignLoading(true);
+    const reassignFn = reassignData.isReconciliation ? reassignReconciliationReview : reassignRegularReview;
+    const response = await reassignFn(
+      reassignData.proposalId, 
+      reassignMode === 'manual' ? selectedReviewer : undefined
+    );
+
+    if (response.success) {
+      setReassignSuccess(true);
+      toast.success('Review reassigned successfully');
+      
+      setTimeout(() => {
+        setShowReassignModal(false);
+        refreshData();
+      }, 1500);
+    } else {
+      toast.error('Failed to reassign review');
+    }
+  } catch (err) {
+    console.error('Failed to reassign review:', err);
+    toast.error('Failed to reassign review');
+  } finally {
+    setReassignLoading(false);
+  }
+};
 
   const handleArchiveClick = (proposalId: string, archive: boolean) => {
     setCurrentProposalId(proposalId);
@@ -496,22 +587,35 @@ export default function AdminProposalsPage() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           {formatDate(proposal.createdAt)}
                         </td>
+
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                <span className="sr-only">Open menu</span>
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => router.push(`/admin/proposals/${proposal._id}`)}>
-                                <Eye className="h-4 w-4 mr-2" /> View
-                              </DropdownMenuItem>
-                              {proposal.status == "submitted" && (
-                              <DropdownMenuItem onSelect={() => handleAssignReviewer(proposal._id)}>
-                                <UserPlus className="h-4 w-4 mr-2" /> Assign Reviewer
-                              </DropdownMenuItem>)}
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild>
+      <Button variant="ghost" className="h-8 w-8 p-0">
+        <span className="sr-only">Open menu</span>
+        <MoreVertical className="h-4 w-4" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end">
+      <DropdownMenuItem onSelect={() => router.push(`/admin/proposals/${proposal._id}`)}>
+        <Eye className="h-4 w-4 mr-2" /> View
+      </DropdownMenuItem>
+      
+      {proposal.status === "submitted" && (
+        <DropdownMenuItem onSelect={() => handleAssignReviewer(proposal._id)}>
+          <UserPlus className="h-4 w-4 mr-2" /> Assign Reviewer
+        </DropdownMenuItem>
+      )}
+      
+      {(() => {
+        const { canReassign, isReconciliation } = canReassignReview(proposal);
+        return canReassign && (
+          <DropdownMenuItem onSelect={() => handleReassignClick(proposal._id, isReconciliation)}>
+            <RefreshCw className="h-4 w-4 mr-2" /> 
+            {isReconciliation ? 'Reassign Reconciliation' : 'Reassign Review'}
+          </DropdownMenuItem>
+        );
+      })()}
                               {proposal.isArchived ? (
                                 <DropdownMenuItem onSelect={() => handleArchiveClick(proposal._id, false)}>
                                   <FolderOpen className="h-4 w-4 mr-2" /> Unarchive
@@ -603,6 +707,189 @@ export default function AdminProposalsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={showReassignModal} onOpenChange={setShowReassignModal}>
+  <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+    <DialogHeader>
+      <DialogTitle className="flex items-center gap-2">
+        <RefreshCw className="h-5 w-5 text-purple-600" />
+        {reassignData?.isReconciliation ? 'Reassign Reconciliation Review' : 'Reassign Review'}
+      </DialogTitle>
+      <DialogDescription>
+        Choose how you want to reassign this {reassignData?.isReconciliation ? 'reconciliation ' : ''}review.
+      </DialogDescription>
+    </DialogHeader>
+
+    <div className="py-4">
+      {reassignSuccess ? (
+        <div className="text-center py-8">
+          <CheckCircle className="h-12 w-12 text-green-500 mx-auto mb-4" />
+          <p className="text-lg font-medium text-gray-900">Review reassigned successfully!</p>
+        </div>
+      ) : !reassignMode ? (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div 
+              onClick={() => setReassignMode('auto')}
+              className="group p-6 border-2 border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all cursor-pointer"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="h-12 w-12 rounded-full bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center mb-4 transition-colors">
+                  <RefreshCw className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Automatic Assignment</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  System will automatically select the best available reviewer based on workload, expertise, and availability.
+                </p>
+              </div>
+            </div>
+
+            <div 
+              onClick={() => {
+                setReassignMode('manual');
+                loadEligibleReviewers();
+              }}
+              className="group p-6 border-2 border-gray-200 rounded-xl hover:border-purple-500 hover:bg-purple-50 transition-all cursor-pointer"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="h-12 w-12 rounded-full bg-purple-100 group-hover:bg-purple-200 flex items-center justify-center mb-4 transition-colors">
+                  <Users className="h-6 w-6 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Manual Selection</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Browse and select from a list of eligible reviewers to manually assign the review.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : reassignMode === 'manual' ? (
+        <div className="space-y-6">
+          {proposalInfo && (
+            <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg p-4 border border-purple-200">
+              <h4 className="font-semibold text-purple-900 mb-2 flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Proposal Information
+              </h4>
+              <div className="space-y-1">
+                <p className="text-sm text-purple-800"><span className="font-medium">Title:</span> {proposalInfo.title}</p>
+                <p className="text-sm text-purple-800"><span className="font-medium">Faculty:</span> {proposalInfo.submitterFaculty}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search reviewers by name, email, or title..."
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            {reassignLoading ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+                <span className="ml-2 text-gray-600">Loading eligible reviewers...</span>
+              </div>
+            ) : eligibleReviewers.filter(reviewer =>
+              reviewer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              reviewer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              reviewer.facultyTitle.toLowerCase().includes(searchTerm.toLowerCase())
+            ).length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Users className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p>No eligible reviewers found</p>
+              </div>
+            ) : (
+              <div className="max-h-80 overflow-y-auto">
+                {eligibleReviewers
+                  .filter(reviewer =>
+                    reviewer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    reviewer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    reviewer.facultyTitle.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((reviewer) => (
+                    <div
+                      key={reviewer._id}
+                      className={`p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors ${
+                        selectedReviewer === reviewer._id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''
+                      }`}
+                      onClick={() => setSelectedReviewer(reviewer._id)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-shrink-0">
+                            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${
+                              selectedReviewer === reviewer._id ? 'bg-purple-100' : 'bg-gray-100'
+                            }`}>
+                              <User className={`h-5 w-5 ${
+                                selectedReviewer === reviewer._id ? 'text-purple-600' : 'text-gray-600'
+                              }`} />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-gray-900">{reviewer.name}</p>
+                            <p className="text-sm text-gray-500">{reviewer.facultyTitle}</p>
+                            <p className="text-xs text-gray-400">{reviewer.email}</p>
+                          </div>
+                        </div>
+                        <div className="text-right text-sm space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-gray-600">{reviewer.totalReviewsCount}</span>
+                            <span className="text-xs text-gray-500">reviews</span>
+                          </div>
+                          <div className={`text-xs font-medium ${
+                            reviewer.completionRate >= 80 ? 'text-green-600' : 
+                            reviewer.completionRate >= 60 ? 'text-yellow-600' : 'text-red-600'
+                          }`}>
+                            {reviewer.completionRate}% completion
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+            <RefreshCw className="h-8 w-8 text-purple-600" />
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Ready for Automatic Assignment</h3>
+          <p className="text-gray-600 mb-6">
+            The system will automatically select the most suitable reviewer for this {reassignData?.isReconciliation ? 'reconciliation ' : ''}review.
+          </p>
+        </div>
+      )}
+    </div>
+
+    <DialogFooter className="border-t pt-4">
+      <Button
+        variant="outline"
+        onClick={() => setShowReassignModal(false)}
+        disabled={reassignLoading}
+      >
+        Cancel
+      </Button>
+      {reassignMode && !reassignSuccess && (
+        <Button
+          onClick={handleReassignSubmit}
+          disabled={reassignLoading || (reassignMode === 'manual' && !selectedReviewer)}
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+        >
+          {reassignLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          {reassignMode === 'auto' ? 'Auto Reassign' : 'Reassign to Selected'}
+        </Button>
+      )}
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
 
       <Toaster />
     </AdminLayout>
