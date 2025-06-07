@@ -244,7 +244,7 @@ const handleReassignSubmit = async () => {
     const reassignFn = reassignData.isReconciliation ? reassignReconciliationReview : reassignRegularReview;
     const response = await reassignFn(
       reassignData.proposalId, 
-      reassignMode === 'manual' ? selectedReviewer : undefined
+      reassignMode === 'manual' ? (selectedReviewer ?? undefined) : undefined
     );
 
     if (response.success) {
