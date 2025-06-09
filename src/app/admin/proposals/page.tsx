@@ -73,10 +73,24 @@ const [reassignData, setReassignData] = useState<{
   isReconciliation: boolean;
 } | null>(null);
 const [reassignMode, setReassignMode] = useState<'auto' | 'manual' | null>(null);
-const [eligibleReviewers, setEligibleReviewers] = useState<any[]>([]);
+interface EligibleReviewer {
+  _id: string;
+  name: string;
+  email: string;
+  facultyTitle: string;
+  totalReviewsCount: number;
+  completionRate: number;
+}
+
+interface ProposalInfo {
+  title: string;
+  submitterFaculty: string;
+}
+
+const [eligibleReviewers, setEligibleReviewers] = useState<EligibleReviewer[]>([]);
 const [selectedReviewer, setSelectedReviewer] = useState<string | null>(null);
 const [searchTerm, setSearchTerm] = useState('');
-const [proposalInfo, setProposalInfo] = useState<any>(null);
+const [proposalInfo, setProposalInfo] = useState<ProposalInfo | null>(null);
 const [reassignLoading, setReassignLoading] = useState(false);
 const [reassignSuccess, setReassignSuccess] = useState(false);
 
