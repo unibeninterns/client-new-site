@@ -210,38 +210,4 @@ const handleViewDetails = (proposalId: string) => {
   };
   // this is it in use
   onClick={() => handleViewDetails(proposal._id)}
-
-  // Define the ProposalDecision type for frontend use
-export type ProposalDecision = {
-  id: string;
-  projectTitle: string;
-  fieldOfResearch: string;
-  totalScore: number;
-  status: "pending" | "approved" | "rejected";
-  scores: {
-    ai: number;
-    reviewer1: number;
-    reviewer2: number;
-  };
-};
-
-export const updateProposalStatus = async (
-  proposalId: string,
-  statusData: {
-    status: ProposalDecision["status"]; // Corrected type here
-    finalScore?: number;
-    fundingAmount?: number;
-    feedbackComments?: string;
-  }
-) => {
-  try {
-    const response = await api.patch(
-      `/admin/decisions/${proposalId}/status`,
-      statusData
-    );
-    return response.data;
-    } catch (error) {
-    console.error(`Error updating status for proposal ${proposalId}:`, error);
-    throw error;
-  }
-};
+  
