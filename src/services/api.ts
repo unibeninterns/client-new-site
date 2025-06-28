@@ -737,7 +737,9 @@ export type ProposalDecision = {
 // Admin endpoints for Proposal Decision Management
 export const getProposalsForDecision = async (params = {}) => {
   try {
-    const response = await api.get("/admin/proposals-for-decision", { params });
+    const response = await api.get("/admin/decisions/proposals-for-decision", {
+      params,
+    });
     return response.data;
   } catch (error) {
     console.error("Error fetching proposals for decision:", error);
@@ -756,7 +758,7 @@ export const updateProposalStatus = async (
 ) => {
   try {
     const response = await api.patch(
-      `/admin/proposals/${proposalId}/status`,
+      `/admin/decisions/${proposalId}/status`,
       statusData
     );
     return response.data;
@@ -769,7 +771,7 @@ export const updateProposalStatus = async (
 export const notifyApplicants = async (proposalId: string) => {
   try {
     const response = await api.post(
-      `/admin/proposals/${proposalId}/notify-applicants`
+      `/admin/decisions/${proposalId}/notify-applicants`
     );
     return response.data;
   } catch (error) {
@@ -803,7 +805,7 @@ export const toggleProposalArchiveStatus = async (
 
 export const exportDecisionsReport = async () => {
   try {
-    const response = await api.get("/admin/proposals/export-decisions", {
+    const response = await api.get("/admin/decisions/export-decisions", {
       responseType: "blob", // Important for handling file downloads
     });
     // Create a blob from the response data
