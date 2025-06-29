@@ -726,7 +726,7 @@ export interface ProposalDecision {
   projectTitle: string;
   award: {
     fundingAmount?: number;
-    status: "pending" | "approved" | "rejected";
+    status: "pending" | "approved" | "declined";
   };
   estimatedBudget?: number;
   fundingAmount?: number;

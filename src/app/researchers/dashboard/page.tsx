@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import ResearcherLayout from '@/components/researchers/ResearcherLayout';
 import { getResearcherDashboard } from '@/services/api';
-import { FileText, ClipboardList, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import { FileText, ClipboardList, CheckCircle, AlertCircle, Clock, XCircle } from 'lucide-react';
 import Link from 'next/link';
 
 interface RecentProposal {
@@ -127,6 +127,14 @@ export default function ResearcherDashboard() {
                 </div>
                 <p className="text-lg font-bold text-gray-800">{dashboardData.stats.statusCounts.approved}</p>
                 <p className="text-sm text-gray-600">Approved</p>
+              </div>
+
+              <div className="bg-white rounded-lg shadow-md p-4 flex flex-col items-center">
+                <div className="bg-red  -100 p-3 rounded-full mb-3">
+                  <XCircle className="h-6 w-6 text-red-800" />
+                </div>
+                <p className="text-lg font-bold text-gray-800">{dashboardData.stats.statusCounts.rejected}</p>
+                <p className="text-sm text-gray-600">Rejected</p>
               </div>
             </div>
 

@@ -27,7 +27,8 @@ import {
 import { 
   getAllProposalReviews, 
   getProposalReviewStatistics, 
-  getDiscrepancyProposals 
+  getDiscrepancyProposals,
+  getFacultiesWithProposals 
 } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -76,11 +77,17 @@ interface Params {
   discrepancy?: string;
 }
 
+interface Faculty {
+  _id: string;
+  title: string;
+}
+
 export default function ProposalReviewsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
 
   const [proposals, setProposals] = useState<ProposalReview[]>([]);
+  const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [statistics, setStatistics] = useState<ReviewStatistics | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -108,9 +115,14 @@ export default function ProposalReviewsPage() {
       setIsLoading(true);
       setError(null);
 
-      // Load statistics
-      const statsResponse = await getProposalReviewStatistics();
-      setStatistics(statsResponse.data);
+    // Load statistics and faculties
+    const [statsResponse, facultiesResponse] = await Promise.all([
+      getProposalReviewStatistics(),
+      getFacultiesWithProposals()
+    ]);
+    
+    setStatistics(statsResponse.data);
+    setFaculties(facultiesResponse);
 
       // Build params for proposals
       const params: Params = {
@@ -358,10 +370,11 @@ export default function ProposalReviewsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Faculties</SelectItem>
-                    <SelectItem value="science">Science</SelectItem>
-                    <SelectItem value="engineering">Engineering</SelectItem>
-                    <SelectItem value="arts">Arts</SelectItem>
-                    {/* Add more faculty options as needed */}
+    {faculties.map((faculty) => (
+      <SelectItem key={faculty._id} value={faculty._id}>
+        {faculty.title}
+      </SelectItem>
+    ))}
                   </SelectContent>
                 </Select>
 

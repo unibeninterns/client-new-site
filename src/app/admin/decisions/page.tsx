@@ -71,6 +71,10 @@ function DecisionsPanel() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1);
+const [totalCount, setTotalCount] = useState(0);
+const limit = 10;
   
   // Decision form state
   const [showDecisionDialog, setShowDecisionDialog] = useState(false);
@@ -82,6 +86,7 @@ function DecisionsPanel() {
     finalScore: 0
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
   // Statistics
   const [statistics, setStatistics] = useState({
@@ -104,7 +109,7 @@ function DecisionsPanel() {
       try {
         setIsLoading(true);
         const [proposalsResponse, facultiesResponse] = await Promise.all([
-          getProposalsForDecision(),
+          getProposalsForDecision({ page: currentPage, limit }),
           getFacultiesWithProposals()
         ]);
 
@@ -113,7 +118,9 @@ function DecisionsPanel() {
         
         setProposals(proposalsResponse.data);
         setFaculties(facultiesResponse);
-        setError(null);
+        setTotalPages(proposalsResponse.pagination?.pages || 1);
+      setTotalCount(proposalsResponse.pagination?.total || proposalsResponse.data.length);
+      setError(null);
       } catch (err) {
         console.error('Failed to load data:', err);
         setError('Failed to load proposals for review');
@@ -126,14 +133,14 @@ function DecisionsPanel() {
     if (isAuthenticated) {
       loadData();
     }
-  }, [isAuthenticated,]);
+  }, [isAuthenticated, currentPage]);
 
   // Update statistics when proposals or threshold changes
   useEffect(() => {
     const totalProposals = proposals.length;
     const pendingDecisions = proposals.filter(p => p.award.status === 'pending').length;
     const approved = proposals.filter(p => p.award.status === 'approved').length;
-    const rejected = proposals.filter(p => p.award.status === 'rejected').length;
+    const rejected = proposals.filter(p => p.award.status === 'declined').length;
     const averageScore = totalProposals > 0 
       ? Math.round(proposals.reduce((sum, p) => sum + (p.finalScore || 0), 0) / totalProposals)
       : 0;
@@ -152,7 +159,7 @@ function DecisionsPanel() {
   const handleDecisionClick = (proposal: ProposalDecision, decision: 'approved' | 'rejected') => {
     setSelectedProposal(proposal);
     setDecisionForm({
-      status: decision,
+      status: decision === 'rejected' ? 'rejected' : 'approved',
       feedbackComments: '',
       fundingAmount: decision === 'approved' ? proposal.estimatedBudget || 0 : 0,
       finalScore: proposal.finalScore || 0
@@ -173,19 +180,19 @@ function DecisionsPanel() {
       await updateProposalStatus(selectedProposal._id, decisionForm);
       
       setProposals(prevProposals => 
-        prevProposals.map(p => {
-          if (p._id === selectedProposal._id) {
-            return { 
-            ...p, 
-            award: {
-              ...p.award,
-              status: decisionForm.status
-            }
-          };
-          }
-          return p;
-        })
-      );
+              prevProposals.map(p => {
+                if (p._id === selectedProposal._id) {
+                  return { 
+                    ...p, 
+                    award: {
+                      ...p.award,
+                      status: decisionForm.status === 'rejected' ? 'declined' : decisionForm.status
+                    }
+                  };
+                }
+                return p;
+              })
+            );
 
       toast.success(`Proposal ${decisionForm.status} successfully`);
       setShowDecisionDialog(false);
@@ -205,7 +212,7 @@ function DecisionsPanel() {
   };
 
   const handleDialogClose = (open: boolean) => {
-  if (!open && !isSubmitting) {
+  if (!open) {
     setShowDecisionDialog(false);
     setSelectedProposal(null);
     setDecisionForm({
@@ -252,6 +259,8 @@ function DecisionsPanel() {
       case 'approved':
         return 'bg-green-200 text-green-800';
       case 'rejected':
+        return 'bg-red-200 text-red-800';
+      case 'declined':
         return 'bg-red-200 text-red-800';
       case 'pending':
         return 'bg-yellow-200 text-yellow-800';
@@ -434,7 +443,7 @@ useEffect(() => {
                 <SelectTrigger>
                   <SelectValue placeholder="All Faculties" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-h-[200px] overflow-y-auto">
                   <SelectItem value="all">All Faculties</SelectItem>
                   {faculties.map((faculty) => (
                     <SelectItem key={faculty._id} value={faculty._id}>
@@ -579,42 +588,59 @@ useEffect(() => {
                   <td className="px-6 py-4">
                     <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusBadgeClass(proposal.award.status)}`}>
                       {proposal.award.status === 'pending' ? 'Pending Decision' : 
-                       proposal.award.status === 'approved' ? 'Approved' : proposal.award.status === 'rejected' ? 'Rejected' : 'Unknown'}
+                       proposal.award.status === 'approved' ? 'Approved' : proposal.award.status === 'declined' ? 'Rejected' : 'Unknown'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewDetails(proposal._id)}>
-                          <Eye className="h-4 w-4 mr-2" /> View Details
-                        </DropdownMenuItem>
-                        
-                        {proposal.award.status === 'pending' && (
-  <>
-    {(proposal.finalScore || 0) >= approvalThreshold ? (
-      <DropdownMenuItem onClick={() => handleDecisionClick(proposal, 'approved')}>
-        <CheckCircle className="h-4 w-4 mr-2 text-green-600" /> Approve
-      </DropdownMenuItem>
-    ) : (
-      <DropdownMenuItem onClick={() => handleDecisionClick(proposal, 'rejected')}>
-        <XCircle className="h-4 w-4 mr-2 text-red-600" /> Reject
+<DropdownMenu
+  open={openMenuId === proposal._id}
+  onOpenChange={(open) => setOpenMenuId(open ? proposal._id : null)}
+>
+  <DropdownMenuTrigger asChild>
+    <Button
+      variant="ghost"
+      className="h-8 w-8 p-0"
+      onClick={() => setOpenMenuId(proposal._id)}
+    >
+      <MoreVertical className="h-4 w-4" />
+    </Button>
+  </DropdownMenuTrigger>
+  <DropdownMenuContent align="end">
+    <DropdownMenuItem onSelect={() => handleViewDetails(proposal._id)}>
+      <Eye className="h-4 w-4 mr-2" /> View Details
+    </DropdownMenuItem>
+    {proposal.award.status === 'pending' && (
+      <>
+        {(proposal.finalScore || 0) >= approvalThreshold ? (
+          <DropdownMenuItem
+            onSelect={e => {
+              e.preventDefault();
+              setOpenMenuId(null); // Close menu
+              setTimeout(() => handleDecisionClick(proposal, 'approved'), 0);
+            }}
+          >
+            <CheckCircle className="h-4 w-4 mr-2 text-green-600" /> Approve
+          </DropdownMenuItem>
+        ) : (
+          <DropdownMenuItem
+            onSelect={e => {
+              e.preventDefault();
+              setOpenMenuId(null); // Close menu
+              setTimeout(() => handleDecisionClick(proposal, 'rejected'), 0);
+            }}
+          >
+            <XCircle className="h-4 w-4 mr-2 text-red-600" /> Reject
+          </DropdownMenuItem>
+        )}
+      </>
+    )}
+    {(proposal.award.status === 'approved' || proposal.award.status === 'declined') && !proposal.isNotified && (
+      <DropdownMenuItem onSelect={() => handleNotifyApplicant(proposal._id)}>
+        <Bell className="h-4 w-4 mr-2" /> Notify Researcher
       </DropdownMenuItem>
     )}
-  </>
-)}
-                        
-                        {(proposal.award.status === 'approved' || proposal.award.status === 'rejected') && !proposal.isNotified && (
-  <DropdownMenuItem onClick={() => handleNotifyApplicant(proposal._id)}>
-    <Bell className="h-4 w-4 mr-2" /> Notify Researcher
-  </DropdownMenuItem>
-)}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+  </DropdownMenuContent>
+</DropdownMenu>
                   </td>
                 </tr>
               ))}
@@ -673,12 +699,12 @@ useEffect(() => {
 
             <DialogFooter>
               <Button 
-                variant="outline" 
-                onClick={() => setShowDecisionDialog(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
+  variant="outline" 
+  onClick={() => handleDialogClose(false)}
+  disabled={isSubmitting}
+>
+  Cancel
+</Button>
               <Button 
                 onClick={handleDecisionSubmit}
                 disabled={isSubmitting || !decisionForm.feedbackComments.trim()}
@@ -692,6 +718,35 @@ useEffect(() => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        
+        {totalPages > 1 && (
+  <div className="mt-6 flex items-center justify-between">
+    <div className="text-sm text-gray-700">
+      Showing {((currentPage - 1) * limit) + 1} to {Math.min(currentPage * limit, totalCount)} of {totalCount} results
+    </div>
+    <div className="flex items-center gap-2">
+      <Button
+        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+        disabled={currentPage === 1}
+        variant="outline"
+        size="sm"
+      >
+        Previous
+      </Button>
+      <span className="text-sm text-gray-600">
+        Page {currentPage} of {totalPages}
+      </span>
+      <Button
+        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+        disabled={currentPage === totalPages}
+        variant="outline"
+        size="sm"
+      >
+        Next
+      </Button>
+    </div>
+  </div>
+)}
       </div>
     </AdminLayout>
   );
