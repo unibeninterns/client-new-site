@@ -20,6 +20,7 @@ import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, Use
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
+import { Suspense } from "react";
 
 interface DecisionFormData {
   status: 'pending' | 'approved' | 'rejected';
@@ -33,7 +34,18 @@ interface Faculty {
   title: string;
 }
 
-export default function DecisionsPanel() {
+export default function DecisionsPanelWrapper() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex justify-center items-center bg-gray-50">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
+      </div>
+    }>
+      <DecisionsPanel />
+    </Suspense>
+  );
+
+function DecisionsPanel() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -578,29 +590,29 @@ useEffect(() => {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => handleViewDetails(proposal._id)}>
+                        <DropdownMenuItem onClick={() => handleViewDetails(proposal._id)}>
                           <Eye className="h-4 w-4 mr-2" /> View Details
                         </DropdownMenuItem>
                         
                         {proposal.award.status === 'pending' && (
-                          <>
-                            {(proposal.finalScore || 0) >= approvalThreshold ? (
-                              <DropdownMenuItem onSelect={() => handleDecisionClick(proposal, 'approved')}>
-                                <CheckCircle className="h-4 w-4 mr-2 text-green-600" /> Approve
-                              </DropdownMenuItem>
-                            ) : (
-                              <DropdownMenuItem onSelect={() => handleDecisionClick(proposal, 'rejected')}>
-                                <XCircle className="h-4 w-4 mr-2 text-red-600" /> Reject
-                              </DropdownMenuItem>
-                            )}
-                          </>
-                        )}
+  <>
+    {(proposal.finalScore || 0) >= approvalThreshold ? (
+      <DropdownMenuItem onClick={() => handleDecisionClick(proposal, 'approved')}>
+        <CheckCircle className="h-4 w-4 mr-2 text-green-600" /> Approve
+      </DropdownMenuItem>
+    ) : (
+      <DropdownMenuItem onClick={() => handleDecisionClick(proposal, 'rejected')}>
+        <XCircle className="h-4 w-4 mr-2 text-red-600" /> Reject
+      </DropdownMenuItem>
+    )}
+  </>
+)}
                         
                         {(proposal.award.status === 'approved' || proposal.award.status === 'rejected') && !proposal.isNotified && (
-                          <DropdownMenuItem onSelect={() => handleNotifyApplicant(proposal._id)}>
-                            <Bell className="h-4 w-4 mr-2" /> Notify Researcher
-                          </DropdownMenuItem>
-                        )}
+  <DropdownMenuItem onClick={() => handleNotifyApplicant(proposal._id)}>
+    <Bell className="h-4 w-4 mr-2" /> Notify Researcher
+  </DropdownMenuItem>
+)}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -683,4 +695,5 @@ useEffect(() => {
       </div>
     </AdminLayout>
   );
+}
 }
