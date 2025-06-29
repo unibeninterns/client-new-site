@@ -40,9 +40,17 @@ export default function DecisionsPanel() {
 
   // Initialize threshold from URL params or default to 70
   const [approvalThreshold, setApprovalThreshold] = useState(() => {
-    const urlThreshold = searchParams.get('threshold');
-    return urlThreshold ? parseInt(urlThreshold, 10) : 70;
-  });
+  // Check localStorage first, then URL params, then default
+  if (typeof window !== 'undefined') {
+    const savedThreshold = localStorage.getItem('approvalThreshold');
+    if (savedThreshold) {
+      return parseInt(savedThreshold, 10);
+    }
+  }
+  
+  const urlThreshold = searchParams.get('threshold');
+  return urlThreshold ? parseInt(urlThreshold, 10) : 70;
+});
   const [proposals, setProposals] = useState<ProposalDecision[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [sortBy, setSortBy] = useState<'score' | 'title' | 'field'>('score');
@@ -159,7 +167,7 @@ export default function DecisionsPanel() {
             ...p, 
             award: {
               ...p.award,
-              status: decisionForm.status // This should update award.status
+              status: decisionForm.status
             }
           };
           }
@@ -170,6 +178,12 @@ export default function DecisionsPanel() {
       toast.success(`Proposal ${decisionForm.status} successfully`);
       setShowDecisionDialog(false);
       setSelectedProposal(null);
+      setDecisionForm({
+      status: 'approved',
+      feedbackComments: '',
+      fundingAmount: 0,
+      finalScore: 0
+    });
     } catch (error) {
       console.error('Failed to update proposal status:', error);
       toast.error('Failed to update proposal status');
@@ -177,6 +191,19 @@ export default function DecisionsPanel() {
       setIsSubmitting(false);
     }
   };
+
+  const handleDialogClose = (open: boolean) => {
+  if (!open && !isSubmitting) {
+    setShowDecisionDialog(false);
+    setSelectedProposal(null);
+    setDecisionForm({
+      status: 'approved',
+      feedbackComments: '',
+      fundingAmount: 0,
+      finalScore: 0
+    });
+  }
+};
 
   const handleNotifyApplicant = async (proposalId: string) => {
     try {
@@ -222,15 +249,38 @@ export default function DecisionsPanel() {
   };
 
   // Update URL when threshold changes
-  const handleThresholdChange = (value: number[]) => {
-    const newThreshold = value[0];
-    setApprovalThreshold(newThreshold);
-    
-    // Update URL parameters
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('threshold', newThreshold.toString());
-    router.replace(`?${params.toString()}`, { scroll: false });
+ const handleThresholdChange = (value: number[]) => {
+  const newThreshold = value[0];
+  setApprovalThreshold(newThreshold);
+  
+  // Save to localStorage
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('approvalThreshold', newThreshold.toString());
+  }
+  
+  // Update URL parameters
+  const params = new URLSearchParams(searchParams.toString());
+  params.set('threshold', newThreshold.toString());
+  router.replace(`?${params.toString()}`, { scroll: false });
+};
+
+// Add effect to sync with localStorage changes (optional, for multiple tabs)
+useEffect(() => {
+  const handleStorageChange = (e: StorageEvent) => {
+    if (e.key === 'approvalThreshold' && e.newValue) {
+      const newThreshold = parseInt(e.newValue, 10);
+      setApprovalThreshold(newThreshold);
+      
+      // Update URL to match
+      const params = new URLSearchParams(searchParams.toString());
+      params.set('threshold', newThreshold.toString());
+      router.replace(`?${params.toString()}`, { scroll: false });
+    }
   };
+
+  window.addEventListener('storage', handleStorageChange);
+  return () => window.removeEventListener('storage', handleStorageChange);
+}, [searchParams, router]);
 
   if (authLoading || !isAuthenticated) {
     return (
@@ -561,7 +611,7 @@ export default function DecisionsPanel() {
         </div>
 
         {/* Decision Dialog */}
-        <Dialog open={showDecisionDialog} onOpenChange={setShowDecisionDialog}>
+        <Dialog open={showDecisionDialog} onOpenChange={handleDialogClose}>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
