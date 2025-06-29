@@ -721,24 +721,68 @@ export const finalizeProposalDecision = async (
 };
 
 // Define the ProposalDecision type for frontend use
-export type ProposalDecision = {
-  id: string;
+export interface ProposalDecision {
+  _id: string;
   projectTitle: string;
-  fieldOfResearch: string;
-  totalScore: number;
-  status: "pending" | "approved" | "rejected";
-  scores: {
-    ai: number;
-    reviewer1: number;
-    reviewer2: number;
+  award: {
+    fundingAmount?: number;
+    status: "pending" | "approved" | "rejected";
   };
-};
+  estimatedBudget?: number;
+  fundingAmount?: number;
+  feedbackComments?: string;
+  finalScore?: number;
+  aiScore?: number;
+  humanScore?: number;
+  reconciliationScore?: number;
+  createdAt: string;
+  isNotified?: boolean;
+  submitter?: {
+    name: string;
+    email: string;
+  };
+  faculty?: {
+    _id: string;
+    title: string;
+  };
+  department?: {
+    _id: string;
+    title: string;
+  };
+}
+
+export interface DecisionUpdateData {
+  status: "pending" | "approved" | "rejected";
+  feedbackComments: string;
+  fundingAmount?: number;
+  finalScore: number;
+}
 
 // Admin endpoints for Proposal Decision Management
-export const getProposalsForDecision = async (params = {}) => {
+export const getProposalsForDecision = async (params?: {
+  page?: number;
+  limit?: number;
+  faculty?: string;
+  sort?: string;
+  order?: "asc" | "desc";
+}): Promise<{
+  success: boolean;
+  data: ProposalDecision[];
+  count: number;
+  totalPages: number;
+  currentPage: number;
+}> => {
+  const queryParams = new URLSearchParams();
+
+  if (params?.page) queryParams.append("page", params.page.toString());
+  if (params?.limit) queryParams.append("limit", params.limit.toString());
+  if (params?.faculty) queryParams.append("faculty", params.faculty);
+  if (params?.sort) queryParams.append("sort", params.sort);
+  if (params?.order) queryParams.append("order", params.order);
+
   try {
     const response = await api.get("/admin/decisions/proposals-for-decision", {
-      params,
+      params: queryParams,
     });
     return response.data;
   } catch (error) {
@@ -749,17 +793,16 @@ export const getProposalsForDecision = async (params = {}) => {
 
 export const updateProposalStatus = async (
   proposalId: string,
-  statusData: {
-    status: ProposalDecision["status"]; // Corrected type here
-    finalScore?: number;
-    fundingAmount?: number;
-    feedbackComments?: string;
-  }
-) => {
+  data: DecisionUpdateData
+): Promise<{
+  success: boolean;
+  message: string;
+  data: ProposalDecision;
+}> => {
   try {
     const response = await api.patch(
       `/admin/decisions/${proposalId}/status`,
-      statusData
+      data
     );
     return response.data;
   } catch (error) {
@@ -768,7 +811,12 @@ export const updateProposalStatus = async (
   }
 };
 
-export const notifyApplicants = async (proposalId: string) => {
+export const notifyApplicants = async (
+  proposalId: string
+): Promise<{
+  success: boolean;
+  message: string;
+}> => {
   try {
     const response = await api.post(
       `/admin/decisions/${proposalId}/notify-applicants`
@@ -803,7 +851,7 @@ export const toggleProposalArchiveStatus = async (
   }
 };
 
-export const exportDecisionsReport = async () => {
+export const exportDecisionsReport = async (): Promise<void> => {
   try {
     const response = await api.get("/admin/decisions/export-decisions", {
       responseType: "blob", // Important for handling file downloads
@@ -817,10 +865,6 @@ export const exportDecisionsReport = async () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    return {
-      success: true,
-      message: "Decisions report downloaded successfully",
-    };
   } catch (error) {
     console.error("Error exporting decisions report:", error);
     throw error;
