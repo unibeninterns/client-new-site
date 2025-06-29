@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getProposalsForDecision, updateProposalStatus, notifyApplicants, exportDecisionsReport, getFacultiesWithProposals, type ProposalDecision } from '@/services/api';
 import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, Users, Award, DollarSign } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
 
@@ -36,8 +36,13 @@ interface Faculty {
 export default function DecisionsPanel() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [approvalThreshold, setApprovalThreshold] = useState(0);
+  // Initialize threshold from URL params or default to 70
+  const [approvalThreshold, setApprovalThreshold] = useState(() => {
+    const urlThreshold = searchParams.get('threshold');
+    return urlThreshold ? parseInt(urlThreshold, 10) : 70;
+  });
   const [proposals, setProposals] = useState<ProposalDecision[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [sortBy, setSortBy] = useState<'score' | 'title' | 'field'>('score');
@@ -150,7 +155,13 @@ export default function DecisionsPanel() {
       setProposals(prevProposals => 
         prevProposals.map(p => {
           if (p._id === selectedProposal._id) {
-            return { ...p, status: decisionForm.status };
+            return { 
+            ...p, 
+            award: {
+              ...p.award,
+              status: decisionForm.status // This should update award.status
+            }
+          };
           }
           return p;
         })
@@ -210,6 +221,17 @@ export default function DecisionsPanel() {
     }
   };
 
+  // Update URL when threshold changes
+  const handleThresholdChange = (value: number[]) => {
+    const newThreshold = value[0];
+    setApprovalThreshold(newThreshold);
+    
+    // Update URL parameters
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('threshold', newThreshold.toString());
+    router.replace(`?${params.toString()}`, { scroll: false });
+  };
+
   if (authLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50">
@@ -242,7 +264,7 @@ export default function DecisionsPanel() {
 
   const filteredProposals = proposals
     .filter(p => filterBy === 'all' || p.award.status === filterBy)
-    .filter(p => facultyFilter === 'all' || p.faculty?.title === facultyFilter)
+    .filter(p => facultyFilter === 'all' || p.faculty?._id === facultyFilter)
     .filter(p => 
       p.projectTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.submitter?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
@@ -396,7 +418,7 @@ export default function DecisionsPanel() {
               <div className="px-2">
                 <Slider
                   value={[approvalThreshold]}
-                  onValueChange={(value) => setApprovalThreshold(value[0])}
+                  onValueChange={handleThresholdChange}
                   max={100}
                   step={5}
                   className="w-full"
