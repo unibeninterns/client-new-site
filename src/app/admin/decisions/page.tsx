@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getProposalsForDecision, updateProposalStatus, notifyApplicants, exportDecisionsReport, getFacultiesWithProposals, type ProposalDecision } from '@/services/api';
-import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, Users, Award, DollarSign } from 'lucide-react';
+import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, Users, Award, Banknote, ArrowUpRight } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
@@ -50,19 +50,7 @@ function DecisionsPanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Initialize threshold from URL params or default to 70
-  const [approvalThreshold, setApprovalThreshold] = useState(() => {
-  // Check localStorage first, then URL params, then default
-  if (typeof window !== 'undefined') {
-    const savedThreshold = localStorage.getItem('approvalThreshold');
-    if (savedThreshold) {
-      return parseInt(savedThreshold, 10);
-    }
-  }
-  
-  const urlThreshold = searchParams.get('threshold');
-  return urlThreshold ? parseInt(urlThreshold, 10) : 70;
-});
+  const [approvalThreshold, setApprovalThreshold] = useState(70);
   const [proposals, setProposals] = useState<ProposalDecision[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
   const [sortBy, setSortBy] = useState<'score' | 'title' | 'field'>('score');
@@ -88,6 +76,9 @@ const limit = 10;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
+  // Add debounce ref
+  const debounceRef = useRef<NodeJS.Timeout | undefined>(undefined);
+
   // Statistics
   const [statistics, setStatistics] = useState({
     totalProposals: 0,
@@ -95,14 +86,86 @@ const limit = 10;
     approved: 0,
     rejected: 0,
     averageScore: 0,
-    proposalsAboveThreshold: 0
+    proposalsAboveThreshold: 0,
+    totalBudgetAboveThreshold: 0,
+    approvedBudget: 0,
   });
 
+  // Debounced data loading function
+  const debouncedLoadData = useCallback(async (threshold: number) => {
+    try {
+      setIsLoading(true);
+      const [proposalsResponse, facultiesResponse] = await Promise.all([
+        getProposalsForDecision({ 
+          page: currentPage, 
+          limit,
+          faculty: facultyFilter !== 'all' ? facultyFilter : undefined,
+          threshold,
+        }),
+        getFacultiesWithProposals()
+      ]);
+
+      console.log('Proposals loaded:', proposalsResponse.data);
+      console.log('Statistics received:', proposalsResponse.statistics);
+      
+      setProposals(proposalsResponse.data);
+      setFaculties(facultiesResponse);
+      setTotalPages(proposalsResponse.totalPages || 1);
+      setTotalCount(proposalsResponse.total || 0);
+      
+      // Update statistics from backend response
+      if (proposalsResponse.statistics) {
+        setStatistics(proposalsResponse.statistics);
+      }
+      
+      setError(null);
+    } catch (err) {
+      console.error('Failed to load data:', err);
+      setError('Failed to load proposals for review');
+      toast.error('Failed to load proposals for review');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, facultyFilter, limit]);
+
+  
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
       router.push('/admin/login');
     }
   }, [authLoading, isAuthenticated, router]);
+  
+  // Handle threshold change with debounce
+  const handleThresholdChange = useCallback((value: number[]) => {
+    const newThreshold = value[0];
+    setApprovalThreshold(newThreshold);
+    
+    // Clear existing timeout
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+    }
+    
+    // Set new timeout for 800ms delay
+    debounceRef.current = setTimeout(() => {
+      debouncedLoadData(newThreshold);
+    }, 800);
+  }, [debouncedLoadData]);
+
+  // Initial data load effect
+  useEffect(() => {
+    if (isAuthenticated) {
+      debouncedLoadData(approvalThreshold);
+    }
+  }, [isAuthenticated, currentPage, facultyFilter, debouncedLoadData, approvalThreshold]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const loadData = async () => {
@@ -138,27 +201,6 @@ setTotalCount(proposalsResponse.total || 0);  // Use total, not count
       loadData();
     }
   }, [isAuthenticated, currentPage, facultyFilter]);
-
-  // Update statistics when proposals or threshold changes
-  useEffect(() => {
-    const totalProposals = proposals.length;
-    const pendingDecisions = proposals.filter(p => p.award.status === 'pending').length;
-    const approved = proposals.filter(p => p.award.status === 'approved').length;
-    const rejected = proposals.filter(p => p.award.status === 'declined').length;
-    const averageScore = totalProposals > 0 
-      ? Math.round(proposals.reduce((sum, p) => sum + (p.finalScore || 0), 0) / totalProposals)
-      : 0;
-    const proposalsAboveThreshold = proposals.filter(p => (p.finalScore || 0) >= approvalThreshold).length;
-
-    setStatistics({
-      totalProposals,
-      pendingDecisions,
-      approved,
-      rejected,
-      averageScore,
-      proposalsAboveThreshold
-    });
-  }, [proposals, approvalThreshold]);
 
   const handleDecisionClick = (proposal: ProposalDecision, decision: 'approved' | 'rejected') => {
     setSelectedProposal(proposal);
@@ -277,22 +319,6 @@ setTotalCount(proposalsResponse.total || 0);  // Use total, not count
     }
   };
 
-  // Update URL when threshold changes
- const handleThresholdChange = (value: number[]) => {
-  const newThreshold = value[0];
-  setApprovalThreshold(newThreshold);
-  
-  // Save to localStorage
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('approvalThreshold', newThreshold.toString());
-  }
-  
-  // Update URL parameters
-  const params = new URLSearchParams(searchParams.toString());
-  params.set('threshold', newThreshold.toString());
-  router.replace(`?${params.toString()}`, { scroll: false });
-};
-
 // Add effect to sync with localStorage changes (optional, for multiple tabs)
 useEffect(() => {
   const handleStorageChange = (e: StorageEvent) => {
@@ -369,67 +395,93 @@ useEffect(() => {
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="flex items-center">
-              <Users className="h-5 w-5 text-blue-500 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Total Proposals</p>
-                <p className="text-lg font-semibold">{statistics.totalProposals}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="flex items-center">
-              <TrendingUp className="h-5 w-5 text-yellow-500 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Pending</p>
-                <p className="text-lg font-semibold">{statistics.pendingDecisions}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="flex items-center">
-              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Approved</p>
-                <p className="text-lg font-semibold">{statistics.approved}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="flex items-center">
-              <XCircle className="h-5 w-5 text-red-500 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Rejected</p>
-                <p className="text-lg font-semibold">{statistics.rejected}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="flex items-center">
-              <Award className="h-5 w-5 text-purple-500 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Avg Score</p>
-                <p className="text-lg font-semibold">{statistics.averageScore}%</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="flex items-center">
-              <DollarSign className="h-5 w-5 text-indigo-500 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Above {approvalThreshold}%</p>
-                <p className="text-lg font-semibold">{statistics.proposalsAboveThreshold}</p>
-              </div>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-8 gap-4 mb-6">
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <Users className="h-5 w-5 text-blue-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Total Proposals</p>
+          <p className="text-lg font-semibold">{statistics.totalProposals}</p>
         </div>
+      </div>
+    </div>
+    
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <TrendingUp className="h-5 w-5 text-yellow-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Pending</p>
+          <p className="text-lg font-semibold">{statistics.pendingDecisions}</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Approved</p>
+          <p className="text-lg font-semibold">{statistics.approved}</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <XCircle className="h-5 w-5 text-red-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Rejected</p>
+          <p className="text-lg font-semibold">{statistics.rejected}</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <Award className="h-5 w-5 text-purple-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Avg Score</p>
+          <p className="text-lg font-semibold">{statistics.averageScore}%</p>
+        </div>
+      </div>
+    </div>
+
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <ArrowUpRight className="h-5 w-5 text-indigo-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Above {approvalThreshold}%</p>
+          <p className="text-lg font-semibold">{statistics.proposalsAboveThreshold}</p>
+        </div>
+      </div>
+    </div>
+
+    {/* New card for potential budget */}
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <TrendingUp className="h-5 w-5 text-orange-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Potential Budget</p>
+          <p className="text-sm font-semibold">
+            ${(statistics.totalBudgetAboveThreshold / 1000000).toFixed(1)}M
+          </p>
+        </div>
+      </div>
+    </div>
+
+    {/* New card for approved budget */}
+    <div className="bg-white p-4 rounded-lg shadow border">
+      <div className="flex items-center">
+        <CheckCircle className="h-5 w-5 text-emerald-500 mr-2" />
+        <div>
+          <p className="text-xs text-gray-500">Approved Budget</p>
+          <p className="text-sm font-semibold">
+            ${(statistics.approvedBudget / 1000000).toFixed(1)}M
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
         
         {/* Controls */}
         <div className="bg-white p-4 rounded-lg shadow mb-6">
@@ -544,7 +596,8 @@ useEffect(() => {
                         {proposal.submitter?.name} • {proposal.faculty?.title}
                       </div>
                       <div className="text-xs text-gray-400">
-                        Budget: ${proposal.estimatedBudget?.toLocaleString()}
+                        Estimated Budget: <Banknote className="inline h-4 w-4 text-green-600 mr-1" />
+                        {proposal.estimatedBudget?.toLocaleString()}
                       </div>
                     </div>
                   </td>

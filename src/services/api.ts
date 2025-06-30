@@ -763,6 +763,7 @@ export const getProposalsForDecision = async (params?: {
   page?: number;
   limit?: number;
   faculty?: string;
+  threshold?: number;
   sort?: string;
   order?: "asc" | "desc";
 }): Promise<{
@@ -772,6 +773,16 @@ export const getProposalsForDecision = async (params?: {
   total: number;
   totalPages: number;
   currentPage: number;
+  statistics?: {
+    totalProposals: number;
+    pendingDecisions: number;
+    approved: number;
+    rejected: number;
+    averageScore: number;
+    proposalsAboveThreshold: number;
+    totalBudgetAboveThreshold: number;
+    approvedBudget: number;
+  };
 }> => {
   const queryParams = new URLSearchParams();
 
