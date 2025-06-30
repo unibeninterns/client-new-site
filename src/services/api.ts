@@ -736,7 +736,7 @@ export interface ProposalDecision {
   humanScore?: number;
   reconciliationScore?: number;
   createdAt: string;
-  isNotified?: boolean;
+  notificationCount?: number;
   submitter?: {
     name: string;
     email: string;
@@ -769,6 +769,7 @@ export const getProposalsForDecision = async (params?: {
   success: boolean;
   data: ProposalDecision[];
   count: number;
+  total: number;
   totalPages: number;
   currentPage: number;
 }> => {

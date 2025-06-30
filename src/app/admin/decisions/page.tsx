@@ -109,7 +109,11 @@ const limit = 10;
       try {
         setIsLoading(true);
         const [proposalsResponse, facultiesResponse] = await Promise.all([
-          getProposalsForDecision({ page: currentPage, limit }),
+          getProposalsForDecision({ 
+  page: currentPage, 
+  limit,
+  faculty: facultyFilter !== 'all' ? facultyFilter : undefined 
+}),
           getFacultiesWithProposals()
         ]);
 
@@ -118,8 +122,8 @@ const limit = 10;
         
         setProposals(proposalsResponse.data);
         setFaculties(facultiesResponse);
-        setTotalPages(proposalsResponse.pagination?.pages || 1);
-      setTotalCount(proposalsResponse.pagination?.total || proposalsResponse.data.length);
+        setTotalPages(proposalsResponse.totalPages || 1);
+setTotalCount(proposalsResponse.total || 0);  // Use total, not count
       setError(null);
       } catch (err) {
         console.error('Failed to load data:', err);
@@ -133,7 +137,7 @@ const limit = 10;
     if (isAuthenticated) {
       loadData();
     }
-  }, [isAuthenticated, currentPage]);
+  }, [isAuthenticated, currentPage, facultyFilter]);
 
   // Update statistics when proposals or threshold changes
   useEffect(() => {
@@ -229,15 +233,19 @@ const limit = 10;
       await notifyApplicants(proposalId);
       toast.success('Applicant notified successfully');
       
-      // Update the proposal to mark as notified (you might need to add this field)
+      // Update the proposal to mark as notified
       setProposals(prevProposals => 
-        prevProposals.map(p => {
-          if (p._id === proposalId) {
-            return { ...p, isNotified: true };
-          }
-          return p;
-        })
-      );
+      prevProposals.map(p => {
+        if (p._id === proposalId) {
+          return { 
+            ...p, 
+            lastNotifiedAt: new Date().toISOString(),
+            notificationCount: (p.notificationCount || 0) + 1
+          };
+        }
+        return p;
+      })
+    );
     } catch (error) {
       console.error('Failed to notify applicant:', error);
       toast.error('Failed to notify applicant');
@@ -634,11 +642,15 @@ useEffect(() => {
         )}
       </>
     )}
-    {(proposal.award.status === 'approved' || proposal.award.status === 'declined') && !proposal.isNotified && (
-      <DropdownMenuItem onSelect={() => handleNotifyApplicant(proposal._id)}>
-        <Bell className="h-4 w-4 mr-2" /> Notify Researcher
-      </DropdownMenuItem>
-    )}
+    {(proposal.award.status === 'approved' || proposal.award.status === 'declined') && (
+  <DropdownMenuItem onSelect={() => handleNotifyApplicant(proposal._id)}>
+    <Bell className="h-4 w-4 mr-2" /> 
+    {(proposal.notificationCount ?? 0) > 0 
+      ? `Notify Again (${proposal.notificationCount ?? 0} sent)` 
+      : 'Notify Researcher'
+    }
+  </DropdownMenuItem>
+)}
   </DropdownMenuContent>
 </DropdownMenu>
                   </td>
