@@ -445,7 +445,7 @@ setTotalCount(proposalsResponse.total || 0);  // Use total, not count
         <div>
           <p className="text-xs text-gray-500">Potential Budget</p>
           <p className="text-sm font-semibold">
-            ${(statistics.totalBudgetAboveThreshold / 1000000).toFixed(1)}M
+            ₦{(statistics.totalBudgetAboveThreshold / 1000000).toFixed(1)}M
           </p>
         </div>
       </div>
@@ -458,7 +458,7 @@ setTotalCount(proposalsResponse.total || 0);  // Use total, not count
         <div>
           <p className="text-xs text-gray-500">Approved Budget</p>
           <p className="text-sm font-semibold">
-            ${(statistics.approvedBudget / 1000000).toFixed(1)}M
+            ₦{(statistics.approvedBudget / 1000000).toFixed(1)}M
           </p>
         </div>
       </div>
@@ -578,7 +578,7 @@ setTotalCount(proposalsResponse.total || 0);  // Use total, not count
                         {proposal.submitter?.name} • {proposal.faculty?.title}
                       </div>
                       <div className="text-xs text-gray-400">
-                        Estimated Budget: <Banknote className="inline h-4 w-4 text-green-600 mr-1" />
+                        Estimated Budget: <Banknote className="inline h-4 w-4 text-green-300 mr-1" />
                         {proposal.estimatedBudget?.toLocaleString()}
                       </div>
                     </div>
