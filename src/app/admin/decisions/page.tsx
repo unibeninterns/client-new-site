@@ -503,7 +503,7 @@ useEffect(() => {
                 <SelectTrigger>
                   <SelectValue placeholder="All Faculties" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[200px] overflow-y-auto">
+                <SelectContent className="max-h-[300px] overflow-y-auto">
                   <SelectItem value="all">All Faculties</SelectItem>
                   {faculties.map((faculty) => (
                     <SelectItem key={faculty._id} value={faculty._id}>

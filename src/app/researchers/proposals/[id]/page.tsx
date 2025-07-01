@@ -7,6 +7,13 @@ import ResearcherLayout from '@/components/researchers/ResearcherLayout';
 import { AlertCircle, ArrowLeft, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+interface AwardData {
+  status: 'approved' | 'declined';
+  finalScore?: number;
+  feedbackComments: string;
+  fundingAmount?: number;
+}
+
 interface Proposal {
   _id: string;
   projectTitle: string;
@@ -25,9 +32,106 @@ interface Proposal {
   cvFile?: string;
   docFile?: string;
   status: string;
+  award?: AwardData;
   createdAt: string;
   updatedAt: string;
 }
+
+const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
+  const isApproved = award.status === 'approved';
+  
+  return (
+    <div className={`rounded-xl p-8 mb-6 relative overflow-hidden ${
+      isApproved 
+        ? 'bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-200' 
+        : 'bg-gradient-to-br from-red-50 to-rose-100 border-2 border-red-200'
+    }`}>
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+        {isApproved ? (
+          <div className="w-full h-full bg-green-500 rounded-full transform translate-x-16 -translate-y-16"></div>
+        ) : (
+          <div className="w-full h-full bg-red-500 rounded-full transform translate-x-16 -translate-y-16"></div>
+        )}
+      </div>
+      
+      <div className="relative z-10">
+        {isApproved ? (
+          <>
+            {/* Approved Header */}
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-green-800">🎉 Congratulations!</h2>
+                <p className="text-green-700">Your proposal has been approved</p>
+              </div>
+            </div>
+            
+            {/* Approved Details */}
+            <div className="bg-white/60 rounded-lg p-6 backdrop-blur-sm">
+              <h3 className="font-semibold text-gray-800 mb-3">Award Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {award.finalScore && (
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium text-gray-600 mr-2">Final Score:</span>
+                    <span className="text-lg font-bold text-green-600">{award.finalScore}/100</span>
+                  </div>
+                )}
+                {award.fundingAmount && (
+                  <div className="flex items-center">
+                    <span className="text-sm font-medium text-gray-600 mr-2">Funding Amount:</span>
+                    <span className="text-lg font-bold text-green-600">₦{award.fundingAmount.toLocaleString()}</span>
+                  </div>
+                )}
+              </div>
+              {award.feedbackComments && (
+                <div className="mt-4">
+                  <span className="text-sm font-medium text-gray-600">Feedback:</span>
+                  <p className="text-gray-700 mt-1 italic">&quot;{award.feedbackComments}&quot;</p>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Declined Header */}
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-red-800">Thanks for participating</h2>
+                <p className="text-red-700">Your proposal was not selected for funding</p>
+              </div>
+            </div>
+            
+            {/* Declined Details */}
+            <div className="bg-white/60 rounded-lg p-6 backdrop-blur-sm">
+              <p className="text-gray-700 mb-4">
+                We appreciate the time and effort you put into your proposal. While it wasn&apos;t selected this time, 
+                we encourage you to consider the feedback and apply again in the future.
+              </p>
+              {award.feedbackComments && (
+                <div>
+                  <span className="text-sm font-medium text-gray-600">Feedback from Review Committee:</span>
+                  <div className="mt-2 p-3 bg-red-50 rounded-md border-l-4 border-red-300">
+                    <p className="text-gray-700 italic">&quot;{award.feedbackComments}&quot;</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default function ProposalDetails() {
   const params = useParams();
@@ -135,6 +239,10 @@ export default function ProposalDetails() {
                 )}
               </div>
             </div>
+
+            {proposal.award && (
+  <AwardPoster award={proposal.award} projectTitle={proposal.projectTitle || 'Your Research Proposal'} />
+)}
             
             {/* Proposal Details */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
