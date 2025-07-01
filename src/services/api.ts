@@ -789,6 +789,8 @@ export const getProposalsForDecision = async (params?: {
   if (params?.page) queryParams.append("page", params.page.toString());
   if (params?.limit) queryParams.append("limit", params.limit.toString());
   if (params?.faculty) queryParams.append("faculty", params.faculty);
+  if (params?.threshold)
+    queryParams.append("threshold", params.threshold.toString());
   if (params?.sort) queryParams.append("sort", params.sort);
   if (params?.order) queryParams.append("order", params.order);
 
