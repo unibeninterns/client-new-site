@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getProposalsForDecision, updateProposalStatus, notifyApplicants, exportDecisionsReport, getFacultiesWithProposals, type ProposalDecision } from '@/services/api';
 import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, Users, Award, Banknote, ArrowUpRight } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
 import { Suspense } from "react";
@@ -48,7 +48,6 @@ export default function DecisionsPanelWrapper() {
 function DecisionsPanel() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [approvalThreshold, setApprovalThreshold] = useState(70);
   const [proposals, setProposals] = useState<ProposalDecision[]>([]);
@@ -101,6 +100,8 @@ const limit = 10;
           limit,
           faculty: facultyFilter !== 'all' ? facultyFilter : undefined,
           threshold,
+          sort: sortBy, // Add sort parameter
+        order: 'desc' // Add order parameter
         }),
         getFacultiesWithProposals()
       ]);
@@ -126,7 +127,7 @@ const limit = 10;
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, facultyFilter, limit]);
+  }, [currentPage, facultyFilter, limit, sortBy]);
 
   
   useEffect(() => {
@@ -156,7 +157,7 @@ const limit = 10;
     if (isAuthenticated) {
       debouncedLoadData(approvalThreshold);
     }
-  }, [isAuthenticated, currentPage, facultyFilter, debouncedLoadData, approvalThreshold]);
+  }, [isAuthenticated, currentPage, facultyFilter, sortBy, debouncedLoadData, approvalThreshold]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -257,6 +258,10 @@ setTotalCount(proposalsResponse.total || 0);  // Use total, not count
     }
   };
 
+  const handleSortChange = (value: 'score' | 'title' | 'field') => {
+  setSortBy(value);
+};
+
   const handleDialogClose = (open: boolean) => {
   if (!open) {
     setShowDecisionDialog(false);
@@ -319,24 +324,6 @@ setTotalCount(proposalsResponse.total || 0);  // Use total, not count
     }
   };
 
-// Add effect to sync with localStorage changes (optional, for multiple tabs)
-useEffect(() => {
-  const handleStorageChange = (e: StorageEvent) => {
-    if (e.key === 'approvalThreshold' && e.newValue) {
-      const newThreshold = parseInt(e.newValue, 10);
-      setApprovalThreshold(newThreshold);
-      
-      // Update URL to match
-      const params = new URLSearchParams(searchParams.toString());
-      params.set('threshold', newThreshold.toString());
-      router.replace(`?${params.toString()}`, { scroll: false });
-    }
-  };
-
-  window.addEventListener('storage', handleStorageChange);
-  return () => window.removeEventListener('storage', handleStorageChange);
-}, [searchParams, router]);
-
   if (authLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50">
@@ -373,12 +360,7 @@ useEffect(() => {
     .filter(p => 
       p.projectTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (p.submitter?.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-    )
-    .sort((a, b) => {
-      if (sortBy === 'score') return (b.finalScore || 0) - (a.finalScore || 0);
-      if (sortBy === 'title') return a.projectTitle.localeCompare(b.projectTitle);
-      return 0;
-    });
+    );
 
   return (
     <AdminLayout>
@@ -516,7 +498,7 @@ useEffect(() => {
 
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Sort By</label>
-              <Select value={sortBy} onValueChange={(value: 'score' | 'title' | 'field') => setSortBy(value)}>
+              <Select value={sortBy} onValueChange={handleSortChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
