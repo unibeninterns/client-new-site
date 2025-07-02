@@ -931,4 +931,17 @@ export const getProposalReviewDetailsById = async (proposalId: string) => {
   }
 };
 
+export const getFullProposalStatus = async (proposalId: string) => {
+  try {
+    const response = await api.get(`/api/can-submit/${proposalId}`);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching proposal status for ID ${proposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
 export default api;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getResearcherProposalDetails } from '@/services/api';
+import { getFullProposalStatus, getResearcherProposalDetails } from '@/services/api';
 import ResearcherLayout from '@/components/researchers/ResearcherLayout';
 import { AlertCircle, ArrowLeft, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
@@ -11,6 +11,15 @@ interface AwardData {
   status: 'approved' | 'declined';
   feedbackComments: string;
   fundingAmount?: number;
+}
+
+interface FullProposalStatus {
+  canSubmit: boolean;
+  isApproved: boolean;
+  hasSubmitted: boolean;
+  isWithinDeadline: boolean;
+  deadline: string;
+  daysRemaining: number;
 }
 
 interface Proposal {
@@ -35,6 +44,32 @@ interface Proposal {
   createdAt: string;
   updatedAt: string;
 }
+
+const useFullProposalStatus = (proposalId: string) => {
+  const [status, setStatus] = useState<FullProposalStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await getFullProposalStatus(proposalId);
+        if (response.success) {
+          setStatus(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching full proposal status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (proposalId) {
+      fetchStatus();
+    }
+  }, [proposalId]);
+
+  return { status, loading };
+};
 
 const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
   const isApproved = award.status === 'approved';
@@ -126,9 +161,100 @@ const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
   );
 };
 
+const FullProposalSubmissionBanner = ({ 
+  proposalId, 
+  fullProposalStatus 
+}: { 
+  proposalId: string; 
+  fullProposalStatus: FullProposalStatus;
+}) => {
+  const { canSubmit, hasSubmitted, isWithinDeadline, deadline, daysRemaining } = fullProposalStatus;
+  
+  if (!fullProposalStatus.isApproved) return null;
+
+  const deadlineDate = new Date(deadline);
+  const formattedDeadline = deadlineDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  if (hasSubmitted) {
+    return (
+      <div className="rounded-xl p-6 mb-6 bg-gradient-to-br from-blue-50 to-indigo-100 border-2 border-blue-200">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-blue-800">Full Proposal Submitted</h3>
+            <p className="text-blue-700">Your complete proposal has been successfully submitted</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isWithinDeadline) {
+    return (
+      <div className="rounded-xl p-6 mb-6 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center mr-4">
+            <Clock className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">Submission Deadline Passed</h3>
+            <p className="text-gray-700">The deadline for full proposal submission was {formattedDeadline}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-6 mb-6 bg-gradient-to-br from-purple-50 to-violet-100 border-2 border-purple-200">
+      <div className="flex items-center mb-4">
+        <div className="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-4">
+          <FileText className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-purple-800">Next Stage: Submit Full Proposal</h3>
+          <p className="text-purple-700">Your proposal has been approved! Submit your complete proposal document.</p>
+        </div>
+      </div>
+      
+      <div className="bg-white/60 rounded-lg p-4 backdrop-blur-sm mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-600">Submission Deadline:</span>
+          <span className="text-lg font-bold text-purple-600">{formattedDeadline}</span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-600">Days Remaining:</span>
+          <span className={`text-lg font-bold ${daysRemaining <= 7 ? 'text-red-600' : 'text-green-600'}`}>
+            {daysRemaining} days
+          </span>
+        </div>
+      </div>
+
+      {canSubmit && (
+        <Link 
+          href={`/researchers/proposals/${proposalId}/submit-full`}
+          className="inline-flex items-center bg-purple-800 hover:bg-purple-900 text-white px-6 py-3 rounded-md font-medium transition-colors"
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Submit Full Proposal
+        </Link>
+      )}
+    </div>
+  );
+};
+
 export default function ProposalDetails() {
   const params = useParams();
   const proposalId = params.id as string;
+  const { status: fullProposalStatus, loading: statusLoading } = useFullProposalStatus(proposalId);
   
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -234,9 +360,16 @@ export default function ProposalDetails() {
             </div>
 
             {proposal.award && (
-  <AwardPoster award={proposal.award} projectTitle={proposal.projectTitle || 'Your Research Proposal'} />
-)}
-            
+            <AwardPoster award={proposal.award} projectTitle={proposal.projectTitle || 'Your Research Proposal'} />
+          )}
+
+          {proposal.award && fullProposalStatus && !statusLoading && (
+          <FullProposalSubmissionBanner 
+          proposalId={proposalId} 
+          fullProposalStatus={fullProposalStatus} 
+          />
+        )}
+
             {/* Proposal Details */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Main Content */}
