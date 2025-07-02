@@ -453,3 +453,14 @@ export default function MastersFundingPage() {
     </div>
   );
 }
+
+// context for the api.ts file, adapt it for the new controller and I donn't know if its multipart/form-data anymore since I only want to submit the doc file this time without the remaining fields of the form:
+
+export const submitMasterProposal = async (formData: FormData) => {
+  try {
+    const response = await api.post("/submit/master-proposal", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
