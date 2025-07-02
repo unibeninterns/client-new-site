@@ -65,8 +65,8 @@ const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
                 </svg>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-green-800">🎉 Congratulations!</h2>
-                <p className="text-green-700">Your proposal has been approved</p>
+                <h2 className="text-2xl font-bold text-green-800">Congratulations!</h2>
+                <p className="text-green-700">Your proposal has been approved for the next stage</p>
               </div>
             </div>
             
