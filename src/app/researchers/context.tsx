@@ -40,9 +40,9 @@ export default function MastersFundingPage() {
       return false;
     }
     
-    // Check file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      setFileError('File size should not exceed 5MB');
+    // Check file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      setFileError('File size should not exceed 10MB');
       return false;
     }
     
@@ -162,14 +162,8 @@ export default function MastersFundingPage() {
               <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
               <h2 className="text-2xl font-medium text-gray-900 mb-4">Submission Successful!</h2>
               <p className="text-gray-600 mb-6">
-                Your full proposal has been submitted successfully. You will receive a confirmation email shortly.
+                Your full proposal has been submitted successfully.
               </p>
-              <button
-                onClick={resetForm}
-                className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-purple-800 hover:bg-purple-900"
-              >
-                Submit Another Document
-              </button>
             </div>
           </div>
         </main>
@@ -214,7 +208,7 @@ export default function MastersFundingPage() {
             {showFullGuidelines ? (
               <>
                 <p className="mb-6 text-gray-700">
-                  Please complete all fields clearly and accurately. Maximum of 5 pages excluding the budget appendix.
+                  Please complete all fields clearly and accurately.
                 </p>
 
                 <ol className="list-decimal list-inside space-y-6 text-gray-800">
@@ -281,14 +275,7 @@ export default function MastersFundingPage() {
 
                 <h3 className="text-lg font-semibold mt-8 text-purple-800">Important Submission Details:</h3>
                 <ul className="list-disc list-inside space-y-2 mt-4 text-gray-700">
-                  <li>Concept note must not exceed 5 pages (excluding appendix).</li>
-                  <li>
-                    Submission Email:{" "}
-                    <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">
-                      drid@uniben.edu
-                    </a>
-                  </li>
-                  <li>Deadline: Tuesday, 31st July 2025</li>
+                  <li>Deadline: Thursday, 31st July 2025</li>
                   <li>
                     For inquiries, contact the DRID Office or email{" "}
                     <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">
@@ -307,7 +294,7 @@ export default function MastersFundingPage() {
             ) : (
               <>
                 <p className="mb-4 text-gray-700">
-                  Please prepare a full proposal document (maximum 5 pages excluding appendix) following the submission guidelines.
+                  Please prepare a full proposal document following the submission guidelines.
                 </p>
                 <p className="text-gray-700 mb-4">
                   Your document should include all required sections: project title, lead researcher information, problem statement, objectives, methodology, innovation and impact, interdisciplinary relevance, implementation plan, and budget estimate.
@@ -354,16 +341,12 @@ export default function MastersFundingPage() {
             )}
 
             <form onSubmit={handleSubmit} className="p-6">
-              {/* Personal Information Section */}
-              <div className="mb-6">
-                <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Personal Information</h2>
-              </div>
               
               {/* Document Upload Section */}
               <div className="mb-6">
                 <h2 className="text-lg font-medium text-gray-900 mb-4 pb-2 border-b">Concept Note Upload</h2>
                 <p className="text-gray-700 mb-6">
-                  Please upload your complete full proposal document (maximum 5 pages excluding appendix).
+                  Please upload your complete full proposal document.
                   Ensure your document includes all required sections as outlined in the submission guidelines.
                 </p>
                 
@@ -395,7 +378,7 @@ export default function MastersFundingPage() {
                       <p className="pl-1">or drag and drop</p>
                     </div>
                     <p className="text-xs text-gray-500">
-                      PDF or DOC/DOCX up to 5MB (max 5 pages excluding appendix)
+                      PDF or DOC/DOCX up to 10MB
                     </p>
                     {document && (
                       <div className="mt-4 text-sm text-green-600 flex items-center justify-center">
