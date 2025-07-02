@@ -9,7 +9,6 @@ import Link from 'next/link';
 
 interface AwardData {
   status: 'approved' | 'declined';
-  finalScore?: number;
   feedbackComments: string;
   fundingAmount?: number;
 }
@@ -75,12 +74,6 @@ const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
             <div className="bg-white/60 rounded-lg p-6 backdrop-blur-sm">
               <h3 className="font-semibold text-gray-800 mb-3">Award Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {award.finalScore && (
-                  <div className="flex items-center">
-                    <span className="text-sm font-medium text-gray-600 mr-2">Final Score:</span>
-                    <span className="text-lg font-bold text-green-600">{award.finalScore}/100</span>
-                  </div>
-                )}
                 {award.fundingAmount && (
                   <div className="flex items-center">
                     <span className="text-sm font-medium text-gray-600 mr-2">Funding Amount:</span>
