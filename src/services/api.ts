@@ -944,4 +944,22 @@ export const getFullProposalStatus = async (proposalId: string) => {
   }
 };
 
+export const submitFullProposal = async (formData: FormData) => {
+  try {
+    const response = await api.post(
+      "/researchers/submit-full-proposal",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Full proposal submission failed:", error);
+    throw error;
+  }
+};
+
 export default api;
