@@ -933,7 +933,7 @@ export const getProposalReviewDetailsById = async (proposalId: string) => {
 
 export const getFullProposalStatus = async (proposalId: string) => {
   try {
-    const response = await api.get(`/api/can-submit/${proposalId}`);
+    const response = await api.get(`/can-submit/${proposalId}`);
     return response.data;
   } catch (error) {
     console.error(
@@ -946,15 +946,11 @@ export const getFullProposalStatus = async (proposalId: string) => {
 
 export const submitFullProposal = async (formData: FormData) => {
   try {
-    const response = await api.post(
-      "/researchers/submit-full-proposal",
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
-    );
+    const response = await api.post("/submit-full-proposal", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
     return response.data;
   } catch (error) {
     console.error("Full proposal submission failed:", error);

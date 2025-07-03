@@ -240,7 +240,7 @@ const FullProposalSubmissionBanner = ({
 
       {canSubmit && (
         <Link 
-          href={`/researchers/proposals/${proposalId}/submit-full`}
+          href={`/researchers/proposals/${proposalId}/submit`}
           className="inline-flex items-center bg-purple-800 hover:bg-purple-900 text-white px-6 py-3 rounded-md font-medium transition-colors"
         >
           <FileText className="w-4 h-4 mr-2" />

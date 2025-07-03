@@ -2,16 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Upload, AlertCircle, CheckCircle, Send, Loader2, ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Header from "@/components/header";
 import Link from 'next/link';
 import { getFullProposalStatus, submitFullProposal } from '@/services/api';
-
-interface SubmitFullProposalPageProps {
-  params: {
-    id: string;
-  };
-}
+import ResearcherLayout from '@/components/researchers/ResearcherLayout';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface EligibilityData {
     isApproved: boolean;
@@ -20,9 +16,11 @@ interface EligibilityData {
     daysRemaining?: number;
   }
 
-export default function SubmitFullProposalPage({ params }: SubmitFullProposalPageProps) {
+export default function SubmitFullProposalPage() {
   const router = useRouter();
-  const { id: proposalId } = params;
+  const { user } = useAuth();
+  const params = useParams();
+  const proposalId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
 
   // Agreement state
   const [agreementChecked, setAgreementChecked] = useState(false);
@@ -143,6 +141,11 @@ export default function SubmitFullProposalPage({ params }: SubmitFullProposalPag
       return;
     }
     
+    if (!user?.id) {
+    setSubmitError('User not authenticated');
+    return;
+  }
+
     setIsSubmitting(true);
     setSubmitError('');
     
@@ -150,7 +153,7 @@ export default function SubmitFullProposalPage({ params }: SubmitFullProposalPag
       const formData = new FormData();
       formData.append('docFile', document);
       formData.append('proposalId', proposalId);
-      formData.append('userId', 'USER_ID_FROM_AUTH'); // You'll need to get this from your auth context
+      formData.append('userId', user.id);
 
       const response = await submitFullProposal(formData);
       
@@ -159,7 +162,7 @@ export default function SubmitFullProposalPage({ params }: SubmitFullProposalPag
         // Redirect back to proposal page after short delay
         setTimeout(() => {
           router.push(`/researchers/proposals/${proposalId}`);
-        }, 2000);
+        }, 3000);
       } else {
         setSubmitError(response.message || 'Failed to submit your full proposal. Please try again.');
       }
@@ -241,7 +244,7 @@ export default function SubmitFullProposalPage({ params }: SubmitFullProposalPag
               <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
               <h2 className="text-2xl font-medium text-gray-900 mb-4">Submission Successful!</h2>
               <p className="text-gray-600 mb-6">
-                Your full proposal has been submitted successfully and is now under review.
+                Your full proposal has been submitted successfully. You will receive a confirmation email shortly.
               </p>
               <p className="text-sm text-gray-500 mb-4">
                 Redirecting you back to your proposal...
@@ -254,9 +257,8 @@ export default function SubmitFullProposalPage({ params }: SubmitFullProposalPag
   }
 
   return (
+    <ResearcherLayout>
     <div className="min-h-screen bg-gray-50">
-      <Header />
-
       <main className="container mx-auto px-4 py-8">
         {/* Back Navigation */}
         <div className="max-w-4xl mx-auto mb-4">
@@ -336,12 +338,12 @@ export default function SubmitFullProposalPage({ params }: SubmitFullProposalPag
                   </div>
                 </div>
 
-                <div className="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <h3 className="text-lg font-semibold text-red-800 mb-2">Important Submission Details:</h3>
-                  <ul className="list-disc list-inside space-y-1 text-red-700">
-                    <li><strong>Deadline:</strong> Thursday, 31st July 2025</li>
-                    <li><strong>File Format:</strong> PDF, DOC, or DOCX only</li>
-                    <li><strong>File Size:</strong> Maximum 10MB</li>
+                <div className="mt-8 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <h3 className="text-lg font-semibold text-purple-800 mb-2">Important Submission Details:</h3>
+                  <ul className="list-disc list-inside space-y-1 text-purple-700">
+                    <li><strong>Deadline:</strong> Thursday, 31st July 2025.</li>
+                    <li><strong>File Format:</strong> PDF, DOC, or DOCX only.</li>
+                    <li><strong>File Size:</strong> Maximum 10MB.</li>
                     <li>For inquiries, contact the DRID Office or email <a href="mailto:drid@uniben.edu" className="text-purple-800 underline">drid@uniben.edu</a></li>
                   </ul>
                 </div>
@@ -515,5 +517,6 @@ export default function SubmitFullProposalPage({ params }: SubmitFullProposalPag
         </div>
       </footer>
     </div>
+    </ResearcherLayout>
   );
 }
