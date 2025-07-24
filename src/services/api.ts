@@ -958,4 +958,104 @@ export const submitFullProposal = async (formData: FormData) => {
   }
 };
 
+// Define the FullProposalDecision type for frontend use
+export interface FullProposalDecision {
+  _id: string;
+  status: "submitted" | "approved" | "rejected";
+  reviewComments?: string;
+  reviewedAt?: string;
+  submittedAt: string;
+  deadline: string;
+  lastNotifiedAt?: string;
+  notificationCount?: number;
+  award?: {
+    fundingAmount?: number;
+    status?: string;
+  };
+  faculty?: {
+    _id: string;
+    title: string;
+  };
+  submitter?: {
+    name: string;
+    email: string;
+  };
+  originalProposal?: {
+    projectTitle: string;
+  };
+}
+
+export const getFullProposalsForDecision = async (params?: {
+  page?: number;
+  limit?: number;
+  faculty?: string;
+  sort?: string;
+  order?: "asc" | "desc";
+}) => {
+  try {
+    const response = await api.get(
+      "/admin/decisions_2/full-proposals-for-decision",
+      {
+        params,
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching full proposals for decision:", error);
+    throw error;
+  }
+};
+
+export const getFullProposalById = async (fullProposalId: string) => {
+  try {
+    const response = await api.get(
+      `/admin/decisions_2/full-proposal/${fullProposalId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching full proposal with ID ${fullProposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const updateFullProposalStatus = async (
+  fullProposalId: string,
+  data: {
+    status: "submitted" | "approved" | "rejected";
+    reviewComments: string;
+  }
+) => {
+  try {
+    const response = await api.patch(
+      `/admin/decisions_2/full-proposal/${fullProposalId}/status`,
+      data
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error updating status for full proposal ${fullProposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const notifyFullProposalApplicants = async (fullProposalId: string) => {
+  try {
+    const response = await api.post(
+      `/admin/decisions_2/full-proposal/${fullProposalId}/notify-applicants`
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error notifying applicants for full proposal ${fullProposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
 export default api;

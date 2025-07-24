@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Menu, X, Home, FileText, LogOut, BookUser, ChevronDown, ChevronUp, LinkIcon,  Users // Import Users icon
+  Menu, X, Home, FileText, LogOut, BookUser, ChevronDown, ChevronUp, LinkIcon,  Users, // Import Users icon
+  UserCheck
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -56,9 +57,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'All Proposals', href: '/admin/proposals', icon: FileText },
     { name: 'Invitations', href: '/admin/invitations', icon: LinkIcon },
     { name: 'Researchers', href: '/admin/researchers', icon: Users },
-    { name: 'Reviewers', href: '/admin/reviewers', icon: Users },
+    { name: 'Reviewers', href: '/admin/reviewers', icon: UserCheck },
     { name: 'All Reviews', href: '/admin/reviews', icon: FileText },
-    { name: 'Final Decisions', href: '/admin/decisions', icon: BookUser },
+    { name: 'First Decision', href: '/admin/decisions', icon: BookUser },
+    { name: 'Final Decisions', href: '/admin/decisions_2', icon: BookUser },
   ];
 
   return (

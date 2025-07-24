@@ -163,7 +163,7 @@ const [reassignSuccess, setReassignSuccess] = useState(false);
   };
 
   fetchProposals();
-}, [isAuthenticated, pagination.currentPage, filters, refreshTrigger]); // Add refreshTrigger to dependencies
+}, [isAuthenticated, pagination.currentPage, filters, refreshTrigger]);
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement>) => {
   const { name, value, type } = e.target;
