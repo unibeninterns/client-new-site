@@ -1058,4 +1058,44 @@ export const notifyFullProposalApplicants = async (fullProposalId: string) => {
   }
 };
 
+// Analytics API calls
+export const getFacultiesWithSubmissions = async () => {
+  try {
+    const response = await api.get(
+      "/admin/analytics/faculties-with-submissions"
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching faculties with submissions:", error);
+    throw error;
+  }
+};
+
+export const getFacultiesWithApprovedAwards = async () => {
+  try {
+    const response = await api.get(
+      "/admin/analytics/faculties-with-approved-awards"
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching faculties with approved awards:", error);
+    throw error;
+  }
+};
+
+export const getFacultiesWithApprovedFullProposals = async () => {
+  try {
+    const response = await api.get(
+      "/admin/analytics/faculties-with-approved-full-proposals"
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      "Error fetching faculties with approved full proposals:",
+      error
+    );
+    throw error;
+  }
+};
+
 export default api;
