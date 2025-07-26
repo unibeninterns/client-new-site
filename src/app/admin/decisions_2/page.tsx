@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getFullProposalsForDecision, updateFullProposalStatus, notifyFullProposalApplicants, getFacultiesWithProposals, type FullProposalDecision } from '@/services/api';
-import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, Users, FileText, Clock } from 'lucide-react';
+import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from "sonner";
@@ -77,6 +77,7 @@ function FullProposalDecisionsPanel() {
     rejected: 0,
     submittedThisMonth: 0,
     nearingDeadline: 0,
+    approvedBudget: 0,
   });
 
   // Data loading function
@@ -170,7 +171,8 @@ function FullProposalDecisionsPanel() {
         ...prev,
         pendingDecisions: prev.pendingDecisions - (selectedFullProposal.status === 'submitted' ? 1 : 0),
         approved: prev.approved + (decisionForm.status === 'approved' ? 1 : 0),
-        rejected: prev.rejected + (decisionForm.status === 'rejected' ? 1 : 0)
+        rejected: prev.rejected + (decisionForm.status === 'rejected' ? 1 : 0),
+        approvedBudget: prev.approvedBudget + (decisionForm.status === 'approved' ? selectedFullProposal.award?.fundingAmount || 0 : 0)
       }));
 
       toast.success(`Full proposal ${decisionForm.status} successfully`);
@@ -228,7 +230,7 @@ function FullProposalDecisionsPanel() {
   };
 
   const handleViewDetails = (fullProposalId: string) => {
-    router.push(`/admin/full-proposals/${fullProposalId}`);
+    router.push(`/admin/decisions_2/${fullProposalId}`);
   };
 
   const getStatusBadgeClass = (status: string) => {
@@ -250,13 +252,6 @@ function FullProposalDecisionsPanel() {
       month: 'short',
       day: 'numeric'
     });
-  };
-
-  const isNearingDeadline = (deadline: string) => {
-    const deadlineDate = new Date(deadline);
-    const now = new Date();
-    const daysLeft = Math.ceil((deadlineDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-    return daysLeft <= 7 && daysLeft >= 0;
   };
 
   if (authLoading || !isAuthenticated) {
@@ -348,20 +343,12 @@ function FullProposalDecisionsPanel() {
 
           <div className="bg-white p-4 rounded-lg shadow border">
             <div className="flex items-center">
-              <Users className="h-5 w-5 text-purple-500 mr-2" />
+              <TrendingUp className="h-5 w-5 text-purple-500 mr-2" />
               <div>
-                <p className="text-xs text-gray-500">This Month</p>
-                <p className="text-lg font-semibold">{statistics.submittedThisMonth}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-4 rounded-lg shadow border">
-            <div className="flex items-center">
-              <Clock className="h-5 w-5 text-orange-500 mr-2" />
-              <div>
-                <p className="text-xs text-gray-500">Near Deadline</p>
-                <p className="text-lg font-semibold">{statistics.nearingDeadline}</p>
+                <p className="text-xs text-gray-500">Approved Budget</p>
+                <p className="text-lg font-semibold">
+                  ₦{statistics.approvedBudget?.toLocaleString() ?? '0'}
+                </p>
               </div>
             </div>
           </div>
@@ -441,9 +428,6 @@ function FullProposalDecisionsPanel() {
                   Submission Info
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Deadline
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -456,7 +440,7 @@ function FullProposalDecisionsPanel() {
                 <tr 
                   key={fullProposal._id} 
                   className={`hover:bg-gray-50 ${
-                    isNearingDeadline(fullProposal.deadline) && fullProposal.status === 'submitted' 
+                    fullProposal.status === 'submitted' 
                       ? 'bg-orange-50' 
                       : ''
                   }`}
@@ -481,20 +465,6 @@ function FullProposalDecisionsPanel() {
                     {fullProposal.reviewedAt && (
                       <div className="text-xs text-gray-500">
                         Reviewed: {formatDate(fullProposal.reviewedAt)}
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className={`text-sm ${
-                      isNearingDeadline(fullProposal.deadline) && fullProposal.status === 'submitted'
-                        ? 'text-orange-600 font-medium'
-                        : 'text-gray-900'
-                    }`}>
-                      {formatDate(fullProposal.deadline)}
-                    </div>
-                    {isNearingDeadline(fullProposal.deadline) && fullProposal.status === 'submitted' && (
-                      <div className="text-xs text-orange-500">
-                        Urgent Review Needed
                       </div>
                     )}
                   </td>
