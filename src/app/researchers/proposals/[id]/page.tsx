@@ -22,6 +22,13 @@ interface FullProposalStatus {
   daysRemaining: number;
 }
 
+interface FullProposalData {
+  status: 'approved' | 'rejected';
+  reviewComments?: string;
+  reviewedAt?: string;
+  submittedAt: string;
+}
+
 interface Proposal {
   _id: string;
   projectTitle: string;
@@ -41,6 +48,7 @@ interface Proposal {
   docFile?: string;
   status: string;
   award?: AwardData;
+  fullProposal?: FullProposalData;
   createdAt: string;
   updatedAt: string;
 }
@@ -161,16 +169,120 @@ const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
   );
 };
 
+// FullProposalPoster component
+const FullProposalPoster = ({ fullProposal, projectTitle }: { 
+  fullProposal: FullProposalData; 
+  projectTitle: string 
+}) => {
+  const isApproved = fullProposal.status === 'approved';
+  
+  return (
+    <div className={`rounded-xl p-8 mb-6 relative overflow-hidden ${
+      isApproved 
+        ? 'bg-gradient-to-br from-emerald-50 to-teal-100 border-2 border-emerald-200' 
+        : 'bg-gradient-to-br from-amber-50 to-orange-100 border-2 border-amber-200'
+    }`}>
+      {/* Decorative elements */}
+      <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
+        {isApproved ? (
+          <div className="w-full h-full bg-emerald-500 rounded-full transform translate-x-16 -translate-y-16"></div>
+        ) : (
+          <div className="w-full h-full bg-amber-500 rounded-full transform translate-x-16 -translate-y-16"></div>
+        )}
+      </div>
+      
+      <div className="relative z-10">
+        {isApproved ? (
+          <>
+            {/* Approved Header */}
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-emerald-500 rounded-full flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-emerald-800">Excellent News!</h2>
+                <p className="text-emerald-700">Your full proposal has been shortlisted and approved!</p>
+              </div>
+            </div>
+            
+            {/* Approved Details */}
+            <div className="bg-white/60 rounded-lg p-6 backdrop-blur-sm">
+              <h3 className="font-semibold text-gray-800 mb-3">Next Steps</h3>
+              <div className="space-y-3">
+                <p className="text-gray-700">
+                  📧 You will receive further information and next steps instructions from the directorate soon via email.
+                </p>
+                <p className="text-gray-700">
+                  Please keep monitoring your email for important updates regarding the funding process.
+                </p>
+              </div>
+              {fullProposal.reviewComments && (
+                <div className="mt-4">
+                  <span className="text-sm font-medium text-gray-600">Review Feedback:</span>
+                  <div className="mt-2 p-3 bg-emerald-50 rounded-md border-l-4 border-emerald-300">
+                    <p className="text-gray-700 italic">&quot;{fullProposal.reviewComments}&quot;</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        ) : (
+          <>
+            {/* Rejected Header */}
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-amber-500 rounded-full flex items-center justify-center mr-4">
+                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-amber-800">Thank You for Your Submission</h2>
+                <p className="text-amber-700">We regret to inform you that your full proposal was not shortlisted for approval</p>
+              </div>
+            </div>
+            
+            {/* Rejected Details */}
+            <div className="bg-white/60 rounded-lg p-6 backdrop-blur-sm">
+              <div className="space-y-3">
+                <p className="text-gray-700">
+                  Thank you for submitting your complete research proposal. While your full proposal was not shortlisted this time,  we appreciate your detailed research work and encourage you to consider the feedback and apply again in the future. 
+                </p>
+              </div>
+              {fullProposal.reviewComments && (
+                <div className="mt-4">
+                  <span className="text-sm font-medium text-gray-600">Review Feedback:</span>
+                  <div className="mt-2 p-3 bg-amber-50 rounded-md border-l-4 border-amber-300">
+                    <p className="text-gray-700 italic">&quot;{fullProposal.reviewComments}&quot;</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const FullProposalSubmissionBanner = ({ 
   proposalId, 
-  fullProposalStatus 
+  fullProposalStatus,
+  fullProposal
 }: { 
   proposalId: string; 
   fullProposalStatus: FullProposalStatus;
+  fullProposal?: FullProposalData;
 }) => {
   const { canSubmit, hasSubmitted, isWithinDeadline, deadline, daysRemaining } = fullProposalStatus;
   
   if (!fullProposalStatus.isApproved) return null;
+
+  // If full proposal has been reviewed (approved/rejected), don't show this banner
+  if (fullProposal && ['approved', 'rejected'].includes(fullProposal.status)) {
+    return null;
+  }
 
   const deadlineDate = new Date(deadline);
   const formattedDeadline = deadlineDate.toLocaleDateString('en-US', {
@@ -346,16 +458,6 @@ export default function ProposalDetails() {
                   </div>
                 </div>
                 
-                {proposal.status === 'revision_requested' && (
-                  <div className="mt-4 md:mt-0">
-                    <Link 
-                      href={`/researchers/revise/${proposal._id}`}
-                      className="bg-purple-800 hover:bg-purple-900 text-white px-4 py-2 rounded-md text-sm font-medium"
-                    >
-                      Revise Proposal
-                    </Link>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -363,10 +465,18 @@ export default function ProposalDetails() {
             <AwardPoster award={proposal.award} projectTitle={proposal.projectTitle || 'Your Research Proposal'} />
           )}
 
+          {proposal.fullProposal && (
+  <FullProposalPoster 
+    fullProposal={proposal.fullProposal} 
+    projectTitle={proposal.projectTitle || 'Your Research Proposal'} 
+  />
+)}
+
           {proposal.award && fullProposalStatus && !statusLoading && (
           <FullProposalSubmissionBanner 
           proposalId={proposalId} 
-          fullProposalStatus={fullProposalStatus} 
+          fullProposalStatus={fullProposalStatus}
+          fullProposal={proposal.fullProposal}
           />
         )}
 
