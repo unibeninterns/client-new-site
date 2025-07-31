@@ -3,7 +3,7 @@ import axios from "axios";
 
 // Configure base API settings
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api/v2";
 
 // Create axios instance with default config
 const api = axios.create({

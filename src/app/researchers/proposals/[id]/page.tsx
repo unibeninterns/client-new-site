@@ -170,7 +170,7 @@ const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
 };
 
 // FullProposalPoster component
-const FullProposalPoster = ({ fullProposal, projectTitle }: { 
+const FullProposalPoster = ({ fullProposal }: { 
   fullProposal: FullProposalData; 
   projectTitle: string 
 }) => {
