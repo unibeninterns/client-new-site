@@ -962,6 +962,7 @@ export const submitFullProposal = async (formData: FormData) => {
 export interface FullProposalDecision {
   _id: string;
   status: "submitted" | "approved" | "rejected";
+  score?: number;
   reviewComments?: string;
   reviewedAt?: string;
   submittedAt: string;
@@ -1015,6 +1016,44 @@ export const getFullProposalById = async (fullProposalId: string) => {
   } catch (error) {
     console.error(
       `Error fetching full proposal with ID ${fullProposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const assignFullProposalScore = async (
+  fullProposalId: string,
+  score: number
+) => {
+  try {
+    const response = await api.post(
+      `/admin/decisions_2/full-proposal/${fullProposalId}/assign-score`,
+      { score }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error assigning score to full proposal ${fullProposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
+export const editFullProposalScore = async (
+  fullProposalId: string,
+  score: number
+) => {
+  try {
+    const response = await api.patch(
+      `/admin/decisions_2/full-proposal/${fullProposalId}/edit-score`,
+      { score }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error editing score for full proposal ${fullProposalId}:`,
       error
     );
     throw error;

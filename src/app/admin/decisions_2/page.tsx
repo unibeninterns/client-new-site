@@ -13,7 +13,7 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { getFullProposalsForDecision, updateFullProposalStatus, notifyFullProposalApplicants, getFacultiesWithProposals, type FullProposalDecision } from '@/services/api';
+import { getFullProposalsForDecision, assignFullProposalScore, editFullProposalScore, updateFullProposalStatus, notifyFullProposalApplicants, getFacultiesWithProposals, type FullProposalDecision } from '@/services/api';
 import { Loader2, MoreVertical, Eye, CheckCircle, XCircle, Bell, TrendingUp, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,7 +48,7 @@ function FullProposalDecisionsPanel() {
 
   const [fullProposals, setFullProposals] = useState<FullProposalDecision[]>([]);
   const [faculties, setFaculties] = useState<Faculty[]>([]);
-  const [sortBy, setSortBy] = useState<'submittedAt' | 'title' | 'deadline'>('submittedAt');
+  const [sortBy, setSortBy] = useState<'submittedAt' | 'title' | 'deadline' | 'score'>('score');
   const [filterBy, setFilterBy] = useState<'all' | 'submitted' | 'approved' | 'rejected'>('all');
   const [facultyFilter, setFacultyFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,6 +57,12 @@ function FullProposalDecisionsPanel() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [showScoreDialog, setShowScoreDialog] = useState(false);
+  const [scoreValue, setScoreValue] = useState<number>(1);
+  const [showEditScoreDialog, setShowEditScoreDialog] = useState(false);
+const [editScoreValue, setEditScoreValue] = useState<number>(1);
+
+
   const limit = 10;
   
   // Decision form state
@@ -190,7 +196,7 @@ function FullProposalDecisionsPanel() {
     }
   };
 
-  const handleSortChange = (value: 'submittedAt' | 'title' | 'deadline') => {
+  const handleSortChange = (value: 'submittedAt' | 'title' | 'deadline' | 'score') => {
     setSortBy(value);
   };
 
@@ -204,6 +210,61 @@ function FullProposalDecisionsPanel() {
       });
     }
   };
+
+  const handleAssignScore = async () => {
+  if (!selectedFullProposal) return;
+  
+  try {
+    setIsSubmitting(true);
+    await assignFullProposalScore(selectedFullProposal._id, scoreValue);
+    
+    setFullProposals(prevFullProposals => 
+      prevFullProposals.map(fp => {
+        if (fp._id === selectedFullProposal._id) {
+          return { ...fp, score: scoreValue };
+        }
+        return fp;
+      })
+    );
+
+    toast.success('Score assigned successfully');
+    setShowScoreDialog(false);
+    setSelectedFullProposal(null);
+    setScoreValue(1);
+  } catch (error) {
+    console.error('Failed to assign score:', error);
+    toast.error('Failed to assign score');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+const handleEditScore = async () => {
+  if (!selectedFullProposal) return;
+
+  try {
+    setIsSubmitting(true);
+    await editFullProposalScore(selectedFullProposal._id, editScoreValue);
+
+    setFullProposals(prevFullProposals =>
+      prevFullProposals.map(fp =>
+        fp._id === selectedFullProposal._id
+          ? { ...fp, score: editScoreValue }
+          : fp
+      )
+    );
+
+    toast.success('Score updated successfully');
+    setShowEditScoreDialog(false);
+    setSelectedFullProposal(null);
+    setEditScoreValue(1);
+  } catch (error) {
+    console.error('Failed to update score:', error);
+    toast.error('Failed to update score');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleNotifyApplicant = async (fullProposalId: string) => {
     try {
@@ -392,6 +453,7 @@ function FullProposalDecisionsPanel() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="score">Score</SelectItem>
                   <SelectItem value="submittedAt">Submission Date</SelectItem>
                   <SelectItem value="title">Title</SelectItem>
                   <SelectItem value="deadline">Deadline</SelectItem>
@@ -425,8 +487,8 @@ function FullProposalDecisionsPanel() {
                   Full Proposal Details
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Submission Info
-                </th>
+  Score
+</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
                 </th>
@@ -459,15 +521,38 @@ function FullProposalDecisionsPanel() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">
-                      Submitted: {formatDate(fullProposal.submittedAt)}
-                    </div>
-                    {fullProposal.reviewedAt && (
-                      <div className="text-xs text-gray-500">
-                        Reviewed: {formatDate(fullProposal.reviewedAt)}
-                      </div>
-                    )}
-                  </td>
+  {typeof fullProposal.score === 'number' ? (
+    <div className="flex items-center gap-2">
+      <div className="w-16 h-1.5 bg-gray-200 rounded-full">
+        <div
+          className={`
+            h-full rounded-full
+            ${fullProposal.score >= 80
+              ? 'bg-green-600'
+              : fullProposal.score >= 60
+              ? 'bg-yellow-500'
+              : 'bg-red-500'
+            }
+          `}
+          style={{ width: `${fullProposal.score}%` }}
+        />
+      </div>
+      <span className={`
+        text-xs font-bold
+        ${fullProposal.score >= 80
+          ? 'text-green-700'
+          : fullProposal.score >= 60
+          ? 'text-yellow-700'
+          : 'text-red-700'
+        }
+      `}>
+        {fullProposal.score}%
+      </span>
+    </div>
+  ) : (
+    <span className="text-gray-400">--</span>
+  )}
+</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusBadgeClass(fullProposal.status)}`}>
                       {fullProposal.status === 'submitted' ? 'Pending Review' : 
@@ -490,41 +575,67 @@ function FullProposalDecisionsPanel() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onSelect={() => handleViewDetails(fullProposal._id)}>
-                          <Eye className="h-4 w-4 mr-2" /> View Details
-                        </DropdownMenuItem>
-                        {fullProposal.status === 'submitted' && (
-                          <>
-                            <DropdownMenuItem
-                              onSelect={e => {
-                                e.preventDefault();
-                                setOpenMenuId(null);
-                                setTimeout(() => handleDecisionClick(fullProposal, 'approved'), 0);
-                              }}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2 text-green-600" /> Approve
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={e => {
-                                e.preventDefault();
-                                setOpenMenuId(null);
-                                setTimeout(() => handleDecisionClick(fullProposal, 'rejected'), 0);
-                              }}
-                            >
-                              <XCircle className="h-4 w-4 mr-2 text-red-600" /> Reject
-                            </DropdownMenuItem>
-                          </>
-                        )}
-                        {(fullProposal.status === 'approved' || fullProposal.status === 'rejected') && (
-                          <DropdownMenuItem onSelect={() => handleNotifyApplicant(fullProposal._id)}>
-                            <Bell className="h-4 w-4 mr-2" /> 
-                            {(fullProposal.notificationCount ?? 0) > 0 
-                              ? `Notify Again (${fullProposal.notificationCount ?? 0} sent)` 
-                              : 'Notify Researcher'
-                            }
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
+  <DropdownMenuItem onSelect={() => handleViewDetails(fullProposal._id)}>
+    <Eye className="h-4 w-4 mr-2" /> View Details
+  </DropdownMenuItem>
+  {!fullProposal.score && (
+    <DropdownMenuItem
+      onSelect={e => {
+        e.preventDefault();
+        setSelectedFullProposal(fullProposal);
+        setScoreValue(1);
+        setShowScoreDialog(true);
+        setOpenMenuId(null);
+      }}
+    >
+      <TrendingUp className="h-4 w-4 mr-2 text-blue-600" /> Assign Score
+    </DropdownMenuItem>
+  )}
+  {fullProposal.score && fullProposal.status === 'submitted' && (
+    <>
+
+      <DropdownMenuItem
+        onSelect={e => {
+          e.preventDefault();
+          setSelectedFullProposal(fullProposal);
+          setEditScoreValue(Number(fullProposal.score) || 1);
+          setShowEditScoreDialog(true);
+          setOpenMenuId(null);
+        }}
+      >
+        <TrendingUp className="h-4 w-4 mr-2 text-blue-600" /> Edit Score
+      </DropdownMenuItem>
+
+      <DropdownMenuItem
+        onSelect={e => {
+          e.preventDefault();
+          setOpenMenuId(null);
+          setTimeout(() => handleDecisionClick(fullProposal, 'approved'), 0);
+        }}
+      >
+        <CheckCircle className="h-4 w-4 mr-2 text-green-600" /> Approve
+      </DropdownMenuItem>
+      <DropdownMenuItem
+        onSelect={e => {
+          e.preventDefault();
+          setOpenMenuId(null);
+          setTimeout(() => handleDecisionClick(fullProposal, 'rejected'), 0);
+        }}
+      >
+        <XCircle className="h-4 w-4 mr-2 text-red-600" /> Reject
+      </DropdownMenuItem>
+    </>
+  )}
+  {(fullProposal.status === 'approved' || fullProposal.status === 'rejected') && (
+    <DropdownMenuItem onSelect={() => handleNotifyApplicant(fullProposal._id)}>
+      <Bell className="h-4 w-4 mr-2" /> 
+      {(fullProposal.notificationCount ?? 0) > 0 
+        ? `Notify Again (${fullProposal.notificationCount ?? 0} sent)` 
+        : 'Notify Researcher'
+      }
+    </DropdownMenuItem>
+  )}
+</DropdownMenuContent>
                     </DropdownMenu>
                   </td>
                 </tr>
@@ -592,6 +703,100 @@ function FullProposalDecisionsPanel() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        <Dialog open={showScoreDialog} onOpenChange={setShowScoreDialog}>
+  <DialogContent className="sm:max-w-[400px]">
+    <DialogHeader>
+      <DialogTitle>Assign Score</DialogTitle>
+      <DialogDescription>
+        {selectedFullProposal?.originalProposal?.projectTitle}
+      </DialogDescription>
+    </DialogHeader>
+    
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          Score (1-100) *
+        </label>
+        <input
+          type="number"
+          min="1"
+          max="100"
+          step="0.01"
+          value={scoreValue}
+          onChange={(e) => setScoreValue(parseInt(e.target.value) || 1)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+        />
+      </div>
+    </div>
+
+    <DialogFooter>
+      <Button 
+        variant="outline" 
+        onClick={() => setShowScoreDialog(false)}
+        disabled={isSubmitting}
+      >
+        Cancel
+      </Button>
+      <Button 
+        onClick={handleAssignScore}
+        disabled={isSubmitting || scoreValue < 1 || scoreValue > 100}
+        className="bg-blue-600 hover:bg-blue-700"
+      >
+        {isSubmitting ? (
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        ) : null}
+        Assign Score
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+
+<Dialog open={showEditScoreDialog} onOpenChange={setShowEditScoreDialog}>
+  <DialogContent className="sm:max-w-[400px]">
+    <DialogHeader>
+      <DialogTitle>Edit Score</DialogTitle>
+      <DialogDescription>
+        {selectedFullProposal?.originalProposal?.projectTitle}
+      </DialogDescription>
+    </DialogHeader>
+    <div className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium mb-2">
+          Score (0-100) *
+        </label>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="0.01"
+          value={editScoreValue}
+          onChange={(e) => setEditScoreValue(parseFloat(e.target.value) || 0)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500 focus:border-purple-500"
+        />
+      </div>
+      </div>
+    <DialogFooter>
+      <Button 
+        variant="outline" 
+        onClick={() => setShowEditScoreDialog(false)}
+        disabled={isSubmitting}
+      >
+        Cancel
+      </Button>
+      <Button 
+        onClick={handleEditScore}
+        disabled={isSubmitting || editScoreValue < 0 || editScoreValue > 100}
+        className="bg-blue-600 hover:bg-blue-700"
+      >
+        {isSubmitting ? (
+          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        ) : null}
+        Update Score
+      </Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
         
         {totalPages > 1 && (
           <div className="mt-6 flex items-center justify-between">
