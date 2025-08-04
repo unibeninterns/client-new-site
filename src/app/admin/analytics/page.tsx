@@ -32,8 +32,8 @@ const FacultyCard = ({ faculty, stage, maxCount }: { faculty: FacultyData; stage
   const getStageColor = (stage: number) => {
     switch(stage) {
       case 1: return 'bg-blue-500';
-      case 2: return 'bg-green-500'; 
-      case 3: return 'bg-purple-500';
+      case 2: return 'bg-purple-500'; 
+      case 3: return 'bg-green-500';
       default: return 'bg-gray-500';
     }
   };
@@ -41,8 +41,8 @@ const FacultyCard = ({ faculty, stage, maxCount }: { faculty: FacultyData; stage
   const getStageColorLight = (stage: number) => {
     switch(stage) {
       case 1: return 'bg-blue-50 border-blue-200';
-      case 2: return 'bg-green-50 border-green-200';
-      case 3: return 'bg-purple-50 border-purple-200';
+      case 2: return 'bg-purple-50 border-purple-200';
+      case 3: return 'bg-green-50 border-green-200';
       default: return 'bg-gray-50 border-gray-200';
     }
   };
@@ -76,8 +76,8 @@ const StageHeader = ({ stage, data, icon: Icon }: { stage: number; data: StageDa
   const getStageColor = (stage: number) => {
     switch(stage) {
       case 1: return 'text-blue-600 bg-blue-100';
-      case 2: return 'text-green-600 bg-green-100'; 
-      case 3: return 'text-purple-600 bg-purple-100';
+      case 2: return 'text-purple-600 bg-purple-100'; 
+      case 3: return 'text-green-600 bg-green-100';
       default: return 'text-gray-600 bg-gray-100';
     }
   };
@@ -108,8 +108,8 @@ const StageHeader = ({ stage, data, icon: Icon }: { stage: number; data: StageDa
 const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
   const stages = [
     { data: stageData[0], color: 'bg-blue-500', width: '100%' },
-    { data: stageData[1], color: 'bg-green-500', width: '70%' },
-    { data: stageData[2], color: 'bg-purple-500', width: '40%' }
+    { data: stageData[1], color: 'bg-purple-500', width: '70%' },
+    { data: stageData[2], color: 'bg-green-500', width: '40%' }
   ];
 
   return (
@@ -289,8 +289,8 @@ export default function ResearchFunnelDashboard() {
                 
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                   <div className="flex items-center">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <CheckCircle2 className="w-6 h-6 text-green-600" />
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <CheckCircle2 className="w-6 h-6 text-purple-600" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Awards Approved</p>
@@ -301,8 +301,8 @@ export default function ResearchFunnelDashboard() {
 
                 <div className="bg-white p-6 rounded-lg shadow-sm border">
                   <div className="flex items-center">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <Award className="w-6 h-6 text-purple-600" />
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Award className="w-6 h-6 text-green-600" />
                     </div>
                     <div className="ml-4">
                       <p className="text-sm font-medium text-gray-600">Full Proposals</p>
