@@ -36,7 +36,6 @@ interface ExportReportButtonProps {
   setSelectedStage: (stage: number) => void;
 }
 
-
 const FacultyCard = ({ faculty, stage, maxCount }: { faculty: FacultyData; stage: number; maxCount: number }) => {
   const barWidth = (faculty.count / maxCount) * 100;
   
@@ -173,7 +172,7 @@ const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
   );
 };
 
-// Export Component
+// Enhanced Export Component with better error handling
 const ExportReportButton: React.FC<ExportReportButtonProps> = ({ 
   headerSectionRef, 
   stageContentRef, 
@@ -186,19 +185,78 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const captureSection = async (ref: React.RefObject<HTMLDivElement | null>, scale = 2) => {
+  // Enhanced capture function with better options
+  const captureSection = async (ref: React.RefObject<HTMLDivElement | null>, scale = 1.5) => {
     if (!ref.current) throw new Error('Reference not found');
     
-    const canvas = await html2canvas(ref.current, { 
+    // Get computed styles and convert oklch to rgb
+    const element = ref.current;
+    const computedStyle = window.getComputedStyle(element);
+    
+    const canvas = await html2canvas(element, { 
       scale,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: '#ffffff',
+      backgroundColor: computedStyle.backgroundColor || '#ffffff',
       scrollX: 0,
-      scrollY: 0
+      scrollY: 0,
+      logging: false, // Disable logging to reduce console noise
+      removeContainer: true,
+      foreignObjectRendering: true,
+      ignoreElements: (element) => {
+        // Ignore elements that might cause issues
+        return element.tagName === 'SCRIPT' || element.tagName === 'STYLE';
+      },
+      onclone: (clonedDoc) => {
+        // Convert oklch colors to hex/rgb in the cloned document
+        const style = clonedDoc.createElement('style');
+        style.textContent = `
+          * {
+            color: rgb(16, 16, 16) !important;
+            background-color: inherit !important;
+          }
+          .bg-white { background-color: #ffffff !important; }
+          .bg-gray-50 { background-color: #f9fafb !important; }
+          .bg-gray-100 { background-color: #f3f4f6 !important; }
+          .bg-gray-200 { background-color: #e5e7eb !important; }
+          .bg-gray-600 { background-color: #4b5563 !important; }
+          .bg-gray-900 { background-color: #111827 !important; }
+          .bg-blue-50 { background-color: #eff6ff !important; }
+          .bg-blue-100 { background-color: #dbeafe !important; }
+          .bg-blue-200 { background-color: #bfdbfe !important; }
+          .bg-blue-500 { background-color: #3b82f6 !important; }
+          .bg-blue-600 { background-color: #2563eb !important; }
+          .bg-purple-50 { background-color: #faf5ff !important; }
+          .bg-purple-100 { background-color: #f3e8ff !important; }
+          .bg-purple-200 { background-color: #e9d5ff !important; }
+          .bg-purple-500 { background-color: #8b5cf6 !important; }
+          .bg-purple-600 { background-color: #7c3aed !important; }
+          .bg-green-50 { background-color: #f0fdf4 !important; }
+          .bg-green-100 { background-color: #dcfce7 !important; }
+          .bg-green-200 { background-color: #bbf7d0 !important; }
+          .bg-green-500 { background-color: #22c55e !important; }
+          .bg-green-600 { background-color: #16a34a !important; }
+          .bg-orange-100 { background-color: #fed7aa !important; }
+          .text-white { color: #ffffff !important; }
+          .text-gray-500 { color: #6b7280 !important; }
+          .text-gray-600 { color: #4b5563 !important; }
+          .text-gray-900 { color: #111827 !important; }
+          .text-blue-600 { color: #2563eb !important; }
+          .text-purple-600 { color: #7c3aed !important; }
+          .text-green-600 { color: #16a34a !important; }
+          .text-orange-600 { color: #ea580c !important; }
+          .border-blue-200 { border-color: #bfdbfe !important; }
+          .border-purple-200 { border-color: #e9d5ff !important; }
+          .border-green-200 { border-color: #bbf7d0 !important; }
+          .border-gray-200 { border-color: #e5e7eb !important; }
+          .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; }
+          .border { border: 1px solid #e5e7eb !important; }
+        `;
+        clonedDoc.head.appendChild(style);
+      }
     });
     
-    return canvas.toDataURL('image/png', 1.0);
+    return canvas.toDataURL('image/png', 0.95);
   };
 
   const exportFullReport = async () => {
@@ -213,59 +271,59 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       let pageCount = 0;
 
       // Page 1: Header section (Header + Summary + Funnel)
       setExportProgress('Capturing overview section...');
-      await sleep(500); // Allow UI to update
+      await sleep(800); // Allow UI to update
       
       const headerImage = await captureSection(headerSectionRef);
-      const headerCanvas = document.createElement('canvas');
-      const headerCtx = headerCanvas.getContext('2d');
-      const headerImg = new Image();
       
+      // Calculate dimensions to fit page
+      const headerImg = new Image();
       await new Promise((resolve) => {
         headerImg.onload = resolve;
         headerImg.src = headerImage;
       });
       
-      headerCanvas.width = headerImg.width;
-      headerCanvas.height = headerImg.height;
-      headerCtx?.drawImage(headerImg, 0, 0);
+      const headerAspectRatio = headerImg.height / headerImg.width;
+      const headerHeight = Math.min(pageWidth * headerAspectRatio, pageHeight - 20);
+      const headerWidth = headerHeight / headerAspectRatio;
       
-      const headerHeight = (headerImg.height * pageWidth) / headerImg.width;
-      pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerHeight);
+      pdf.addImage(headerImage, 'PNG', 0, 10, headerWidth, headerHeight);
       pageCount++;
 
       // Pages 2-4: Each stage content
       for (let stage = 1; stage <= 3; stage++) {
-        setExportProgress(`Capturing Stage ${stage} content...`);
+        setExportProgress(`Preparing Stage ${stage} content...`);
         
         // Switch to the stage and wait for rendering
         setSelectedStage(stage);
-        await sleep(1000); // Wait for stage switch and animations
+        await sleep(1200); // Wait longer for stage switch and animations
 
-        const stageImage = await captureSection(stageContentRef);
-        const stageCanvas = document.createElement('canvas');
-        const stageCtx = stageCanvas.getContext('2d');
-        const stageImg = new Image();
+        setExportProgress(`Capturing Stage ${stage} content...`);
         
+        const stageImage = await captureSection(stageContentRef);
+        
+        // Calculate dimensions
+        const stageImg = new Image();
         await new Promise((resolve) => {
           stageImg.onload = resolve;
           stageImg.src = stageImage;
         });
         
-        stageCanvas.width = stageImg.width;
-        stageCanvas.height = stageImg.height;
-        stageCtx?.drawImage(stageImg, 0, 0);
-        
-        const stageHeight = (stageImg.height * pageWidth) / stageImg.width;
+        const stageAspectRatio = stageImg.height / stageImg.width;
+        const stageHeight = Math.min(pageWidth * stageAspectRatio, pageHeight - 20);
+        const stageWidth = stageHeight / stageAspectRatio;
         
         // Add new page for stages
         pdf.addPage();
-        pdf.addImage(stageImage, 'PNG', 0, 0, pageWidth, stageHeight);
+        pdf.addImage(stageImage, 'PNG', 0, 10, stageWidth, stageHeight);
         pageCount++;
-        console.log(`Total pages: ${pageCount}`);
+        
+        setExportProgress(`Stage ${stage} captured (${pageCount} pages complete)`);
+        await sleep(300);
       }
 
       // Generate filename with timestamp
@@ -276,7 +334,7 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
       await sleep(500);
       
       pdf.save(filename);
-      setExportProgress('Export completed!');
+      setExportProgress('Export completed successfully!');
       
       // Reset to original stage
       setSelectedStage(originalStage);
@@ -284,14 +342,17 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
       setTimeout(() => {
         setIsExporting(false);
         setExportProgress('');
-      }, 1500);
+      }, 2000);
 
     } catch (error) {
       console.error('Export failed:', error);
-      alert('Failed to export report. Please try again.');
+      setExportProgress('Export failed. Please try again.');
       setIsExporting(false);
-      setExportProgress('');
       setSelectedStage(originalStage);
+      
+      setTimeout(() => {
+        setExportProgress('');
+      }, 3000);
     }
   };
 
@@ -300,10 +361,10 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
       <button
         onClick={exportFullReport}
         disabled={isExporting || stageData.length === 0}
-        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white transition-all duration-200 ${
+        className={`inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white transition-all duration-200 ${
           isExporting || stageData.length === 0
             ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+            : 'bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 hover:shadow-md'
         }`}
       >
         {isExporting ? (
@@ -314,13 +375,19 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
         ) : (
           <>
             <Download className="w-4 h-4 mr-2" />
-            Export Report
+            Export Full Report
           </>
         )}
       </button>
       
-      {isExporting && exportProgress && (
-        <div className="text-sm text-gray-600 font-medium">
+      {exportProgress && (
+        <div className={`text-sm font-medium px-3 py-1 rounded-md ${
+          exportProgress.includes('failed') 
+            ? 'text-red-700 bg-red-50' 
+            : exportProgress.includes('completed')
+            ? 'text-green-700 bg-green-50'
+            : 'text-blue-700 bg-blue-50'
+        }`}>
           {exportProgress}
         </div>
       )}
@@ -423,10 +490,10 @@ export default function ResearchFunnelDashboard() {
 
   return (
     <AdminLayout>
-      <div className="py-6">
+      <div className="py-6 bg-gray-50 min-h-screen">
         <div className="mx-auto px-4 sm:px-6 md:px-8">
           {/* Header Section - Will be captured as Page 1 */}
-          <div ref={headerSectionRef}>
+          <div ref={headerSectionRef} className="bg-gray-50 pb-8">
             {/* Header */}
             <div className="mb-8 flex justify-between items-start">
               <div>
@@ -515,7 +582,7 @@ export default function ResearchFunnelDashboard() {
 
           {!isLoading && (
             /* Stage Content Section - Will be captured as Pages 2-4 */
-            <div ref={stageContentRef}>
+            <div ref={stageContentRef} className="bg-gray-50 pt-8">
               {/* Stage Navigation */}
               <div className="flex justify-center mb-8">
                 <div className="bg-white p-2 rounded-lg shadow-sm border flex space-x-2">
@@ -544,7 +611,7 @@ export default function ResearchFunnelDashboard() {
                 />
 
                 {/* Faculty Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                   {currentStageData.faculties.map((faculty, index) => (
                     <div
                       key={faculty._id}
@@ -561,7 +628,7 @@ export default function ResearchFunnelDashboard() {
                 </div>
 
                 {/* Stage-specific insights */}
-                <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border">
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
                   <h4 className="text-lg font-semibold text-gray-900 mb-4">
                     {selectedStage === 1 && "Initial Submissions Insights"}
                     {selectedStage === 2 && "Award Approval Insights"} 
