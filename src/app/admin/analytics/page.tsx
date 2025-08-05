@@ -10,7 +10,7 @@ import {
 } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { ChevronRight, Users, Award, FileCheck, TrendingUp, Building2, Clock, CheckCircle2, Loader2, Download } from 'lucide-react';
-import domtoimage from 'dom-to-image-more';
+import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 interface FacultyData {
@@ -35,6 +35,7 @@ interface ExportReportButtonProps {
   selectedStage: number;
   setSelectedStage: (stage: number) => void;
 }
+
 
 const FacultyCard = ({ faculty, stage, maxCount }: { faculty: FacultyData; stage: number; maxCount: number }) => {
   const barWidth = (faculty.count / maxCount) * 100;
@@ -185,51 +186,20 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
 
   const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-  const captureSection = async (element: HTMLElement): Promise<string> => {
-    try {
-      const dataUrl = await domtoimage.toPng(element, {
-        quality: 1.0,
-        bgcolor: '#ffffff',
-        cacheBust: true,
-        imagePlaceholder: undefined,
-        width: element.scrollWidth,
-        height: element.scrollHeight,
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
-        }
-      });
-      return dataUrl;
-    } catch (error) {
-      console.error('Error capturing section:', error);
-      throw error;
-    }
+  const captureSection = async (ref: React.RefObject<HTMLDivElement | null>, scale = 2) => {
+    if (!ref.current) throw new Error('Reference not found');
+    
+    const canvas = await html2canvas(ref.current, { 
+      scale,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0
+    });
+    
+    return canvas.toDataURL('image/png', 1.0);
   };
-
-const addImageToPDF = (pdf: jsPDF, imageData: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    img.onload = () => {
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      const imgWidth = img.width;
-      const imgHeight = img.height;
-      const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
-
-      const finalWidth = imgWidth * ratio;
-      const finalHeight = imgHeight * ratio;
-
-      const x = (pageWidth - finalWidth) / 2;
-      const y = (pageHeight - finalHeight) / 2;
-
-      pdf.addImage(imageData, 'PNG', x, y, finalWidth, finalHeight);
-      resolve();
-    };
-    img.onerror = reject;
-    img.src = imageData;
-  });
-};
 
   const exportFullReport = async () => {
     if (!headerSectionRef.current || !stageContentRef.current || stageData.length === 0) {
@@ -242,14 +212,30 @@ const addImageToPDF = (pdf: jsPDF, imageData: string): Promise<void> => {
 
     try {
       const pdf = new jsPDF('p', 'mm', 'a4');
-      let isFirstPage = true;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let pageCount = 0;
 
       // Page 1: Header section (Header + Summary + Funnel)
       setExportProgress('Capturing overview section...');
-      await sleep(1000); // Allow UI to update
+      await sleep(500); // Allow UI to update
       
-      const headerImage = await captureSection(headerSectionRef.current);
-      await addImageToPDF(pdf, headerImage);
+      const headerImage = await captureSection(headerSectionRef);
+      const headerCanvas = document.createElement('canvas');
+      const headerCtx = headerCanvas.getContext('2d');
+      const headerImg = new Image();
+      
+      await new Promise((resolve) => {
+        headerImg.onload = resolve;
+        headerImg.src = headerImage;
+      });
+      
+      headerCanvas.width = headerImg.width;
+      headerCanvas.height = headerImg.height;
+      headerCtx?.drawImage(headerImg, 0, 0);
+      
+      const headerHeight = (headerImg.height * pageWidth) / headerImg.width;
+      pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerHeight);
+      pageCount++;
 
       // Pages 2-4: Each stage content
       for (let stage = 1; stage <= 3; stage++) {
@@ -257,39 +243,29 @@ const addImageToPDF = (pdf: jsPDF, imageData: string): Promise<void> => {
         
         // Switch to the stage and wait for rendering
         setSelectedStage(stage);
-        await sleep(1500); // Wait for stage switch and animations to complete
+        await sleep(1000); // Wait for stage switch and animations
 
-        // Ensure the content has fully rendered
-        await new Promise(resolve => {
-          const checkRendering = () => {
-            if (stageContentRef.current) {
-              const stageElements = stageContentRef.current.querySelectorAll('[data-stage-content]');
-              if (stageElements.length > 0 || stageContentRef.current.children.length > 0) {
-                resolve(void 0);
-              } else {
-                setTimeout(checkRendering, 100);
-              }
-            } else {
-              setTimeout(checkRendering, 100);
-            }
-          };
-          checkRendering();
+        const stageImage = await captureSection(stageContentRef);
+        const stageCanvas = document.createElement('canvas');
+        const stageCtx = stageCanvas.getContext('2d');
+        const stageImg = new Image();
+        
+        await new Promise((resolve) => {
+          stageImg.onload = resolve;
+          stageImg.src = stageImage;
         });
-
-        const stageImage = await captureSection(stageContentRef.current);
+        
+        stageCanvas.width = stageImg.width;
+        stageCanvas.height = stageImg.height;
+        stageCtx?.drawImage(stageImg, 0, 0);
+        
+        const stageHeight = (stageImg.height * pageWidth) / stageImg.width;
         
         // Add new page for stages
-        if (!isFirstPage) {
-          pdf.addPage();
-        } else {
-          pdf.addPage();
-          isFirstPage = false;
-        }
-        
-        await addImageToPDF(pdf, stageImage);
-        
-        // Small delay between stages
-        await sleep(500);
+        pdf.addPage();
+        pdf.addImage(stageImage, 'PNG', 0, 0, pageWidth, stageHeight);
+        pageCount++;
+        console.log(`Total pages: ${pageCount}`);
       }
 
       // Generate filename with timestamp
@@ -300,7 +276,7 @@ const addImageToPDF = (pdf: jsPDF, imageData: string): Promise<void> => {
       await sleep(500);
       
       pdf.save(filename);
-      setExportProgress('Export completed successfully!');
+      setExportProgress('Export completed!');
       
       // Reset to original stage
       setSelectedStage(originalStage);
@@ -308,11 +284,11 @@ const addImageToPDF = (pdf: jsPDF, imageData: string): Promise<void> => {
       setTimeout(() => {
         setIsExporting(false);
         setExportProgress('');
-      }, 2000);
+      }, 1500);
 
     } catch (error) {
       console.error('Export failed:', error);
-      alert(`Failed to export report: ${error instanceof Error ? error.message : 'Unknown error'}. Please try again.`);
+      alert('Failed to export report. Please try again.');
       setIsExporting(false);
       setExportProgress('');
       setSelectedStage(originalStage);
@@ -539,7 +515,7 @@ export default function ResearchFunnelDashboard() {
 
           {!isLoading && (
             /* Stage Content Section - Will be captured as Pages 2-4 */
-            <div ref={stageContentRef} data-stage-content>
+            <div ref={stageContentRef}>
               {/* Stage Navigation */}
               <div className="flex justify-center mb-8">
                 <div className="bg-white p-2 rounded-lg shadow-sm border flex space-x-2">
