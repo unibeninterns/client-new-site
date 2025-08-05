@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -9,7 +9,9 @@ import {
   getFacultiesWithApprovedFullProposals 
 } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { ChevronRight, Users, Award, FileCheck, TrendingUp, Building2, Clock, CheckCircle2, Loader2 } from 'lucide-react';
+import { ChevronRight, Users, Award, FileCheck, TrendingUp, Building2, Clock, CheckCircle2, Loader2, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 interface FacultyData {
   _id: string;
@@ -25,6 +27,15 @@ interface StageData {
   total: number;
   faculties: FacultyData[];
 }
+
+interface ExportReportButtonProps {
+  headerSectionRef: React.RefObject<HTMLDivElement | null>;
+  stageContentRef: React.RefObject<HTMLDivElement | null>;
+  stageData: StageData[];
+  selectedStage: number;
+  setSelectedStage: (stage: number) => void;
+}
+
 
 const FacultyCard = ({ faculty, stage, maxCount }: { faculty: FacultyData; stage: number; maxCount: number }) => {
   const barWidth = (faculty.count / maxCount) * 100;
@@ -162,6 +173,161 @@ const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
   );
 };
 
+// Export Component
+const ExportReportButton: React.FC<ExportReportButtonProps> = ({ 
+  headerSectionRef, 
+  stageContentRef, 
+  stageData, 
+  selectedStage, 
+  setSelectedStage 
+}) => {
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState('');
+
+  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+  const captureSection = async (ref: React.RefObject<HTMLDivElement | null>, scale = 2) => {
+    if (!ref.current) throw new Error('Reference not found');
+    
+    const canvas = await html2canvas(ref.current, { 
+      scale,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      scrollX: 0,
+      scrollY: 0
+    });
+    
+    return canvas.toDataURL('image/png', 1.0);
+  };
+
+  const exportFullReport = async () => {
+    if (!headerSectionRef.current || !stageContentRef.current || stageData.length === 0) {
+      alert('Data not ready for export. Please wait for the page to load completely.');
+      return;
+    }
+
+    setIsExporting(true);
+    const originalStage = selectedStage;
+
+    try {
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      let pageCount = 0;
+
+      // Page 1: Header section (Header + Summary + Funnel)
+      setExportProgress('Capturing overview section...');
+      await sleep(500); // Allow UI to update
+      
+      const headerImage = await captureSection(headerSectionRef);
+      const headerCanvas = document.createElement('canvas');
+      const headerCtx = headerCanvas.getContext('2d');
+      const headerImg = new Image();
+      
+      await new Promise((resolve) => {
+        headerImg.onload = resolve;
+        headerImg.src = headerImage;
+      });
+      
+      headerCanvas.width = headerImg.width;
+      headerCanvas.height = headerImg.height;
+      headerCtx?.drawImage(headerImg, 0, 0);
+      
+      const headerHeight = (headerImg.height * pageWidth) / headerImg.width;
+      pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerHeight);
+      pageCount++;
+
+      // Pages 2-4: Each stage content
+      for (let stage = 1; stage <= 3; stage++) {
+        setExportProgress(`Capturing Stage ${stage} content...`);
+        
+        // Switch to the stage and wait for rendering
+        setSelectedStage(stage);
+        await sleep(1000); // Wait for stage switch and animations
+
+        const stageImage = await captureSection(stageContentRef);
+        const stageCanvas = document.createElement('canvas');
+        const stageCtx = stageCanvas.getContext('2d');
+        const stageImg = new Image();
+        
+        await new Promise((resolve) => {
+          stageImg.onload = resolve;
+          stageImg.src = stageImage;
+        });
+        
+        stageCanvas.width = stageImg.width;
+        stageCanvas.height = stageImg.height;
+        stageCtx?.drawImage(stageImg, 0, 0);
+        
+        const stageHeight = (stageImg.height * pageWidth) / stageImg.width;
+        
+        // Add new page for stages
+        pdf.addPage();
+        pdf.addImage(stageImage, 'PNG', 0, 0, pageWidth, stageHeight);
+        pageCount++;
+        console.log(`Total pages: ${pageCount}`);
+      }
+
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `research-analytics-report-${timestamp}.pdf`;
+      
+      setExportProgress('Generating PDF...');
+      await sleep(500);
+      
+      pdf.save(filename);
+      setExportProgress('Export completed!');
+      
+      // Reset to original stage
+      setSelectedStage(originalStage);
+      
+      setTimeout(() => {
+        setIsExporting(false);
+        setExportProgress('');
+      }, 1500);
+
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export report. Please try again.');
+      setIsExporting(false);
+      setExportProgress('');
+      setSelectedStage(originalStage);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      <button
+        onClick={exportFullReport}
+        disabled={isExporting || stageData.length === 0}
+        className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white transition-all duration-200 ${
+          isExporting || stageData.length === 0
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500'
+        }`}
+      >
+        {isExporting ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            Exporting...
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4 mr-2" />
+            Export Report
+          </>
+        )}
+      </button>
+      
+      {isExporting && exportProgress && (
+        <div className="text-sm text-gray-600 font-medium">
+          {exportProgress}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function ResearchFunnelDashboard() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
@@ -170,6 +336,10 @@ export default function ResearchFunnelDashboard() {
   const [stageData, setStageData] = useState<StageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Refs for export functionality
+  const headerSectionRef = useRef<HTMLDivElement>(null);
+  const stageContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -255,78 +425,97 @@ export default function ResearchFunnelDashboard() {
     <AdminLayout>
       <div className="py-6">
         <div className="mx-auto px-4 sm:px-6 md:px-8">
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Research Funding Analytics</h1>
-            <p className="text-gray-600">Track proposal submissions, approvals, and full proposal outcomes across faculties</p>
+          {/* Header Section - Will be captured as Page 1 */}
+          <div ref={headerSectionRef}>
+            {/* Header */}
+            <div className="mb-8 flex justify-between items-start">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 mb-2">Research Funding Analytics</h1>
+                <p className="text-gray-600">Track proposal submissions, approvals, and full proposal outcomes across faculties</p>
+              </div>
+              
+              {/* Export Button positioned in header */}
+              <ExportReportButton
+                headerSectionRef={headerSectionRef}
+                stageContentRef={stageContentRef}
+                stageData={stageData}
+                selectedStage={selectedStage}
+                setSelectedStage={setSelectedStage}
+              />
+            </div>
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+                {error}
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
+              </div>
+            ) : (
+              <>
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-blue-100 rounded-lg">
+                        <FileCheck className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Total Submissions</p>
+                        <p className="text-2xl font-bold text-gray-900">{totalSubmissions}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-purple-100 rounded-lg">
+                        <CheckCircle2 className="w-6 h-6 text-purple-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Awards Approved</p>
+                        <p className="text-2xl font-bold text-gray-900">{totalAwards}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-green-100 rounded-lg">
+                        <Award className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Full Proposals</p>
+                        <p className="text-2xl font-bold text-gray-900">{totalFullProposals}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <div className="flex items-center">
+                      <div className="p-2 bg-orange-100 rounded-lg">
+                        <TrendingUp className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div className="ml-4">
+                        <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                        <p className="text-2xl font-bold text-gray-900">{successRate}%</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Funnel Visualization */}
+                <FunnelVisualization stageData={stageData} />
+              </>
+            )}
           </div>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
-              {error}
-            </div>
-          )}
-
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
-            </div>
-          ) : (
-            <>
-              {/* Summary Cards */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <div className="flex items-center">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <FileCheck className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Total Submissions</p>
-                      <p className="text-2xl font-bold text-gray-900">{totalSubmissions}</p>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <div className="flex items-center">
-                    <div className="p-2 bg-purple-100 rounded-lg">
-                      <CheckCircle2 className="w-6 h-6 text-purple-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Awards Approved</p>
-                      <p className="text-2xl font-bold text-gray-900">{totalAwards}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <div className="flex items-center">
-                    <div className="p-2 bg-green-100 rounded-lg">
-                      <Award className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Full Proposals</p>
-                      <p className="text-2xl font-bold text-gray-900">{totalFullProposals}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-white p-6 rounded-lg shadow-sm border">
-                  <div className="flex items-center">
-                    <div className="p-2 bg-orange-100 rounded-lg">
-                      <TrendingUp className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <div className="ml-4">
-                      <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                      <p className="text-2xl font-bold text-gray-900">{successRate}%</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Funnel Visualization */}
-              <FunnelVisualization stageData={stageData} />
-
+          {!isLoading && (
+            /* Stage Content Section - Will be captured as Pages 2-4 */
+            <div ref={stageContentRef}>
               {/* Stage Navigation */}
               <div className="flex justify-center mb-8">
                 <div className="bg-white p-2 rounded-lg shadow-sm border flex space-x-2">
@@ -407,7 +596,7 @@ export default function ResearchFunnelDashboard() {
                   </div>
                 </div>
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
