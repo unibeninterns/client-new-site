@@ -197,7 +197,7 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
       scale,
       useCORS: true,
       allowTaint: true,
-      backgroundColor: computedStyle.backgroundColor || '#ffffff',
+      backgroundColor: '#ffffff',
       scrollX: 0,
       scrollY: 0,
       logging: false, // Disable logging to reduce console noise
