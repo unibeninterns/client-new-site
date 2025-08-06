@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -9,9 +9,7 @@ import {
   getFacultiesWithApprovedFullProposals 
 } from '@/services/api';
 import AdminLayout from '@/components/admin/AdminLayout';
-import { ChevronRight, Users, Award, FileCheck, TrendingUp, Building2, Clock, CheckCircle2, Loader2, Download } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { ChevronRight, Users, Award, FileCheck, TrendingUp, Building2, Clock, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface FacultyData {
   _id: string;
@@ -26,14 +24,6 @@ interface StageData {
   description: string;
   total: number;
   faculties: FacultyData[];
-}
-
-interface ExportReportButtonProps {
-  headerSectionRef: React.RefObject<HTMLDivElement | null>;
-  stageContentRef: React.RefObject<HTMLDivElement | null>;
-  stageData: StageData[];
-  selectedStage: number;
-  setSelectedStage: (stage: number) => void;
 }
 
 const FacultyCard = ({ faculty, stage, maxCount }: { faculty: FacultyData; stage: number; maxCount: number }) => {
@@ -116,44 +106,112 @@ const StageHeader = ({ stage, data, icon: Icon }: { stage: number; data: StageDa
 };
 
 const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
+  // Gracefully handle the case where data is not yet available
+  if (!stageData || stageData.length < 3) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-sm border mb-8 flex justify-center items-center h-48">
+        <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
+      </div>
+    );
+  }
+
+  // Pre-calculate total counts for easy use in explanations
+  const totalSubmissions = stageData[0].faculties.reduce((sum, f) => sum + f.count, 0);
+  const totalAwards = stageData[1].faculties.reduce((sum, f) => sum + f.count, 0);
+  const totalFullProposals = stageData[2].faculties.reduce((sum, f) => sum + f.count, 0);
+  
   const stages = [
-    { data: stageData[0], color: 'bg-blue-500', width: '100%' },
-    { data: stageData[1], color: 'bg-purple-500', width: '70%' },
-    { data: stageData[2], color: 'bg-green-500', width: '40%' }
+    {
+      data: stageData[0],
+      color: 'bg-blue-500', // Stage 1 Color
+      width: '90%',
+      totalCount: totalSubmissions,
+      explanation: (
+        <p className='font-bold'>
+          A total of <span className="font-bold">{totalSubmissions}</span> IBR proposals were received from{' '}
+          <span className="font-bold">{stageData[0].total}</span> Faculties, Schools and Institutes digitally and processed by a custom review system.
+        </p>
+      ),
+    },
+    {
+      data: stageData[1],
+      color: 'bg-purple-500', // Stage 2 Color
+      width: '85%',
+      totalCount: totalAwards,
+      explanation: (
+        <p className='font-bold'>
+          Each proposal was subjected to a blind reviewing process by three (3) sets of reviewers from different clusters. We had the AI reviewer and the human reviewer; when there's a discrepancy of up to 20% in the scores gotten by both, a reconciliation reviewer is then assigned to make an independent score. The scores were collated, and the average computed. The results were used in the decision-making process to award approvals to{' '}
+          <span className="font-bold">{totalAwards}</span> eligible proposals to proceed to the next stage.
+        </p>
+      ),
+    },
+    {
+      data: stageData[2],
+      color: 'bg-green-500', // Stage 3 Color
+      width: '80%',
+      totalCount: totalFullProposals,
+      explanation: (
+        <p className='font-bold'>
+          After all the full proposals were submitted and graded by the review committee, a total of{' '}
+          <span className="font-bold">{totalFullProposals}</span> full proposals were shortlisted from{' '}
+          <span className="font-bold">{stageData[2].total}</span> Faculties, Schools and Institutes. The recommended{' '}
+          <span className="font-bold">{totalFullProposals}</span> full proposals, if approved by the Vice Chancellor, will be processed further to TETFund for consideration and release of funds.
+        </p>
+      ),
+    },
   ];
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-sm border mb-8">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6 text-center">Research Funding Funnel</h3>
-      <div className="flex flex-col items-center space-y-4">
+      <h3 className="text-lg font-semibold text-gray-900 mb-8 text-center">Research Funding Funnel</h3>
+      
+      {/* Container for all stages */}
+      <div className="flex flex-col space-y-8">
         {stages.map((stage, index) => (
           <React.Fragment key={index}>
-            <div className="flex flex-col items-center">
+            {/* A single stage row with a responsive grid layout */}
+            <div className="w-full grid grid-cols-1 lg:grid-cols-[0.5fr_1fr_2fr] gap-4 lg:gap-4 items-center">
+              
+              {/* Column 1: Stage Number */}
+              <div className="text-center lg:text-right">
+              <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-800 lg:text-gray-600 uppercase tracking-wider">
+                Stage {index + 1}
+              </h2>
+              </div>
+              
+              {/* Column 2: Data Card */}
+              <div className="flex justify-center">
               <div 
-                className={`${stage.color} rounded-lg p-4 text-white text-center transition-all duration-500`}
-                style={{ width: stage.width, minWidth: '200px' }}
-              >
+              className={`${stage.color} rounded-lg p-4 text-white text-center w-full max-w-xs shadow-lg`}
+              style={{ width: stage.width, minWidth: '200px' }}>
                 <div className="font-semibold">{stage.data.title}</div>
                 <div className="text-sm opacity-90">{stage.data.total} Faculties</div>
-                <div className="text-lg font-bold">
-                  {stage.data.faculties.reduce((sum, f) => sum + f.count, 0)} Total
-                </div>
+                <div className="text-2xl font-bold">{stage.totalCount} Total</div>
+              </div>
+              </div>
+
+              {/* Column 3: Explanation Text */}
+              <div className="text-gray-600 text-sm leading-relaxed px-4 lg:px-0">
+              {stage.explanation}
               </div>
             </div>
+
+            {/* Chevron separator, hidden after the last stage */}
             {index < stages.length - 1 && (
-              <ChevronRight className="w-6 h-6 text-gray-400 rotate-90" />
+              <div className="flex justify-center">
+                  <ChevronRight className="w-8 h-8 text-gray-300 rotate-90" />
+              </div>
             )}
           </React.Fragment>
         ))}
       </div>
       
-      {/* Conversion Metrics */}
-      <div className="mt-6 grid grid-cols-2 gap-4">
+      {/* Conversion Metrics (Your existing code for this section is fine) */}
+      <div className="mt-8 pt-6 border-t grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="text-center p-3 bg-gray-50 rounded-lg">
           <div className="text-lg font-bold text-gray-900">
             {stageData[1]?.faculties.length > 0 && stageData[0]?.faculties.length > 0
-              ? Math.round((stageData[1].faculties.reduce((sum, f) => sum + f.count, 0) / 
-                          stageData[0].faculties.reduce((sum, f) => sum + f.count, 0)) * 100)
+              ? Math.round((totalAwards / totalSubmissions) * 100)
               : 0}%
           </div>
           <div className="text-sm text-gray-600">Stage 1 → 2 Conversion</div>
@@ -161,236 +219,12 @@ const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
         <div className="text-center p-3 bg-gray-50 rounded-lg">
           <div className="text-lg font-bold text-gray-900">
             {stageData[2]?.faculties.length > 0 && stageData[1]?.faculties.length > 0
-              ? Math.round((stageData[2].faculties.reduce((sum, f) => sum + f.count, 0) / 
-                          stageData[1].faculties.reduce((sum, f) => sum + f.count, 0)) * 100)
+              ? Math.round((totalFullProposals / totalAwards) * 100)
               : 0}%
           </div>
           <div className="text-sm text-gray-600">Stage 2 → 3 Conversion</div>
         </div>
       </div>
-    </div>
-  );
-};
-
-// Enhanced Export Component with better error handling
-const ExportReportButton: React.FC<ExportReportButtonProps> = ({ 
-  headerSectionRef, 
-  stageContentRef, 
-  stageData, 
-  selectedStage, 
-  setSelectedStage 
-}) => {
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportProgress, setExportProgress] = useState('');
-
-  const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-  // Enhanced capture function with better options
-  const captureSection = async (ref: React.RefObject<HTMLDivElement | null>, scale = 1.5) => {
-    if (!ref.current) throw new Error('Reference not found');
-    
-    // Get computed styles and convert oklch to rgb
-    const element = ref.current;
-    const computedStyle = window.getComputedStyle(element);
-    
-    const canvas = await html2canvas(element, { 
-      scale,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      scrollX: 0,
-      scrollY: 0,
-      logging: false, // Disable logging to reduce console noise
-      removeContainer: true,
-      foreignObjectRendering: true,
-      ignoreElements: (element) => {
-        // Ignore elements that might cause issues
-        return element.tagName === 'SCRIPT' || element.tagName === 'STYLE';
-      },
-      onclone: (clonedDoc) => {
-        // Convert oklch colors to hex/rgb in the cloned document
-        const style = clonedDoc.createElement('style');
-        style.textContent = `
-          * {
-            color: rgb(16, 16, 16) !important;
-            background-color: inherit !important;
-          }
-          .bg-white { background-color: #ffffff !important; }
-          .bg-gray-50 { background-color: #f9fafb !important; }
-          .bg-gray-100 { background-color: #f3f4f6 !important; }
-          .bg-gray-200 { background-color: #e5e7eb !important; }
-          .bg-gray-600 { background-color: #4b5563 !important; }
-          .bg-gray-900 { background-color: #111827 !important; }
-          .bg-blue-50 { background-color: #eff6ff !important; }
-          .bg-blue-100 { background-color: #dbeafe !important; }
-          .bg-blue-200 { background-color: #bfdbfe !important; }
-          .bg-blue-500 { background-color: #3b82f6 !important; }
-          .bg-blue-600 { background-color: #2563eb !important; }
-          .bg-purple-50 { background-color: #faf5ff !important; }
-          .bg-purple-100 { background-color: #f3e8ff !important; }
-          .bg-purple-200 { background-color: #e9d5ff !important; }
-          .bg-purple-500 { background-color: #8b5cf6 !important; }
-          .bg-purple-600 { background-color: #7c3aed !important; }
-          .bg-green-50 { background-color: #f0fdf4 !important; }
-          .bg-green-100 { background-color: #dcfce7 !important; }
-          .bg-green-200 { background-color: #bbf7d0 !important; }
-          .bg-green-500 { background-color: #22c55e !important; }
-          .bg-green-600 { background-color: #16a34a !important; }
-          .bg-orange-100 { background-color: #fed7aa !important; }
-          .text-white { color: #ffffff !important; }
-          .text-gray-500 { color: #6b7280 !important; }
-          .text-gray-600 { color: #4b5563 !important; }
-          .text-gray-900 { color: #111827 !important; }
-          .text-blue-600 { color: #2563eb !important; }
-          .text-purple-600 { color: #7c3aed !important; }
-          .text-green-600 { color: #16a34a !important; }
-          .text-orange-600 { color: #ea580c !important; }
-          .border-blue-200 { border-color: #bfdbfe !important; }
-          .border-purple-200 { border-color: #e9d5ff !important; }
-          .border-green-200 { border-color: #bbf7d0 !important; }
-          .border-gray-200 { border-color: #e5e7eb !important; }
-          .shadow-sm { box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05) !important; }
-          .border { border: 1px solid #e5e7eb !important; }
-        `;
-        clonedDoc.head.appendChild(style);
-      }
-    });
-    
-    return canvas.toDataURL('image/png', 0.95);
-  };
-
-  const exportFullReport = async () => {
-    if (!headerSectionRef.current || !stageContentRef.current || stageData.length === 0) {
-      alert('Data not ready for export. Please wait for the page to load completely.');
-      return;
-    }
-
-    setIsExporting(true);
-    const originalStage = selectedStage;
-
-    try {
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      let pageCount = 0;
-
-      // Page 1: Header section (Header + Summary + Funnel)
-      setExportProgress('Capturing overview section...');
-      await sleep(800); // Allow UI to update
-      
-      const headerImage = await captureSection(headerSectionRef);
-      
-      // Calculate dimensions to fit page
-      const headerImg = new Image();
-      await new Promise((resolve) => {
-        headerImg.onload = resolve;
-        headerImg.src = headerImage;
-      });
-      
-      const headerAspectRatio = headerImg.height / headerImg.width;
-      const headerHeight = Math.min(pageWidth * headerAspectRatio, pageHeight - 20);
-      const headerWidth = headerHeight / headerAspectRatio;
-      
-      pdf.addImage(headerImage, 'PNG', 0, 10, headerWidth, headerHeight);
-      pageCount++;
-
-      // Pages 2-4: Each stage content
-      for (let stage = 1; stage <= 3; stage++) {
-        setExportProgress(`Preparing Stage ${stage} content...`);
-        
-        // Switch to the stage and wait for rendering
-        setSelectedStage(stage);
-        await sleep(1200); // Wait longer for stage switch and animations
-
-        setExportProgress(`Capturing Stage ${stage} content...`);
-        
-        const stageImage = await captureSection(stageContentRef);
-        
-        // Calculate dimensions
-        const stageImg = new Image();
-        await new Promise((resolve) => {
-          stageImg.onload = resolve;
-          stageImg.src = stageImage;
-        });
-        
-        const stageAspectRatio = stageImg.height / stageImg.width;
-        const stageHeight = Math.min(pageWidth * stageAspectRatio, pageHeight - 20);
-        const stageWidth = stageHeight / stageAspectRatio;
-        
-        // Add new page for stages
-        pdf.addPage();
-        pdf.addImage(stageImage, 'PNG', 0, 10, stageWidth, stageHeight);
-        pageCount++;
-        
-        setExportProgress(`Stage ${stage} captured (${pageCount} pages complete)`);
-        await sleep(300);
-      }
-
-      // Generate filename with timestamp
-      const timestamp = new Date().toISOString().split('T')[0];
-      const filename = `research-analytics-report-${timestamp}.pdf`;
-      
-      setExportProgress('Generating PDF...');
-      await sleep(500);
-      
-      pdf.save(filename);
-      setExportProgress('Export completed successfully!');
-      
-      // Reset to original stage
-      setSelectedStage(originalStage);
-      
-      setTimeout(() => {
-        setIsExporting(false);
-        setExportProgress('');
-      }, 2000);
-
-    } catch (error) {
-      console.error('Export failed:', error);
-      setExportProgress('Export failed. Please try again.');
-      setIsExporting(false);
-      setSelectedStage(originalStage);
-      
-      setTimeout(() => {
-        setExportProgress('');
-      }, 3000);
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-4">
-      <button
-        onClick={exportFullReport}
-        disabled={isExporting || stageData.length === 0}
-        className={`inline-flex items-center px-6 py-3 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white transition-all duration-200 ${
-          isExporting || stageData.length === 0
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 hover:shadow-md'
-        }`}
-      >
-        {isExporting ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Exporting...
-          </>
-        ) : (
-          <>
-            <Download className="w-4 h-4 mr-2" />
-            Export Full Report
-          </>
-        )}
-      </button>
-      
-      {exportProgress && (
-        <div className={`text-sm font-medium px-3 py-1 rounded-md ${
-          exportProgress.includes('failed') 
-            ? 'text-red-700 bg-red-50' 
-            : exportProgress.includes('completed')
-            ? 'text-green-700 bg-green-50'
-            : 'text-blue-700 bg-blue-50'
-        }`}>
-          {exportProgress}
-        </div>
-      )}
     </div>
   );
 };
@@ -403,10 +237,6 @@ export default function ResearchFunnelDashboard() {
   const [stageData, setStageData] = useState<StageData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Refs for export functionality
-  const headerSectionRef = useRef<HTMLDivElement>(null);
-  const stageContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -490,99 +320,80 @@ export default function ResearchFunnelDashboard() {
 
   return (
     <AdminLayout>
-      <div className="py-6 bg-gray-50 min-h-screen">
+      <div className="py-6">
         <div className="mx-auto px-4 sm:px-6 md:px-8">
-          {/* Header Section - Will be captured as Page 1 */}
-          <div ref={headerSectionRef} className="bg-gray-50 pb-8">
-            {/* Header */}
-            <div className="mb-8 flex justify-between items-start">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">Research Funding Analytics</h1>
-                <p className="text-gray-600">Track proposal submissions, approvals, and full proposal outcomes across faculties</p>
-              </div>
-              
-              {/* Export Button positioned in header */}
-              <ExportReportButton
-                headerSectionRef={headerSectionRef}
-                stageContentRef={stageContentRef}
-                stageData={stageData}
-                selectedStage={selectedStage}
-                setSelectedStage={setSelectedStage}
-              />
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">Research Funding Analytics</h1>
+            <p className="text-gray-600">Track proposal submissions, approvals, and full proposal outcomes across faculties</p>
+          </div>
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
+              {error}
             </div>
+          )}
 
-            {error && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-md text-red-700">
-                {error}
-              </div>
-            )}
-
-            {isLoading ? (
-              <div className="flex justify-center items-center h-64">
-                <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
-              </div>
-            ) : (
-              <>
-                {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                  <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-blue-100 rounded-lg">
-                        <FileCheck className="w-6 h-6 text-blue-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Total Submissions</p>
-                        <p className="text-2xl font-bold text-gray-900">{totalSubmissions}</p>
-                      </div>
+          {isLoading ? (
+            <div className="flex justify-center items-center h-64">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-800" />
+            </div>
+          ) : (
+            <>
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <FileCheck className="w-6 h-6 text-blue-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Submissions</p>
+                      <p className="text-2xl font-bold text-gray-900">{totalSubmissions}</p>
                     </div>
                   </div>
-                  
-                  <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-purple-100 rounded-lg">
-                        <CheckCircle2 className="w-6 h-6 text-purple-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Awards Approved</p>
-                        <p className="text-2xl font-bold text-gray-900">{totalAwards}</p>
-                      </div>
+                </div>
+                
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <CheckCircle2 className="w-6 h-6 text-purple-600" />
                     </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-green-100 rounded-lg">
-                        <Award className="w-6 h-6 text-green-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Full Proposals</p>
-                        <p className="text-2xl font-bold text-gray-900">{totalFullProposals}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <div className="flex items-center">
-                      <div className="p-2 bg-orange-100 rounded-lg">
-                        <TrendingUp className="w-6 h-6 text-orange-600" />
-                      </div>
-                      <div className="ml-4">
-                        <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                        <p className="text-2xl font-bold text-gray-900">{successRate}%</p>
-                      </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Awards Approved</p>
+                      <p className="text-2xl font-bold text-gray-900">{totalAwards}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Funnel Visualization */}
-                <FunnelVisualization stageData={stageData} />
-              </>
-            )}
-          </div>
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <Award className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Full Proposals</p>
+                      <p className="text-2xl font-bold text-gray-900">{totalFullProposals}</p>
+                    </div>
+                  </div>
+                </div>
 
-          {!isLoading && (
-            /* Stage Content Section - Will be captured as Pages 2-4 */
-            <div ref={stageContentRef} className="bg-gray-50 pt-8">
+                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <TrendingUp className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Success Rate</p>
+                      <p className="text-2xl font-bold text-gray-900">{successRate}%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Funnel Visualization */}
+              <FunnelVisualization stageData={stageData} />
+
               {/* Stage Navigation */}
               <div className="flex justify-center mb-8">
                 <div className="bg-white p-2 rounded-lg shadow-sm border flex space-x-2">
@@ -611,7 +422,7 @@ export default function ResearchFunnelDashboard() {
                 />
 
                 {/* Faculty Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {currentStageData.faculties.map((faculty, index) => (
                     <div
                       key={faculty._id}
@@ -628,7 +439,7 @@ export default function ResearchFunnelDashboard() {
                 </div>
 
                 {/* Stage-specific insights */}
-                <div className="bg-white p-6 rounded-lg shadow-sm border">
+                <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border">
                   <h4 className="text-lg font-semibold text-gray-900 mb-4">
                     {selectedStage === 1 && "Initial Submissions Insights"}
                     {selectedStage === 2 && "Award Approval Insights"} 
@@ -663,7 +474,7 @@ export default function ResearchFunnelDashboard() {
                   </div>
                 </div>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
