@@ -944,6 +944,19 @@ export const getFullProposalStatus = async (proposalId: string) => {
   }
 };
 
+export const getFinalSubmissionStatus = async (proposalId: string) => {
+  try {
+    const response = await api.get(`/can-submit-final/${proposalId}`);
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error fetching final submission status for ID ${proposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
 export const submitFullProposal = async (formData: FormData) => {
   try {
     const response = await api.post("/submit-full-proposal", formData, {
@@ -954,6 +967,20 @@ export const submitFullProposal = async (formData: FormData) => {
     return response.data;
   } catch (error) {
     console.error("Full proposal submission failed:", error);
+    throw error;
+  }
+};
+
+export const submitFinalSubmission = async (formData: FormData) => {
+  try {
+    const response = await api.post("/submit-final-submission", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Final submission submission failed:", error);
     throw error;
   }
 };
