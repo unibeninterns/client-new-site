@@ -1060,6 +1060,25 @@ export const editFullProposalScore = async (
   }
 };
 
+export const editFullProposalFundingAmount = async (
+  fullProposalId: string,
+  fundingAmount: number
+) => {
+  try {
+    const response = await api.patch(
+      `/admin/decisions_2/full-proposal/${fullProposalId}/funding-amount`,
+      { fundingAmount }
+    );
+    return response.data;
+  } catch (error) {
+    console.error(
+      `Error editing funding amount for full proposal ${fullProposalId}:`,
+      error
+    );
+    throw error;
+  }
+};
+
 export const updateFullProposalStatus = async (
   fullProposalId: string,
   data: {

@@ -127,7 +127,7 @@ const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
       width: '90%',
       totalCount: totalSubmissions,
       explanation: (
-        <p className='font-bold'>
+        <p className='font-bold md:text-3xl lg:text-sm'>
           A total of <span className="font-bold">{totalSubmissions}</span> IBR proposals were received from{' '}
           <span className="font-bold">{stageData[0].total}</span> Faculties, Schools and Institutes digitally and processed by a custom review system.
         </p>
@@ -139,8 +139,8 @@ const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
       width: '85%',
       totalCount: totalAwards,
       explanation: (
-        <p className='font-bold'>
-          Each proposal was subjected to a blind reviewing process by three (3) sets of reviewers from different clusters. We had the AI reviewer and the human reviewer; when there's a discrepancy of up to 20% in the scores gotten by both, a reconciliation reviewer is then assigned to make an independent score. The scores were collated, and the average computed. The results were used in the decision-making process to award approvals to{' '}
+        <p className='font-bold md:text-3xl lg:text-sm'>
+          Each proposal was subjected to a blind reviewing process by three (3) sets of reviewers from different clusters. We had the AI reviewer and the human reviewer; when there&apos;s a discrepancy of up to 20% in the scores gotten by both, a reconciliation reviewer is then assigned to make an independent score. The scores were collated, and the average computed. The results were used in the decision-making process to award approvals to{' '}
           <span className="font-bold">{totalAwards}</span> eligible proposals to proceed to the next stage.
         </p>
       ),
@@ -151,7 +151,7 @@ const FunnelVisualization = ({ stageData }: { stageData: StageData[] }) => {
       width: '80%',
       totalCount: totalFullProposals,
       explanation: (
-        <p className='font-bold'>
+        <p className='font-bold md:text-3xl lg:text-sm'>
           After all the full proposals were submitted and graded by the review committee, a total of{' '}
           <span className="font-bold">{totalFullProposals}</span> full proposals were shortlisted from{' '}
           <span className="font-bold">{stageData[2].total}</span> Faculties, Schools and Institutes. The recommended{' '}

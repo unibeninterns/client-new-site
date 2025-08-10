@@ -175,6 +175,26 @@ export default function FullProposalDetailPage() {
     return new Date() > new Date(deadline);
   };
 
+  const linkify = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.split(urlRegex).map((part, i) => {
+      if (part.match(urlRegex)) {
+        return (
+          <a
+            key={i}
+            href={part}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-purple-600 hover:underline"
+          >
+            {part}
+          </a>
+        );
+      }
+      return part;
+    });
+  };
+
   if (authLoading || !isAuthenticated) {
     return (
       <div className="min-h-screen flex justify-center items-center bg-gray-50">
@@ -467,9 +487,9 @@ export default function FullProposalDetailPage() {
                     {/* Review Comments */}
                     {fullProposal.reviewComments && (
                       <div>
-                        <h4 className="text-sm font-medium text-gray-900 mb-2">Review Comments</h4>
+                        <h4 className="text-sm font-medium text-black mb-2">Review Comments</h4>
                         <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-sm text-gray-700">{fullProposal.reviewComments}</p>
+                          <p className="text-sm text-gray-900 whitespace-pre-wrap">{linkify(fullProposal.reviewComments)}</p>
                         </div>
                       </div>
                     )}

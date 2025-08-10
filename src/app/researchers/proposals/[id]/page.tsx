@@ -7,6 +7,29 @@ import ResearcherLayout from '@/components/researchers/ResearcherLayout';
 import { AlertCircle, ArrowLeft, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
 
+const linkify = (text: string | undefined) => {
+  if (!text) return text;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-600 hover:underline"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 interface AwardData {
   status: 'approved' | 'declined';
   feedbackComments: string;
@@ -127,7 +150,7 @@ const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
               {award.feedbackComments && (
                 <div className="mt-4">
                   <span className="text-sm font-medium text-gray-600">Feedback:</span>
-                  <p className="text-gray-700 mt-1 italic">&quot;{award.feedbackComments}&quot;</p>
+                  <p className="text-gray-700 mt-1 italic whitespace-pre-wrap">&quot;{linkify(award.feedbackComments)}&quot;</p>
                 </div>
               )}
             </div>
@@ -157,7 +180,7 @@ const AwardPoster = ({ award }: { award: AwardData; projectTitle: string }) => {
                 <div>
                   <span className="text-sm font-medium text-gray-600">Feedback from Review Committee:</span>
                   <div className="mt-2 p-3 bg-red-50 rounded-md border-l-4 border-red-300">
-                    <p className="text-gray-700 italic">&quot;{award.feedbackComments}&quot;</p>
+                    <p className="text-gray-700 italic whitespace-pre-wrap">&quot;{linkify(award.feedbackComments)}&quot;</p>
                   </div>
                 </div>
               )}
@@ -212,17 +235,14 @@ const FullProposalPoster = ({ fullProposal }: {
               <h3 className="font-semibold text-gray-800 mb-3">Next Steps</h3>
               <div className="space-y-3">
                 <p className="text-gray-700">
-                  📧 You will receive further information and next steps instructions from the directorate soon via email.
-                </p>
-                <p className="text-gray-700">
-                  Please keep monitoring your email for important updates regarding the funding process.
+                  📧 You will receive further information and next steps instructions from the directorate soon either below in the review comments or via email.
                 </p>
               </div>
               {fullProposal.reviewComments && (
                 <div className="mt-4">
                   <span className="text-sm font-medium text-gray-600">Review Feedback:</span>
                   <div className="mt-2 p-3 bg-emerald-50 rounded-md border-l-4 border-emerald-300">
-                    <p className="text-gray-700 italic">&quot;{fullProposal.reviewComments}&quot;</p>
+                    <p className="text-gray-700 italic whitespace-pre-wrap">&quot;{linkify(fullProposal.reviewComments)}&quot;</p>
                   </div>
                 </div>
               )}
@@ -254,7 +274,7 @@ const FullProposalPoster = ({ fullProposal }: {
                 <div className="mt-4">
                   <span className="text-sm font-medium text-gray-600">Review Feedback:</span>
                   <div className="mt-2 p-3 bg-amber-50 rounded-md border-l-4 border-amber-300">
-                    <p className="text-gray-700 italic">&quot;{fullProposal.reviewComments}&quot;</p>
+                    <p className="text-gray-700 italic whitespace-pre-wrap">&quot;{linkify(fullProposal.reviewComments)}&quot;</p>
                   </div>
                 </div>
               )}
