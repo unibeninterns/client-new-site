@@ -72,6 +72,7 @@ interface FullProposal {
   createdAt: string;
   updatedAt: string;
   award: Award;
+  finalSubmission?: string;
 }
 
 interface ApiResponse {
@@ -490,6 +491,38 @@ export default function FullProposalDetailPage() {
                         <h4 className="text-sm font-medium text-black mb-2">Review Comments</h4>
                         <div className="bg-gray-50 p-3 rounded-lg">
                           <p className="text-sm text-gray-900 whitespace-pre-wrap">{linkify(fullProposal.reviewComments)}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Final Submission Document */}
+                    {fullProposal.finalSubmission && (
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <FileText className="h-6 w-6 text-green-600 mr-3" />
+                            <div>
+                              <p className="text-sm font-medium text-green-900">Final Submission Document</p>
+                              <p className="text-xs text-gray-500">The final submitted proposal document.</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <a
+                              href={fullProposal.finalSubmission}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                            >
+                              View
+                            </a>
+                            <Button
+                              onClick={() => window.open(fullProposal.finalSubmission, '_blank')}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              Download
+                            </Button>
+                          </div>
                         </div>
                       </div>
                     )}

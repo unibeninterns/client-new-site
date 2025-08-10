@@ -2,33 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getFullProposalStatus, getResearcherProposalDetails } from '@/services/api';
+import { getFullProposalStatus, getResearcherProposalDetails, getFinalSubmissionStatus } from '@/services/api';
 import ResearcherLayout from '@/components/researchers/ResearcherLayout';
 import { AlertCircle, ArrowLeft, FileText, Clock } from 'lucide-react';
 import Link from 'next/link';
 
-const linkify = (text: string | undefined) => {
-  if (!text) return text;
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const parts = text.split(urlRegex);
-
-  return parts.map((part, i) => {
-    if (part.match(urlRegex)) {
-      return (
-        <a
-          key={i}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-purple-600 hover:underline"
-        >
-          {part}
-        </a>
-      );
-    }
-    return part;
-  });
-};
 
 interface AwardData {
   status: 'approved' | 'declined';
@@ -43,6 +21,15 @@ interface FullProposalStatus {
   isWithinDeadline: boolean;
   deadline: string;
   daysRemaining: number;
+}
+
+interface FinalSubmissionStatus {
+  canSubmit: boolean;
+  hasSubmitted: boolean;
+  isWithinDeadline: boolean;
+  deadline: string;
+  daysRemaining: number;
+  isApproved: boolean;
 }
 
 interface FullProposalData {
@@ -76,6 +63,29 @@ interface Proposal {
   updatedAt: string;
 }
 
+const linkify = (text: string | undefined) => {
+  if (!text) return text;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-600 hover:underline"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 const useFullProposalStatus = (proposalId: string) => {
   const [status, setStatus] = useState<FullProposalStatus | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,6 +99,32 @@ const useFullProposalStatus = (proposalId: string) => {
         }
       } catch (error) {
         console.error('Error fetching full proposal status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (proposalId) {
+      fetchStatus();
+    }
+  }, [proposalId]);
+
+  return { status, loading };
+};
+
+const useFinalSubmissionStatus = (proposalId: string) => {
+  const [status, setStatus] = useState<FinalSubmissionStatus | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const response = await getFinalSubmissionStatus(proposalId);
+        if (response.success) {
+          setStatus(response.data);
+        }
+      } catch (error) {
+        console.error('Error fetching final submission status:', error);
       } finally {
         setLoading(false);
       }
@@ -383,10 +419,111 @@ const FullProposalSubmissionBanner = ({
   );
 };
 
+const FinalSubmissionBanner = ({ 
+  proposalId, 
+  finalSubmissionStatus,
+}: { 
+  proposalId: string; 
+  finalSubmissionStatus: FinalSubmissionStatus;
+}) => {
+  const { canSubmit, hasSubmitted, isWithinDeadline, deadline, daysRemaining, } = finalSubmissionStatus;
+  
+  if (!finalSubmissionStatus.isApproved) return null;
+
+  const deadlineDate = new Date(deadline);
+  const formattedDeadline = deadlineDate.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  if (hasSubmitted) {
+    return (
+      <div className="rounded-xl p-6 mb-6 bg-gradient-to-br from-green-50 to-emerald-100 border-2 border-green-200">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center mr-4">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-green-800">Final Submission Completed</h3>
+            <p className="text-green-700">Your final submission has been successfully submitted</p>
+          </div>
+        </div>
+        <div className="bg-white/60 rounded-lg p-4 backdrop-blur-sm">
+          <p className="text-sm text-gray-700">
+            <strong>Important:</strong> Remember to also submit the physical documents at the DRID office as instructed in the review comments.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isWithinDeadline) {
+    return (
+      <div className="rounded-xl p-6 mb-6 bg-gradient-to-br from-gray-50 to-gray-100 border-2 border-gray-200">
+        <div className="flex items-center mb-4">
+          <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center mr-4">
+            <Clock className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-800">Final Submission Deadline Passed</h3>
+            <p className="text-gray-700">The deadline for final submission was {formattedDeadline}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-xl p-6 mb-6 bg-gradient-to-br from-indigo-50 to-blue-100 border-2 border-indigo-200">
+      <div className="flex items-center mb-4">
+        <div className="w-10 h-10 bg-indigo-500 rounded-full flex items-center justify-center mr-4">
+          <FileText className="w-5 h-5 text-white" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-indigo-800">Final Stage: Final Submission</h3>
+          <p className="text-indigo-700">Your full proposal has been approved! Submit your final documents.</p>
+        </div>
+      </div>
+      
+      <div className="bg-white/60 rounded-lg p-4 backdrop-blur-sm mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium text-gray-600">Final Submission Deadline:</span>
+          <span className="text-lg font-bold text-indigo-600">{formattedDeadline}</span>
+        </div>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-medium text-gray-600">Days Remaining:</span>
+          <span className={`text-lg font-bold ${daysRemaining <= 7 ? 'text-red-600' : 'text-green-600'}`}>
+            {daysRemaining} days
+          </span>
+        </div>
+        <div className="border-t pt-3">
+          <p className="text-sm text-gray-700">
+            <strong>Important:</strong> You need to submit both online documents and physical documents at the DRID office as instructed in the review comments.
+          </p>
+        </div>
+      </div>
+
+      {canSubmit && (
+        <Link 
+          href={`/researchers/proposals/${proposalId}/final-submission`}
+          className="inline-flex items-center bg-indigo-800 hover:bg-indigo-900 text-white px-6 py-3 rounded-md font-medium transition-colors"
+        >
+          <FileText className="w-4 h-4 mr-2" />
+          Submit Final Documents
+        </Link>
+      )}
+    </div>
+  );
+};
+
 export default function ProposalDetails() {
   const params = useParams();
   const proposalId = params.id as string;
   const { status: fullProposalStatus, loading: statusLoading } = useFullProposalStatus(proposalId);
+  const { status: finalSubmissionStatus, loading: finalStatusLoading } = useFinalSubmissionStatus(proposalId);
   
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
@@ -491,6 +628,13 @@ export default function ProposalDetails() {
     projectTitle={proposal.projectTitle || 'Your Research Proposal'} 
   />
 )}
+
+          {proposal.fullProposal && proposal.fullProposal.status === 'approved' && finalSubmissionStatus && !finalStatusLoading && (
+          <FinalSubmissionBanner 
+            proposalId={proposalId} 
+            finalSubmissionStatus={finalSubmissionStatus}
+          />
+        )}
 
           {proposal.award && fullProposalStatus && !statusLoading && (
           <FullProposalSubmissionBanner 

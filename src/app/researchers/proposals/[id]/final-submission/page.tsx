@@ -17,6 +17,29 @@ interface EligibilityData {
   reviewComments?: string;
 }
 
+const linkify = (text: string | undefined) => {
+  if (!text) return text;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const parts = text.split(urlRegex);
+
+  return parts.map((part, i) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={i}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-purple-600 hover:underline"
+        >
+          {part}
+        </a>
+      );
+    }
+    return part;
+  });
+};
+
 export default function SubmitFinalPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -152,7 +175,7 @@ export default function SubmitFinalPage() {
     
     try {
       const formData = new FormData();
-      formData.append('docFile', document);
+      formData.append('finalSubmission', document);
       formData.append('proposalId', proposalId);
       formData.append('userId', user.id);
 
@@ -305,7 +328,7 @@ export default function SubmitFinalPage() {
                 <div>
                   <h3 className="text-lg font-semibold text-blue-800 mb-3">Review Comments & Instructions</h3>
                   <div className="text-blue-700 whitespace-pre-wrap bg-white p-4 rounded border">
-                    {eligibilityData.reviewComments}
+                    {linkify(eligibilityData.reviewComments)}
                   </div>
                   <p className="text-blue-600 text-sm mt-2 font-medium">
                     Please follow all instructions and guidelines provided in the review comments above for your final submission.
